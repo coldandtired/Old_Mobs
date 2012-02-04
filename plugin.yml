@@ -1,0 +1,24 @@
+name: Mobs
+version: 1.9 b10
+author: coldandtired
+main: me.coldandtired.mobs.Main
+description: A fully-featured mob control plugin
+softdepend: [Vault, WorldGuard]
+commands:
+    reload_mobs:
+        description: Reloads the config
+        aliases: rm
+        permission: mobs.can_reload_mobs
+        usage: "Usage: /<command>"
+    spawn_mob:
+        description: Manually spawn some or all of the auto_spawns
+        aliases: sm
+        permission: mobs.can_spawn_mob
+        usage: "Usage: /spawn_mob (shortcut)"
+permissions:
+    mobs.can_reload_mobs:
+        description: Allows reloading the configs
+        default: false
+    mobs.can_spawn_mob:
+        description: Allows manual spawning
+        default: false
