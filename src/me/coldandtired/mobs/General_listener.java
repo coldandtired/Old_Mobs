@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Random;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -11,43 +12,20 @@ import org.bukkit.configuration.MemorySection;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.entity.CraftEntity;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Blaze;
-import org.bukkit.entity.CaveSpider;
-import org.bukkit.entity.Chicken;
-import org.bukkit.entity.Cow;
 import org.bukkit.entity.CreatureType;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.EnderDragon;
-import org.bukkit.entity.Enderman;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
-import org.bukkit.entity.Ghast;
-import org.bukkit.entity.Giant;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.MagmaCube;
-import org.bukkit.entity.MushroomCow;
-import org.bukkit.entity.Pig;
-import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Sheep;
-import org.bukkit.entity.Silverfish;
-import org.bukkit.entity.Skeleton;
-import org.bukkit.entity.Slime;
-import org.bukkit.entity.Snowman;
-import org.bukkit.entity.Spider;
-import org.bukkit.entity.Squid;
-import org.bukkit.entity.Villager;
-import org.bukkit.entity.Wolf;
-import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreeperPowerEvent;
 import org.bukkit.event.entity.EndermanPickupEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityCreatePortalEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -64,11 +42,11 @@ import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class Mobs_listener implements Listener
+public class General_listener implements Listener
 {
 	Main plugin;
 	Map<String, Object> unique = null;
-	ArrayList<String> skipped_mobs = new ArrayList<String>();
+	ArrayList<String> tracked_mobs = new ArrayList<String>();
 	Random rng = new Random();
 	boolean overrule_damage = false;
 	boolean overrule_burn = false;
@@ -85,8 +63,9 @@ public class Mobs_listener implements Listener
 	boolean overrule_become_powered_creeper = false;
 	boolean overrule_tame = false;
 	boolean overrule_become_pig_zombie = false;
+	boolean allow = true;
 	
-	Mobs_listener(Main plugin)
+	General_listener(Main plugin)
 	{
 		this.plugin = plugin;
 		overrule_damage = plugin.config.getBoolean("overrule.damaging", false);
@@ -108,187 +87,1114 @@ public class Mobs_listener implements Listener
 		MemorySection ms = (MemorySection)plugin.config.get("blaze");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftBlaze");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftBlaze");
 		}
-		else skipped_mobs.add("CraftBlaze");
 		
 		ms = (MemorySection)plugin.config.get("cave_spider");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftCaveSpider");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftCaveSpider");
 		}
-		else skipped_mobs.add("CraftCaveSpider");
 		
 		ms = (MemorySection)plugin.config.get("chicken");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftChicken");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftChicken");
 		}
-		else skipped_mobs.add("CraftChicken");
 		
 		ms = (MemorySection)plugin.config.get("cow");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftCow");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftCow");
 		}
-		else skipped_mobs.add("CraftCow");
 		
 		ms = (MemorySection)plugin.config.get("creeper");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftCreeper");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftCreeper");
 		}
-		else skipped_mobs.add("CraftCreeper");
 		
 		ms = (MemorySection)plugin.config.get("ender_dragon");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftEnderDragon");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftEnderDragon");
 		}
-		else skipped_mobs.add("CraftEnderDragon");
 		
 		ms = (MemorySection)plugin.config.get("enderman");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftEnderman");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftEnderman");
 		}
-		else skipped_mobs.add("CraftEnderman");
 		
 		ms = (MemorySection)plugin.config.get("ghast");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftGhast");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftGhast");
 		}
-		else skipped_mobs.add("CraftGhast");
 		
 		ms = (MemorySection)plugin.config.get("giant");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftGiant");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftGiant");
 		}
-		else skipped_mobs.add("CraftGiant");
 		
 		ms = (MemorySection)plugin.config.get("magma_cube");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftMagmaCube");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftMagmaCube");
 		}
-		else skipped_mobs.add("CraftMagmaCube");
 		
 		ms = (MemorySection)plugin.config.get("mushroom_cow");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftMushroomCow");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftMushroomCow");
 		}
-		else skipped_mobs.add("CraftMushroomCow");
 		
 		ms = (MemorySection)plugin.config.get("pig");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftPig");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftPig");
 		}
-		else skipped_mobs.add("CraftPig");
 		
 		ms = (MemorySection)plugin.config.get("pig_zombie");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftPigZombie");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftPigZombie");
 		}
-		else skipped_mobs.add("CraftPigZombie");
 		
 		ms = (MemorySection)plugin.config.get("sheep");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSheep");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSheep");
 		}
-		else skipped_mobs.add("CraftSheep");
 		
 		ms = (MemorySection)plugin.config.get("silverfish");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSilverfish");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSilverfish");
 		}
-		else skipped_mobs.add("CraftSilverfish");
 		
 		ms = (MemorySection)plugin.config.get("skeleton");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSkeleton");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSkeleton");
 		}
-		else skipped_mobs.add("CraftSkeleton");
 		
 		ms = (MemorySection)plugin.config.get("slime");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSlime");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSlime");
 		}
-		else skipped_mobs.add("CraftSlime");
 		
 		ms = (MemorySection)plugin.config.get("snowman");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSnowman");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSnowman");
 		}
-		else skipped_mobs.add("CraftSnowman");
 		
 		ms = (MemorySection)plugin.config.get("spider");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSpider");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSpider");
 		}
-		else skipped_mobs.add("CraftSpider");
 		
 		ms = (MemorySection)plugin.config.get("squid");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftSquid");
-		}
-		else skipped_mobs.add("CraftSquid");
-		
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftSquid");
+		}		
 		
 		ms = (MemorySection)plugin.config.get("villager");		
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftVillager");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftVillager");
 		}
-		else skipped_mobs.add("CraftVillager");
 		
 		ms = (MemorySection)plugin.config.get("wolf");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftWolf");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftWolf");
 		}
-		else skipped_mobs.add("CraftWolf");
 		
 		ms = (MemorySection)plugin.config.get("zombie");
 		if (ms != null) 
 		{
-			if (ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
-					&& ms.get("burn_rules") == null && ms.get("death_rules") == null) skipped_mobs.add("CraftZombie");
+			if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
+					&& ms.get("burn_rules") == null && ms.get("death_rules") == null)) tracked_mobs.add("CraftZombie");
 		}
-		else skipped_mobs.add("CraftZombie");
+		if (tracked_mobs.size() > 0)
+		{
+			Bukkit.getLogger().info("[Mobs] Replaced mobs:");
+			for (String s : tracked_mobs) Bukkit.getLogger().info(s.replace("Craft", ""));
+		} else this.plugin.getServer().getPluginManager().disablePlugin(plugin);
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onCreatureSpawn(CreatureSpawnEvent event)
+	{		
+		if (event.isCancelled())
+		{
+			if (overrule_spawn) event.setCancelled(false); else return;
+		}
+		
+		Entity entity = event.getEntity();
+		
+        Location location = event.getLocation();        
+        CreatureType creatureType = event.getCreatureType();
+        SpawnReason spawn_reason = event.getSpawnReason();
+        //int x = location.getChunk().getX();
+       // int z = location.getChunk().getZ();
+        net.minecraft.server.World mcWorld = ((CraftWorld) location.getWorld()).getHandle();
+        net.minecraft.server.Entity mcEntity = (((CraftEntity) entity).getHandle());
+
+        if (creatureType == CreatureType.BLAZE)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("blaze");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_blaze blaze;
+        	
+        	if (mcEntity instanceof Mobs_blaze)
+        	{
+        		blaze = (Mobs_blaze)mcEntity;
+        		blaze.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		blaze = new Mobs_blaze(mcWorld);
+        		blaze.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(blaze, spawn_reason); 
+        	} 	     	         	     
+            
+            /*int sr = blaze.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	blaze = new Mobs_blaze(mcWorld);
+            	blaze.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	blaze.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(blaze, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.CAVE_SPIDER)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("cave_spider");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_cave_spider cave_spider;
+        	
+        	if (mcEntity instanceof Mobs_cave_spider)
+        	{
+        		cave_spider = (Mobs_cave_spider)mcEntity;
+        		cave_spider.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		cave_spider = new Mobs_cave_spider(mcWorld);
+        		cave_spider.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(cave_spider, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = cave_spider.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	cave_spider = new Mobs_cave_spider(mcWorld);
+            	cave_spider.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	cave_spider.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(cave_spider, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.CHICKEN)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("chicken");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_chicken chicken;
+        	
+        	if (mcEntity instanceof Mobs_chicken)
+        	{
+        		chicken = (Mobs_chicken)mcEntity;
+        		chicken.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		chicken = new Mobs_chicken(mcWorld);
+        		chicken.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(chicken, spawn_reason); 
+        	} 	     	         	     
+            
+            /*int sr = chicken.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	chicken = new Mobs_chicken(mcWorld);
+            	chicken.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	chicken.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(chicken, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.COW)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("cow");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_cow cow;
+        	
+        	if (mcEntity instanceof Mobs_cow)
+        	{
+        		cow = (Mobs_cow)mcEntity;
+        		cow.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		//entity.remove();
+        		cow = new Mobs_cow(mcWorld);
+        		cow.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(cow, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = cow.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	cow = new Mobs_cow(mcWorld);
+            	cow.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	cow.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(cow, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.CREEPER)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("creeper");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_creeper creeper;
+        	
+        	if (mcEntity instanceof Mobs_creeper)
+        	{
+        		creeper = (Mobs_creeper)mcEntity;
+        		creeper.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		creeper = new Mobs_creeper(mcWorld);
+        		creeper.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(creeper, spawn_reason); 
+        	} 	     	         	     
+            
+            /*int sr = creeper.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	creeper = new Mobs_creeper(mcWorld);
+            	creeper.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	creeper.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(creeper, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.ENDER_DRAGON)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("ender_dragon");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_ender_dragon ender_dragon;
+        	
+        	if (mcEntity instanceof Mobs_ender_dragon)
+        	{
+        		ender_dragon = (Mobs_ender_dragon)mcEntity;
+        		ender_dragon.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		ender_dragon = new Mobs_ender_dragon(mcWorld);
+        		ender_dragon.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(ender_dragon, spawn_reason); 
+        	} 	     	         	     
+            
+            /*int sr = ender_dragon.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	ender_dragon = new Mobs_ender_dragon(mcWorld);
+            	ender_dragon.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	ender_dragon.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(ender_dragon, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.ENDERMAN)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("enderman");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_enderman enderman;
+        	
+        	if (mcEntity instanceof Mobs_enderman)
+        	{
+        		enderman = (Mobs_enderman)mcEntity;
+        		enderman.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		enderman = new Mobs_enderman(mcWorld);
+        		enderman.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(enderman, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = enderman.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	enderman = new Mobs_enderman(mcWorld);
+            	enderman.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	enderman.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(enderman, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.GHAST)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("ghast");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_ghast ghast;
+        	
+        	if (mcEntity instanceof Mobs_ghast)
+        	{
+        		ghast = (Mobs_ghast)mcEntity;
+        		ghast.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		ghast = new Mobs_ghast(mcWorld);
+        		ghast.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(ghast, spawn_reason); 
+        	} 	     	         	     
+            
+          /*  int sr = ghast.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	ghast = new Mobs_ghast(mcWorld);
+            	ghast.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	ghast.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(ghast, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.GIANT)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("giant");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_giant giant;
+        	
+        	if (mcEntity instanceof Mobs_giant)
+        	{
+        		giant = (Mobs_giant)mcEntity;
+        		giant.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		giant = new Mobs_giant(mcWorld);
+        		giant.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(giant, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = giant.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	giant = new Mobs_giant(mcWorld);
+            	giant.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	giant.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(giant, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.MAGMA_CUBE)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("magma_cube");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_magma_cube magma_cube;
+        	
+        	if (mcEntity instanceof Mobs_magma_cube)
+        	{
+        		magma_cube = (Mobs_magma_cube)mcEntity;
+        		magma_cube.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		magma_cube = new Mobs_magma_cube(mcWorld);
+        		magma_cube.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(magma_cube, spawn_reason); 
+        	} 	     	         	     
+            
+        	/*int sr = magma_cube.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	magma_cube = new Mobs_magma_cube(mcWorld);
+            	magma_cube.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	magma_cube.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(magma_cube, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.MUSHROOM_COW)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("mushroom_cow");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_mushroom_cow mushroom_cow;
+        	
+        	if (mcEntity instanceof Mobs_mushroom_cow)
+        	{
+        		mushroom_cow = (Mobs_mushroom_cow)mcEntity;
+        		mushroom_cow.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		mushroom_cow = new Mobs_mushroom_cow(mcWorld);
+        		mushroom_cow.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(mushroom_cow, spawn_reason); 
+        	} 	     	         	     
+            
+        	/*int sr = mushroom_cow.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	mushroom_cow = new Mobs_mushroom_cow(mcWorld);
+            	mushroom_cow.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	mushroom_cow.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(mushroom_cow, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.PIG)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("pig");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_pig pig = null;
+        	
+        	if (mcEntity instanceof Mobs_pig)
+        	{
+        		pig = (Mobs_pig)mcEntity;
+        		pig.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		pig = new Mobs_pig(mcWorld);
+            	pig.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(pig, spawn_reason);
+        	}  	         	                
+        	
+        	/*if (allow)
+        	{
+        		allow = false;
+        		int sr = pig.spawn_rate;
+        		for (int i = 0; i < sr; i++)
+        		{
+        			pig = new Mobs_pig(mcWorld);
+        			pig.setup(ms, unique, spawn_reason.name());
+        			Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z + rng.nextInt(16)));
+        			pig.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+        			mcWorld.addEntity(pig, spawn_reason);
+        		}
+        		allow = true;
+        	}*/
+            unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.PIG_ZOMBIE)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("pig_zombie");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_pig_zombie pig_zombie;
+        	
+        	if (mcEntity instanceof Mobs_pig_zombie)
+        	{
+        		pig_zombie = (Mobs_pig_zombie)mcEntity;
+        		pig_zombie.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		pig_zombie = new Mobs_pig_zombie(mcWorld);
+        		pig_zombie.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(pig_zombie, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = pig_zombie.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	pig_zombie = new Mobs_pig_zombie(mcWorld);
+            	pig_zombie.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	pig_zombie.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(pig_zombie, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SHEEP)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("sheep");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_sheep sheep;
+        	
+        	if (mcEntity instanceof Mobs_sheep)
+        	{
+        		sheep = (Mobs_sheep)mcEntity;
+        		sheep.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		sheep = new Mobs_sheep(mcWorld);
+        		sheep.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(sheep, spawn_reason);
+        		//sheep.addEffect(new MobEffect("potion.moveSpeed", -1, 4));
+        	} 	     	         	     
+            
+          /*  int sr = sheep.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	sheep = new Mobs_sheep(mcWorld);
+            	sheep.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	sheep.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(sheep, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SILVERFISH)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("silverfish");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_silverfish silverfish;
+        	
+        	if (mcEntity instanceof Mobs_silverfish)
+        	{
+        		silverfish = (Mobs_silverfish)mcEntity;
+        		silverfish.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		silverfish = new Mobs_silverfish(mcWorld);
+        		silverfish.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(silverfish, spawn_reason); 
+        	} 	     	         	     
+            
+            /*int sr = silverfish.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	silverfish = new Mobs_silverfish(mcWorld);
+            	silverfish.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	silverfish.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(silverfish, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SKELETON)
+        {        	
+        	MemorySection ms = (MemorySection) plugin.config.get("skeleton");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_skeleton skeleton;
+        	
+        	if (mcEntity instanceof Mobs_skeleton)
+        	{
+        		skeleton = (Mobs_skeleton)mcEntity;
+        		skeleton.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		skeleton = new Mobs_skeleton(mcWorld);
+        		skeleton.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(skeleton, spawn_reason); 
+        	} 	     	         	     
+            
+          /*  int sr = skeleton.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	skeleton = new Mobs_skeleton(mcWorld);
+            	skeleton.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	skeleton.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(skeleton, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SLIME)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("slime");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_slime slime;
+        	
+        	if (mcEntity instanceof Mobs_slime)
+        	{
+        		slime = (Mobs_slime)mcEntity;
+        		slime.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		slime = new Mobs_slime(mcWorld);
+        		slime.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(slime, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = slime.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	slime = new Mobs_slime(mcWorld);
+            	slime.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	slime.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(slime, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SNOWMAN)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("snowman");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_snowman snowman;
+        	
+        	if (mcEntity instanceof Mobs_snowman)
+        	{
+        		snowman = (Mobs_snowman)mcEntity;
+        		snowman.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		snowman = new Mobs_snowman(mcWorld);
+        		snowman.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(snowman, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = snowman.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	snowman = new Mobs_snowman(mcWorld);
+            	snowman.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	snowman.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(snowman, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SPIDER)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("spider");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_spider spider;
+        	
+        	if (mcEntity instanceof Mobs_spider)
+        	{
+        		spider = (Mobs_spider)mcEntity;
+        		spider.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		spider = new Mobs_spider(mcWorld);
+        		spider.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(spider, spawn_reason); 
+        	} 	     	         	     
+            
+        	/*int sr = spider.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	spider = new Mobs_spider(mcWorld);
+            	spider.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	spider.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(spider, spawn_reason);
+            }  */
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.SQUID)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("squid");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_squid squid;
+        	
+        	if (mcEntity instanceof Mobs_squid)
+        	{
+        		squid = (Mobs_squid)mcEntity;
+        		squid.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		squid = new Mobs_squid(mcWorld);
+        		squid.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(squid, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = squid.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	squid = new Mobs_squid(mcWorld);
+            	squid.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	squid.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(squid, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.VILLAGER)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("villager");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_villager villager;
+        	
+        	if (mcEntity instanceof Mobs_villager)
+        	{
+        		villager = (Mobs_villager)mcEntity;
+        		villager.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		villager = new Mobs_villager(mcWorld);
+        		villager.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(villager, spawn_reason); 
+        	} 	     	         	     
+            
+            /*int sr = villager.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	villager = new Mobs_villager(mcWorld);
+            	villager.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	villager.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(villager, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.WOLF)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("wolf");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_wolf wolf;
+        	
+        	if (mcEntity instanceof Mobs_wolf)
+        	{
+        		wolf = (Mobs_wolf)mcEntity;
+        		wolf.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		wolf = new Mobs_wolf(mcWorld);
+        		wolf.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(wolf, spawn_reason); 
+        	} 	     	         	     
+            
+          /*  int sr = wolf.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	wolf = new Mobs_wolf(mcWorld);
+            	wolf.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	wolf.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(wolf, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }
+        
+        if (creatureType == CreatureType.ZOMBIE)
+        {
+        	MemorySection ms = (MemorySection) plugin.config.get("zombie");
+        	
+        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
+        	{
+        		event.setCancelled(true);
+        		return;
+        	}
+        	
+        	Mobs_zombie zombie;
+        	
+        	if (mcEntity instanceof Mobs_zombie)
+        	{
+        		zombie = (Mobs_zombie)mcEntity;
+        		zombie.setup(ms, unique, spawn_reason.name());
+        	}
+        	else
+        	{
+        		if (!tracked_mobs.contains(entity.toString())) return;
+        		event.setCancelled(true);
+        		zombie = new Mobs_zombie(mcWorld);
+        		zombie.setPosition(location.getX(), location.getY(), location.getZ());
+        		mcWorld.addEntity(zombie, spawn_reason); 
+        	} 	     	         	     
+            
+           /* int sr = zombie.spawn_rate;
+            for (int i = 0; i < sr; i++)
+            {
+            	zombie = new Mobs_zombie(mcWorld);
+            	zombie.setup(ms, unique, spawn_reason.name());
+            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
+            	zombie.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
+            	
+            	mcWorld.addEntity(zombie, spawn_reason);
+            }*/
+        	unique = null;
+            return;
+        }       
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -300,14 +1206,14 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDeath(EntityDeathEvent event)
 	{		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		LivingEntity le = (LivingEntity)entity;
 		Player p = le.getKiller();
@@ -463,7 +1369,7 @@ public class Mobs_listener implements Listener
 				{
 					if (da.exp != null)
 					{
-						int exp = Utils.get_quantity(da.exp);
+						int exp = Utils.get_quantity(da.exp);						
 						if (!da.replace_exp) exp += event.getDroppedExp();
 						event.setDroppedExp(exp);
 					}
@@ -522,7 +1428,7 @@ public class Mobs_listener implements Listener
 		}
 	}
 	
-	boolean matches_condition(ArrayList<Condition_group> conditions, LivingEntity le, String spawn_reason, Player player)
+	static boolean matches_condition(ArrayList<Condition_group> conditions, LivingEntity le, String spawn_reason, Player player)
 	{
 		if (conditions == null || conditions.size() == 0) return true;
 		
@@ -539,7 +1445,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());	
 		
@@ -549,7 +1455,7 @@ public class Mobs_listener implements Listener
 			boolean burn = skeleton.burn;
 			if (skeleton.burn_rules != null)
 			{
-				if (matches_condition(skeleton.burn_rules, (LivingEntity)event.getEntity(), "", null)) burn = !burn;
+				if (matches_condition(skeleton.burn_rules, (LivingEntity)event.getEntity(), skeleton.spawn_reason, null)) burn = !burn;
 			}
 			if (!burn)
 			{
@@ -564,7 +1470,7 @@ public class Mobs_listener implements Listener
 			boolean burn = zombie.burn;
 			if (zombie.burn_rules != null)
 			{
-				if (matches_condition(zombie.burn_rules, (LivingEntity)event.getEntity(), "", null)) burn = !burn;
+				if (matches_condition(zombie.burn_rules, (LivingEntity)event.getEntity(), zombie.spawn_reason, null)) burn = !burn;
 			}
 			if (!burn)
 			{
@@ -612,924 +1518,6 @@ public class Mobs_listener implements Listener
 		return def;
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onCreatureSpawn(CreatureSpawnEvent event)
-	{		
-		if (event.isCancelled())
-		{
-			if (overrule_spawn) event.setCancelled(false); else return;
-		}
-		
-		Entity entity = event.getEntity();
-		
-        Location location = event.getLocation();        
-        CreatureType creatureType = event.getCreatureType();
-        SpawnReason spawn_reason = event.getSpawnReason();
-        int x = location.getChunk().getX();
-        int z = location.getChunk().getZ();
-        
-        net.minecraft.server.World mcWorld = ((CraftWorld) location.getWorld()).getHandle();
-        net.minecraft.server.Entity mcEntity = (((CraftEntity) entity).getHandle());
-
-        if (creatureType == CreatureType.BLAZE)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("blaze");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_blaze blaze;
-        	
-        	if (mcEntity instanceof Mobs_blaze)
-        	{
-        		blaze = (Mobs_blaze)mcEntity;
-        		blaze.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		blaze = new Mobs_blaze(mcWorld);
-        		blaze.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(blaze, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = blaze.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	blaze = new Mobs_blaze(mcWorld);
-            	blaze.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	blaze.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(blaze, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.CAVE_SPIDER)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("cave_spider");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_cave_spider cave_spider;
-        	
-        	if (mcEntity instanceof Mobs_cave_spider)
-        	{
-        		cave_spider = (Mobs_cave_spider)mcEntity;
-        		cave_spider.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		cave_spider = new Mobs_cave_spider(mcWorld);
-        		cave_spider.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(cave_spider, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = cave_spider.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	cave_spider = new Mobs_cave_spider(mcWorld);
-            	cave_spider.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	cave_spider.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(cave_spider, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.CHICKEN)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("chicken");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_chicken chicken;
-        	
-        	if (mcEntity instanceof Mobs_chicken)
-        	{
-        		chicken = (Mobs_chicken)mcEntity;
-        		chicken.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		chicken = new Mobs_chicken(mcWorld);
-        		chicken.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(chicken, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = chicken.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	chicken = new Mobs_chicken(mcWorld);
-            	chicken.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	chicken.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(chicken, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.COW)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("cow");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_cow cow;
-        	
-        	if (mcEntity instanceof Mobs_cow)
-        	{
-        		cow = (Mobs_cow)mcEntity;
-        		cow.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		//entity.remove();
-        		cow = new Mobs_cow(mcWorld);
-        		cow.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(cow, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = cow.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	cow = new Mobs_cow(mcWorld);
-            	cow.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	cow.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(cow, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.CREEPER)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("creeper");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_creeper creeper;
-        	
-        	if (mcEntity instanceof Mobs_creeper)
-        	{
-        		creeper = (Mobs_creeper)mcEntity;
-        		creeper.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		creeper = new Mobs_creeper(mcWorld);
-        		creeper.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(creeper, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = creeper.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	creeper = new Mobs_creeper(mcWorld);
-            	creeper.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	creeper.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(creeper, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.ENDER_DRAGON)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("ender_dragon");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_ender_dragon ender_dragon;
-        	
-        	if (mcEntity instanceof Mobs_ender_dragon)
-        	{
-        		ender_dragon = (Mobs_ender_dragon)mcEntity;
-        		ender_dragon.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		ender_dragon = new Mobs_ender_dragon(mcWorld);
-        		ender_dragon.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(ender_dragon, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = ender_dragon.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	ender_dragon = new Mobs_ender_dragon(mcWorld);
-            	ender_dragon.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	ender_dragon.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(ender_dragon, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.ENDERMAN)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("enderman");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_enderman enderman;
-        	
-        	if (mcEntity instanceof Mobs_enderman)
-        	{
-        		enderman = (Mobs_enderman)mcEntity;
-        		enderman.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		enderman = new Mobs_enderman(mcWorld);
-        		enderman.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(enderman, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = enderman.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	enderman = new Mobs_enderman(mcWorld);
-            	enderman.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	enderman.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(enderman, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.GHAST)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("ghast");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_ghast ghast;
-        	
-        	if (mcEntity instanceof Mobs_ghast)
-        	{
-        		ghast = (Mobs_ghast)mcEntity;
-        		ghast.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		ghast = new Mobs_ghast(mcWorld);
-        		ghast.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(ghast, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = ghast.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	ghast = new Mobs_ghast(mcWorld);
-            	ghast.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	ghast.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(ghast, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.GIANT)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("giant");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_giant giant;
-        	
-        	if (mcEntity instanceof Mobs_giant)
-        	{
-        		giant = (Mobs_giant)mcEntity;
-        		giant.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		giant = new Mobs_giant(mcWorld);
-        		giant.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(giant, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = giant.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	giant = new Mobs_giant(mcWorld);
-            	giant.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	giant.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(giant, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.MAGMA_CUBE)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("magma_cube");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_magma_cube magma_cube;
-        	
-        	if (mcEntity instanceof Mobs_magma_cube)
-        	{
-        		magma_cube = (Mobs_magma_cube)mcEntity;
-        		magma_cube.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		magma_cube = new Mobs_magma_cube(mcWorld);
-        		magma_cube.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(magma_cube, spawn_reason); 
-        	} 	     	         	     
-            
-        	int sr = magma_cube.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	magma_cube = new Mobs_magma_cube(mcWorld);
-            	magma_cube.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	magma_cube.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(magma_cube, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.MUSHROOM_COW)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("mushroom_cow");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_mushroom_cow mushroom_cow;
-        	
-        	if (mcEntity instanceof Mobs_mushroom_cow)
-        	{
-        		mushroom_cow = (Mobs_mushroom_cow)mcEntity;
-        		mushroom_cow.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		mushroom_cow = new Mobs_mushroom_cow(mcWorld);
-        		mushroom_cow.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(mushroom_cow, spawn_reason); 
-        	} 	     	         	     
-            
-        	int sr = mushroom_cow.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	mushroom_cow = new Mobs_mushroom_cow(mcWorld);
-            	mushroom_cow.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	mushroom_cow.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(mushroom_cow, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.PIG)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("pig");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_pig pig;
-        	
-        	if (mcEntity instanceof Mobs_pig)
-        	{
-        		pig = (Mobs_pig)mcEntity;
-        		pig.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		pig = new Mobs_pig(mcWorld);
-            	pig.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(pig, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = pig.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	pig = new Mobs_pig(mcWorld);
-            	pig.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	pig.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(pig, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.PIG_ZOMBIE)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("pig_zombie");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_pig_zombie pig_zombie;
-        	
-        	if (mcEntity instanceof Mobs_pig_zombie)
-        	{
-        		pig_zombie = (Mobs_pig_zombie)mcEntity;
-        		pig_zombie.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		pig_zombie = new Mobs_pig_zombie(mcWorld);
-        		pig_zombie.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(pig_zombie, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = pig_zombie.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	pig_zombie = new Mobs_pig_zombie(mcWorld);
-            	pig_zombie.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	pig_zombie.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(pig_zombie, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.SHEEP)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("sheep");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_sheep sheep;
-        	
-        	if (mcEntity instanceof Mobs_sheep)
-        	{
-        		sheep = (Mobs_sheep)mcEntity;
-        		sheep.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		sheep = new Mobs_sheep(mcWorld);
-        		sheep.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(sheep, spawn_reason);
-        		//sheep.addEffect(new MobEffect("potion.moveSpeed", -1, 4));
-        	} 	     	         	     
-            
-            int sr = sheep.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	sheep = new Mobs_sheep(mcWorld);
-            	sheep.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	sheep.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(sheep, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.SILVERFISH)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("silverfish");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_silverfish silverfish;
-        	
-        	if (mcEntity instanceof Mobs_silverfish)
-        	{
-        		silverfish = (Mobs_silverfish)mcEntity;
-        		silverfish.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		silverfish = new Mobs_silverfish(mcWorld);
-        		silverfish.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(silverfish, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = silverfish.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	silverfish = new Mobs_silverfish(mcWorld);
-            	silverfish.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	silverfish.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(silverfish, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.SKELETON)
-        {        	
-        	MemorySection ms = (MemorySection) plugin.config.get("skeleton");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_skeleton skeleton;
-        	
-        	if (mcEntity instanceof Mobs_skeleton)
-        	{
-        		skeleton = (Mobs_skeleton)mcEntity;
-        		skeleton.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		skeleton = new Mobs_skeleton(mcWorld);
-        		skeleton.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(skeleton, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = skeleton.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	skeleton = new Mobs_skeleton(mcWorld);
-            	skeleton.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	skeleton.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(skeleton, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.SLIME)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("slime");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_slime slime;
-        	
-        	if (mcEntity instanceof Mobs_slime)
-        	{
-        		slime = (Mobs_slime)mcEntity;
-        		slime.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		slime = new Mobs_slime(mcWorld);
-        		slime.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(slime, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = slime.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	slime = new Mobs_slime(mcWorld);
-            	slime.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	slime.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(slime, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.SNOWMAN)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("snowman");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_snowman snowman;
-        	
-        	if (mcEntity instanceof Mobs_snowman)
-        	{
-        		snowman = (Mobs_snowman)mcEntity;
-        		snowman.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		snowman = new Mobs_snowman(mcWorld);
-        		snowman.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(snowman, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = snowman.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	snowman = new Mobs_snowman(mcWorld);
-            	snowman.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	snowman.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(snowman, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.SPIDER)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("spider");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_spider spider;
-        	
-        	if (mcEntity instanceof Mobs_spider)
-        	{
-        		spider = (Mobs_spider)mcEntity;
-        		spider.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		spider = new Mobs_spider(mcWorld);
-        		spider.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(spider, spawn_reason); 
-        	} 	     	         	     
-            
-        	int sr = spider.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	spider = new Mobs_spider(mcWorld);
-            	spider.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	spider.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(spider, spawn_reason);
-            }        
-            return;
-        }
-        
-        if (creatureType == CreatureType.SQUID)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("squid");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_squid squid;
-        	
-        	if (mcEntity instanceof Mobs_squid)
-        	{
-        		squid = (Mobs_squid)mcEntity;
-        		squid.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		squid = new Mobs_squid(mcWorld);
-        		squid.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(squid, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = squid.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	squid = new Mobs_squid(mcWorld);
-            	squid.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	squid.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(squid, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.VILLAGER)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("villager");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_villager villager;
-        	
-        	if (mcEntity instanceof Mobs_villager)
-        	{
-        		villager = (Mobs_villager)mcEntity;
-        		villager.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		villager = new Mobs_villager(mcWorld);
-        		villager.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(villager, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = villager.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	villager = new Mobs_villager(mcWorld);
-            	villager.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	villager.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(villager, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.WOLF)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("wolf");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_wolf wolf;
-        	
-        	if (mcEntity instanceof Mobs_wolf)
-        	{
-        		wolf = (Mobs_wolf)mcEntity;
-        		wolf.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		wolf = new Mobs_wolf(mcWorld);
-        		wolf.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(wolf, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = wolf.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	wolf = new Mobs_wolf(mcWorld);
-            	wolf.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	wolf.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(wolf, spawn_reason);
-            }
-            return;
-        }
-        
-        if (creatureType == CreatureType.ZOMBIE)
-        {
-        	MemorySection ms = (MemorySection) plugin.config.get("zombie");
-        	
-        	if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null))
-        	{
-        		event.setCancelled(true);
-        		return;
-        	}
-        	
-        	Mobs_zombie zombie;
-        	
-        	if (mcEntity instanceof Mobs_zombie)
-        	{
-        		zombie = (Mobs_zombie)mcEntity;
-        		zombie.setup(ms, unique, spawn_reason.name());
-        	}
-        	else
-        	{
-        		if (skipped_mobs.contains(entity.toString())) return;
-        		event.setCancelled(true);
-        		zombie = new Mobs_zombie(mcWorld);
-        		zombie.setPosition(location.getX(), location.getY(), location.getZ());
-        		mcWorld.addEntity(zombie, spawn_reason); 
-        	} 	     	         	     
-            
-            int sr = zombie.spawn_rate;
-            for (int i = 0; i < sr; i++)
-            {
-            	zombie = new Mobs_zombie(mcWorld);
-            	zombie.setup(ms, unique, spawn_reason.name());
-            	Location loc = Utils.get_safe_block(entity.getWorld().getBlockAt(x + rng.nextInt(16), (int) location.getY(), z+ rng.nextInt(16)));
-            	zombie.setPosition(loc.getX(), loc.getY(), loc.getZ()); 
-            	
-            	mcWorld.addEntity(zombie, spawn_reason);
-            }
-            return;
-        }
-	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTarget(EntityTargetEvent event)
@@ -1540,7 +1528,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		
@@ -1659,7 +1647,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1696,7 +1684,7 @@ public class Mobs_listener implements Listener
 			if (overrule_explode) event.setCancelled(false); else return;
 		}
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1726,7 +1714,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1746,7 +1734,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1766,7 +1754,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1795,14 +1783,14 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
         if (mcEntity instanceof Mobs_sheep)
         {
         	Mobs_sheep sheep = (Mobs_sheep)mcEntity;
-        	if (sheep.always_sheared) event.setCancelled(true); else sheep.setColor(sheep.colour);
+        	if (sheep.always_sheared) event.setCancelled(true);// else sheep.setColor(sheep.colour);
         }
 	}
 	
@@ -1815,7 +1803,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1835,7 +1823,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1863,7 +1851,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		
@@ -1884,7 +1872,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1909,7 +1897,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1929,7 +1917,7 @@ public class Mobs_listener implements Listener
 		}
 		
 		Entity entity = event.getEntity();
-		if (skipped_mobs.contains(entity.toString())) return;
+		if (!tracked_mobs.contains(entity.toString())) return;
 		
 		net.minecraft.server.Entity mcEntity = (((CraftEntity)entity).getHandle());
 		  
@@ -1943,41 +1931,20 @@ public class Mobs_listener implements Listener
 	@EventHandler
 	public void onChunkLoad(ChunkLoadEvent event)
 	{
+		allow = false;
 		for (Entity e :event.getChunk().getEntities())
-		if (e instanceof LivingEntity && !skipped_mobs.contains(e.toString()) && !(e instanceof Player))
+		if (e instanceof LivingEntity && tracked_mobs.contains(e.toString()) && !(e instanceof Player))
 		{
 			replace_mob(e, event.getWorld());
 		}
+		allow = false;
 	}
-
 	
 	void replace_mob(Entity ee, World world)
-	{
-		
+	{		
 		Location loc = ee.getLocation();
 		ee.remove();
-		if (ee instanceof Blaze) world.spawnCreature(loc, CreatureType.BLAZE);
-		if (ee instanceof CaveSpider) world.spawnCreature(loc, CreatureType.CAVE_SPIDER);
-		if (ee instanceof Chicken) world.spawnCreature(loc, CreatureType.CHICKEN);
-		if (ee instanceof Cow) world.spawnCreature(loc, CreatureType.COW);
-		if (ee instanceof Creeper) world.spawnCreature(loc, CreatureType.CREEPER);
-		if (ee instanceof EnderDragon) world.spawnCreature(loc, CreatureType.ENDER_DRAGON);
-		if (ee instanceof Enderman) world.spawnCreature(loc, CreatureType.ENDERMAN);
-		if (ee instanceof Ghast) world.spawnCreature(loc, CreatureType.GHAST);
-		if (ee instanceof Giant) world.spawnCreature(loc, CreatureType.GIANT);
-		if (ee instanceof MagmaCube) world.spawnCreature(loc, CreatureType.MAGMA_CUBE);
-		if (ee instanceof MushroomCow) world.spawnCreature(loc, CreatureType.MUSHROOM_COW);
-		if (ee instanceof Pig) world.spawnCreature(loc, CreatureType.PIG);
-		if (ee instanceof PigZombie) world.spawnCreature(loc, CreatureType.PIG_ZOMBIE);
-		if (ee instanceof Sheep) world.spawnCreature(loc, CreatureType.SHEEP);
-		if (ee instanceof Silverfish) world.spawnCreature(loc, CreatureType.SILVERFISH);
-		if (ee instanceof Skeleton) world.spawnCreature(loc, CreatureType.SKELETON);
-		if (ee instanceof Slime) world.spawnCreature(loc, CreatureType.SLIME);
-		if (ee instanceof Snowman) world.spawnCreature(loc, CreatureType.SNOWMAN);
-		if (ee instanceof Spider) world.spawnCreature(loc, CreatureType.SPIDER);
-		if (ee instanceof Squid) world.spawnCreature(loc, CreatureType.SQUID);
-		if (ee instanceof Villager) world.spawnCreature(loc, CreatureType.VILLAGER);
-		if (ee instanceof Wolf) world.spawnCreature(loc, CreatureType.WOLF);
-		if (ee instanceof Zombie) world.spawnCreature(loc, CreatureType.ZOMBIE);
+		net.minecraft.server.World mcWorld = ((CraftWorld) loc.getWorld()).getHandle();
+		mcWorld.addEntity(Utils.get_entity(ee, "", mcWorld, loc), SpawnReason.NATURAL);
 	}
 }

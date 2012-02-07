@@ -32,42 +32,21 @@ public class Mobs_slime extends net.minecraft.server.EntitySlime
     }
 	
 	@SuppressWarnings("unchecked")
-	public void setup(MemorySection ms, Map<String, Object> unique, String spawn_reason)
+	public void setup(MemorySection general, Map<String, Object> unique, String spawn_reason)
 	{
 		this.spawn_reason = spawn_reason;
 		
+		Map<String, Object> u_general = null;
+		if (unique != null && unique.containsKey("general")) u_general = (Map<String, Object>)unique.get("general");
 		int size = 1 << this.random.nextInt(3);
 		
-		if (unique != null)
-		{
-			if (unique.containsKey("general"))
-			{
-				Map<String, Object> general = (Map<String, Object>)unique.get("general");
-				if (general.containsKey("hp")) hp = Utils.get_number(general.get("hp"));
-				if (general.containsKey("spawn_rate")) spawn_rate = Utils.get_number(general.get("spawn_rate"));
-				if (general.containsKey("hp_per_size")) hp_per_size = Utils.get_number(general.get("hp_per_size"));
-				if (general.containsKey("size")) size = Utils.get_number(general.get("size"));
-				if (general.containsKey("split")) split = Utils.get_random(general.get("split"));
-			}
-			if (unique.containsKey("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		else
-		{
-			if (ms.contains("general.hp")) hp = Utils.get_number(ms.get("general.hp"));
-			if (ms.contains("general.spawn_rate")) spawn_rate = Utils.get_number(ms.get("general.spawn_rate"));	
-			if (ms.contains("general.size")) size = Utils.get_number(ms.get("general.size"));
-			if (ms.contains("general.hp_per_size")) hp_per_size = Utils.get_number(ms.get("general.hp_per_size"));
-			if (ms.contains("general.split")) split = Utils.get_random(ms.get("general.split"));
-			if (ms.contains("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : ms.getMapList("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		setSize(size);	
+		hp = Utils.set_int_property(size * size, general, u_general, "hp");
+		size = Utils.set_int_property(size, general, u_general, "size");
+		hp_per_size = Utils.set_int_property(size, general, u_general, "hp_per_size");
+		split = Utils.set_boolean_property(true, general, u_general, "split");
+		spawn_rate= Utils.set_int_property(0, general, u_general, "spawn_rate");
+		death_actions = Utils.set_death_actions(general, unique);
+		health = hp;			
+		setSize(size);
 	}
 }

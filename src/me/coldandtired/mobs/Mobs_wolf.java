@@ -29,46 +29,22 @@ public class Mobs_wolf extends net.minecraft.server.EntityWolf
     }
 	
 	@SuppressWarnings("unchecked")
-	public void setup(MemorySection ms, Map<String, Object> unique, String spawn_reason)
+	public void setup(MemorySection general, Map<String, Object> unique, String spawn_reason)
 	{
 		this.spawn_reason = spawn_reason;
 		
-		if (unique != null)
-		{
-			if (unique.containsKey("general"))
-			{
-				Map<String, Object> general = (Map<String, Object>)unique.get("general");
-				if (general.containsKey("hp")) hp = Utils.get_number(general.get("hp")); 
-				if (general.containsKey("spawn_rate")) spawn_rate = Utils.get_number(general.get("spawn_rate"));
-				if (general.containsKey("tamed_hp")) tamed_hp = Utils.get_number(general.get("tamed_hp")); 
-				if (general.containsKey("safe")) safe = Utils.get_random(general.get("safe"));
-				if (general.containsKey("adult")) if (!Utils.get_random(general.get("adult"))) setAge(-24000);
-				if (general.containsKey("tamed")) if (Utils.get_random(general.get("tamed"))) setTamed(true);
-				if (general.containsKey("angry")) if (Utils.get_random(general.get("angry"))) setAngry(true);
-				if (general.containsKey("can_be_tamed")) can_be_tamed = Utils.get_random(general.get("can_be_tamed"));
-			}
-			if (unique.containsKey("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		else
-		{
-			if (ms.contains("general.hp")) hp = Utils.get_number(ms.get("general.hp"));
-			if (ms.contains("general.spawn_rate")) spawn_rate = Utils.get_number(ms.get("general.spawn_rate"));	
-			if (ms.contains("general.tamed_hp")) tamed_hp = Utils.get_number(ms.get("general.tamed_hp"));
-			if (ms.contains("general.adult")) if (!Utils.get_random(ms.get("general.adult"))) setAge(-24000);
-			if (ms.contains("general.safe")) safe = Utils.get_random(ms.get("general.safe"));
-			if (ms.contains("general.tamed")) setTamed(Utils.get_random(ms.get("general.tamed", false)));
-			if (ms.contains("general.angry")) setAngry(Utils.get_random(ms.get("general.angry", false)));
-			if (ms.contains("general.can_be_tamed")) can_be_tamed = Utils.get_random(ms.get("general.can_be_tamed", true));
-			if (ms.contains("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : ms.getMapList("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
+		Map<String, Object> u_general = null;
+		if (unique != null && unique.containsKey("general")) u_general = (Map<String, Object>)unique.get("general");
+
+		hp = Utils.set_int_property(8, general, u_general, "hp");
+		tamed_hp = Utils.set_int_property(20, general, u_general, "tamed_hp");
+		safe = Utils.set_boolean_property(false, general, u_general, "safe");
+		can_be_tamed = Utils.set_boolean_property(true, general, u_general, "can_be_tamed");
+		spawn_rate= Utils.set_int_property(0, general, u_general, "spawn_rate");
+		if (Utils.set_boolean_property(false, general, u_general, "adult")) setAge(-24000);
+		setTamed(Utils.set_boolean_property(false, general, u_general, "tamed"));
+		setAngry(Utils.set_boolean_property(false, general, u_general, "angry"));
+		death_actions = Utils.set_death_actions(general, unique);
 		health = hp;
 		if (!can_be_tamed) setTamed(false);
 	}

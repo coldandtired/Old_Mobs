@@ -6,11 +6,11 @@ import java.util.Map;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.entity.CreatureType;
 
 public class Auto_spawn 
 {
-	CreatureType mob;
+	//CreatureType mob;
+	String name;
 	ArrayList<Integer> quantities;
 	ArrayList<Loc> locations = new ArrayList<Loc>();
 	Map<String, Object> source;
@@ -22,8 +22,9 @@ public class Auto_spawn
 	{//zombie chicken skin no burn 
 		m = (Map<String, Object>) m.get("spawn_event");
 		source = m;
+		this.name = name;
+		//mob = CreatureType.valueOf(name);
 		
-		mob = CreatureType.valueOf(name);
 		if (m.containsKey("quantities")) quantities = Utils.fill_int_array(m.get("quantities"));
 		if (m.containsKey("manual")) manual = (Boolean)m.get("manual");
 		if (m.containsKey("where_to_spawn"))

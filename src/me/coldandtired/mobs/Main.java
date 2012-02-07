@@ -26,7 +26,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 public class Main extends JavaPlugin
 {
-	Mobs_listener listener;
+	General_listener general_listener;
 	public static WorldGuardPlugin world_guard = null;
 	public static Economy economy = null;
 	Mob_spawner spawner;
@@ -34,7 +34,7 @@ public class Main extends JavaPlugin
 	
 	public void onDisable() 
 	{
-		listener = null;	
+		general_listener = null;
 		world_guard = null;
 		economy = null;
 		config = null;
@@ -67,8 +67,8 @@ public class Main extends JavaPlugin
 		Utils.setup_utils();
 		world_guard = get_world_guard();
 		if (getServer().getPluginManager().getPlugin("Vault") != null) setup_economy();
-		listener = new Mobs_listener(this);
-        Bukkit.getServer().getPluginManager().registerEvents(this.listener, this);        
+		general_listener = new General_listener(this);
+        Bukkit.getServer().getPluginManager().registerEvents(this.general_listener, this); 
         
 		try
 		{
@@ -109,17 +109,18 @@ public class Main extends JavaPlugin
             e.printStackTrace();
             this.setEnabled(false);
         }	
-		
+		general_listener.allow = false;
 		for (World world : Bukkit.getWorlds())
 		{
 			for (Entity ee: world.getEntities()) 
 			{
-				if (ee instanceof LivingEntity && !listener.skipped_mobs.contains(ee.toString()) && !(ee instanceof Player))
+				if (ee instanceof LivingEntity && general_listener.tracked_mobs.contains(ee.toString()) && !(ee instanceof Player))
 				{
-					listener.replace_mob(ee, world);
+					general_listener.replace_mob(ee, world);
 				}
 			}
 		}
+		general_listener.allow = true;
 	}
 
 	void setup_config()

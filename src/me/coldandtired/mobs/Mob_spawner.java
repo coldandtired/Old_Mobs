@@ -3,7 +3,9 @@ package me.coldandtired.mobs;
 import java.util.ArrayList;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 public class Mob_spawner implements Runnable
 {
@@ -28,28 +30,40 @@ public class Mob_spawner implements Runnable
 					loc = l.get_location();
 					if (loc.getY() > loc.getWorld().getMaxHeight()) loc.setY(loc.getWorld().getMaxHeight() - 2);
 					if (!loc.getChunk().isLoaded()) return;
-				
-					plugin.listener.unique = a.source;
-					loc.getWorld().spawnCreature(loc, a.mob);
-				}
+					if (loc != null)
+					{
+						plugin.general_listener.unique = a.source;
+						net.minecraft.server.World world = ((CraftWorld) loc.getWorld()).getHandle();
+						world.addEntity(Utils.get_entity(null, a.name, world, loc), SpawnReason.CUSTOM);
+					}
+				}				
 				else
 				{
 					if (l.players.contains("all_players")) 
 					{
 						for (Player p : l.world.getPlayers())
-						{
-							plugin.listener.unique = a.source;
+						{							
 							loc = l.get_player_location(p.getName());
-							if (loc != null) l.world.spawnCreature(loc, a.mob);
+							if (loc != null)
+							{
+								plugin.general_listener.unique = a.source;
+								net.minecraft.server.World world = ((CraftWorld) loc.getWorld()).getHandle();
+								world.addEntity(Utils.get_entity(null, a.name, world, loc), SpawnReason.CUSTOM);
+							}
 						}
 					}
 					else
 					{
 						for (String s : l.players)
 						{
-							plugin.listener.unique = a.source;
+							plugin.general_listener.unique = a.source;
 							loc = l.get_player_location(s);
-							if (loc != null) l.world.spawnCreature(loc, a.mob);
+							if (loc != null)
+							{
+								plugin.general_listener.unique = a.source;
+								net.minecraft.server.World world = ((CraftWorld) loc.getWorld()).getHandle();
+								world.addEntity(Utils.get_entity(null, a.name, world, loc), SpawnReason.CUSTOM);
+							}
 						}
 					}
 				}

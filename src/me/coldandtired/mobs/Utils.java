@@ -6,11 +6,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import net.minecraft.server.Entity;
+import net.minecraft.server.World;
+
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.configuration.MemorySection;
+import org.bukkit.entity.Blaze;
+import org.bukkit.entity.CaveSpider;
+import org.bukkit.entity.Chicken;
+import org.bukkit.entity.Cow;
+import org.bukkit.entity.Creeper;
+import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.Enderman;
+import org.bukkit.entity.Ghast;
+import org.bukkit.entity.Giant;
+import org.bukkit.entity.MagmaCube;
+import org.bukkit.entity.MushroomCow;
+import org.bukkit.entity.Pig;
+import org.bukkit.entity.PigZombie;
+import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Silverfish;
+import org.bukkit.entity.Skeleton;
+import org.bukkit.entity.Slime;
+import org.bukkit.entity.Snowman;
+import org.bukkit.entity.Spider;
+import org.bukkit.entity.Squid;
+import org.bukkit.entity.Villager;
+import org.bukkit.entity.Wolf;
+import org.bukkit.entity.Zombie;
 
 public class Utils 
 {
@@ -92,7 +119,7 @@ public class Utils
 	
 	@SuppressWarnings("unchecked")
 	static byte get_wool_colour(Object o)
-	{
+	{		
 		if (o == null) return DyeColor.WHITE.getData();
 		
 		ArrayList<String> colours = new ArrayList<String>();
@@ -153,5 +180,108 @@ public class Utils
 			}
 		}
 		return temp;
+	}
+	
+	static int set_int_property(int def, MemorySection general, Map<String, Object> unique, String node)
+	{
+		if (unique != null && unique.containsKey(node)) return Utils.get_number(unique.get(node));
+		else if (general != null && general.contains("general." + node)) return Utils.get_number(general.get("general." + node));
+		else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static boolean set_burn_property(boolean def, MemorySection general, Map<String, Object> unique)
+	{
+		if (unique != null && unique.containsKey("burn_rules"))
+		{
+			unique = (Map<String, Object>)unique.get("burn_rules");
+			return Utils.get_random(unique.get("burn"));
+		}
+		else if (general != null && general.contains("burn_rules.burn")) return Utils.get_random(general.get("burn_rules.burn"));
+		else return def;
+	}
+	
+	static boolean set_boolean_property(boolean def, MemorySection general, Map<String, Object> unique, String node)
+	{
+		if (unique != null && unique.containsKey(node)) return Utils.get_random(unique.get(node));
+		else if (general != null && general.contains("general." + node)) return Utils.get_random(general.get("general." + node));
+		else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static ArrayList<Death_action> set_death_actions(MemorySection general, Map<String, Object> unique)
+	{
+		if (unique != null && unique.containsKey("death_rules"))
+		{
+			ArrayList<Death_action> da = new ArrayList<Death_action>();
+			for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) da.add(new Death_action(o));
+			return da;
+		}
+		else if (general != null && general.contains("death_rules"))
+		{
+			ArrayList<Death_action> da = new ArrayList<Death_action>();
+			for (Map<String, Object> o : general.getMapList("death_rules")) da.add(new Death_action(o));
+			return da;
+		}
+		else return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static ArrayList<Condition_group> set_burn_rules(MemorySection general, Map<String, Object> unique)
+	{
+		ArrayList<Object> conds = null;
+		
+		if (unique != null && unique.containsKey("burn_rules"))
+		{
+			unique = (Map<String, Object>)unique.get("burn_rules");
+			conds = (ArrayList<Object>)unique.get("unless");
+		}
+		else if (general != null && general.contains("burn_rules")) conds = (ArrayList<Object>)general.get("burn_rules.unless");
+			
+		if (conds != null && conds.size() > 0)
+		{
+			ArrayList<Condition_group> br = new ArrayList<Condition_group>();
+			for (Object o : conds) br.add(new Condition_group(o));			
+			return br;
+		} else return null;
+	}
+	
+	static byte set_byte_property(MemorySection general, Map<String, Object> unique)
+	{
+		if (unique != null && unique.containsKey("wool_colors")) return get_wool_colour(unique.get("wool_colors"));
+		else if (general != null && general.contains("wool_colors")) return get_wool_colour(general.get("wool_colors"));
+		else return DyeColor.WHITE.getData();
+	}
+	
+	static Entity get_entity(org.bukkit.entity.Entity entity, String name, World world, Location loc)
+	{
+		Entity mob = null;
+		
+		if (entity instanceof Blaze || name.equalsIgnoreCase("blaze")) mob = new Mobs_blaze(world);
+		if (entity instanceof CaveSpider || name.equalsIgnoreCase("cave_spider")) mob = new Mobs_cave_spider(world);
+		if (entity instanceof Chicken || name.equalsIgnoreCase("chicken")) mob = new Mobs_chicken(world);
+		if (entity instanceof Cow || name.equalsIgnoreCase("cow")) mob = new Mobs_cow(world);
+		if (entity instanceof Creeper || name.equalsIgnoreCase("creeper")) mob = new Mobs_creeper(world);
+		if (entity instanceof EnderDragon || name.equalsIgnoreCase("ender_dragon")) mob = new Mobs_ender_dragon(world);
+		if (entity instanceof Enderman || name.equalsIgnoreCase("enderman")) mob = new Mobs_enderman(world);
+		if (entity instanceof Ghast || name.equalsIgnoreCase("ghast")) mob = new Mobs_ghast(world);
+		if (entity instanceof Giant || name.equalsIgnoreCase("giant")) mob = new Mobs_giant(world);
+		if (entity instanceof MagmaCube || name.equalsIgnoreCase("magma_cube")) mob = new Mobs_magma_cube(world);
+		if (entity instanceof MushroomCow || name.equalsIgnoreCase("mushroom_cow")) mob = new Mobs_mushroom_cow(world);
+		if (entity instanceof Pig || name.equalsIgnoreCase("pig")) mob = new Mobs_pig(world);
+		if (entity instanceof PigZombie || name.equalsIgnoreCase("pig_zombie")) mob = new Mobs_pig_zombie(world);
+		if (entity instanceof Sheep || name.equalsIgnoreCase("sheep")) mob = new Mobs_sheep(world);
+		if (entity instanceof Silverfish || name.equalsIgnoreCase("silverfish")) mob = new Mobs_silverfish(world);
+		if (entity instanceof Skeleton || name.equalsIgnoreCase("skeleton")) mob = new Mobs_skeleton(world);
+		if (entity instanceof Slime || name.equalsIgnoreCase("slime")) mob = new Mobs_slime(world);
+		if (entity instanceof Snowman || name.equalsIgnoreCase("snowman")) mob = new Mobs_snowman(world);
+		if (entity instanceof Spider || name.equalsIgnoreCase("spider")) mob = new Mobs_spider(world);
+		if (entity instanceof Squid || name.equalsIgnoreCase("squid")) mob = new Mobs_squid(world);
+		if (entity instanceof Villager || name.equalsIgnoreCase("villager")) mob = new Mobs_villager(world);
+		if (entity instanceof Wolf || name.equalsIgnoreCase("wolf")) mob = new Mobs_wolf(world);
+		if (entity instanceof Zombie || name.equalsIgnoreCase("zombie")) mob = new Mobs_zombie(world);
+		
+		mob.setPosition(loc.getX(), loc.getY(), loc.getZ());
+		return mob;
 	}
 }

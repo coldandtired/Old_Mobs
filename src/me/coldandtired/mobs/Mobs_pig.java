@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import org.bukkit.configuration.MemorySection;
-
-import net.minecraft.server.PathfinderGoalMeleeAttack;
 import net.minecraft.server.World;
 
 public class Mobs_pig extends net.minecraft.server.EntityPig
 {
-	private int hp = 10;
+	private int hp;
 	ArrayList<Death_action> death_actions;
-	int spawn_rate = 0;
-	String spawn_reason = "";
-	boolean can_become_pig_zombie = true;
+	int spawn_rate;
+	String spawn_reason;
+	boolean can_become_pig_zombie;
+	//boolean burn = false;
+	//ArrayList<Condition_group> burn_rules;
 	
 	public Mobs_pig(World world) 
 	{
 		super(world);
-		this.goalSelector.a(2, new PathfinderGoalMeleeAttack(this, world, 16.0F));
+		//this.goalSelector.a(2, new PathfinderGoalMeleeAttack(this, world, 16.0F));
 	}	
 	
 	@Override
@@ -28,41 +28,43 @@ public class Mobs_pig extends net.minecraft.server.EntityPig
         return hp;
     }
 	
+	/*@Override
+	public void d() 
+	{
+		boolean temp_burn = burn;
+		if (General_listener.matches_condition(burn_rules, (LivingEntity)((CraftEntity)this), spawn_reason, null)) temp_burn = !temp_burn;
+		
+		if (!temp_burn) return;
+		
+        if (this.world.e() && !this.world.isStatic) 
+        {
+            float f = this.a(1.0F);
+
+            if (f > 0.5F && this.world.isChunkLoaded(MathHelper.floor(this.locX), MathHelper.floor(this.locY), 
+            		MathHelper.floor(this.locZ)) && this.random.nextFloat() * 30.0F < (f - 0.4F) * 2.0F) 
+            {
+                this.setOnFire(8);
+            }
+        }
+        super.d();
+    }*/
+	
 	@SuppressWarnings("unchecked")
-	public void setup(MemorySection ms, Map<String, Object> unique, String spawn_reason)
+	public void setup(MemorySection general, Map<String, Object> unique, String spawn_reason)
 	{
 		this.spawn_reason = spawn_reason;
 
-		if (unique != null)
-		{			
-			if (unique.containsKey("general"))
-			{
-				Map<String, Object> general = (Map<String, Object>)unique.get("general");
-				if (general.containsKey("hp")) hp = Utils.get_number(general.get("hp"));
-				if (general.containsKey("spawn_rate")) spawn_rate = Utils.get_number(general.get("spawn_rate"));	
-				if (general.containsKey("saddled")) setSaddle(Utils.get_random(general.get("saddled")));
-				if (general.containsKey("adult")) if (!Utils.get_random(general.get("adult"))) setAge(-24000);
-				if (general.containsKey("can_become_pig_zombie")) can_become_pig_zombie = Utils.get_random(general.get("can_become_pig_zombie"));
-			}
-			if (unique.containsKey("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		else if (ms != null)
-		{
-			if (ms.contains("general.hp")) hp = Utils.get_number(ms.get("general.hp"));	
-			if (ms.contains("general.spawn_rate")) spawn_rate = Utils.get_number(ms.get("general.spawn_rate"));	
-			if (ms.contains("general.adult")) if (!Utils.get_random(ms.get("general.adult"))) setAge(-24000);
-			if (ms.contains("general.saddled")) setSaddle(Utils.get_random(ms.get("general.saddled", false)));
-			if (ms.contains("general.can_become_pig_zombie")) can_become_pig_zombie = Utils.get_random(ms.get("general.can_become_pig_zombie", false));
-			if (ms.contains("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : ms.getMapList("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
+		Map<String, Object> u_general = null;
+		if (unique != null && unique.containsKey("general")) u_general = (Map<String, Object>)unique.get("general");
+
+		hp = Utils.set_int_property(10, general, u_general, "hp");
+		spawn_rate= Utils.set_int_property(0, general, u_general, "spawn_rate");
+		setSaddle(Utils.set_boolean_property(false, general, u_general, "saddled"));
+		can_become_pig_zombie = Utils.set_boolean_property(true, general, u_general, "can_become_pig_zombie");
+		if (Utils.set_boolean_property(false, general, u_general, "adult")) setAge(-24000);
+		death_actions = Utils.set_death_actions(general, unique);
+		//burn_rules = Utils.set_burn_rules(general, unique);
+		//burn = Utils.set_burn_property(false, general, unique);
 		health = hp;
 	}
 }

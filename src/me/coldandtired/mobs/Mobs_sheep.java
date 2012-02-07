@@ -17,7 +17,7 @@ public class Mobs_sheep extends net.minecraft.server.EntitySheep
 	String spawn_reason = "";
 	boolean can_be_sheared = true;
 	boolean can_be_dyed = true;
-	boolean can_remove_grass;
+	boolean can_remove_grass = true;
 	
 	public Mobs_sheep(World world) 
 	{
@@ -31,48 +31,24 @@ public class Mobs_sheep extends net.minecraft.server.EntitySheep
     }
 	
 	@SuppressWarnings("unchecked")
-	public void setup(MemorySection ms, Map<String, Object> unique, String spawn_reason)
+	public void setup(MemorySection general, Map<String, Object> unique, String spawn_reason)
 	{
 		this.spawn_reason = spawn_reason;
 		
-		if (unique != null)
-		{
-			if (unique.containsKey("general"))
-			{
-				Map<String, Object> general = (Map<String, Object>)unique.get("general");
-				if (general.containsKey("hp")) hp = Utils.get_number(general.get("hp"));
-				if (general.containsKey("spawn_rate")) spawn_rate = Utils.get_number(general.get("spawn_rate"));
-				if (general.containsKey("adult")) if (!Utils.get_random(general.get("adult"))) setAge(-24000);
-				if (general.containsKey("sheared")) setSheared(Utils.get_random(general.get("sheared")));
-				if (general.containsKey("always_sheared")) always_sheared = Utils.get_random(general.get("always_sheared"));
-				if (general.containsKey("can_be_sheared")) can_be_sheared = Utils.get_random(general.get("can_be_sheared"));
-				if (general.containsKey("can_remove_grass")) can_remove_grass = Utils.get_random(general.get("can_remove_grass"));
-				if (general.containsKey("can_be_dyed")) can_be_dyed = Utils.get_random(general.get("can_be_dyed"));
-				colour = Utils.get_wool_colour(general.get("wool_colors"));
-			}
-			if (unique.containsKey("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		else
-		{
-			if (ms.contains("general.hp")) hp = Utils.get_number(ms.get("general.hp"));
-			if (ms.contains("general.spawn_rate")) spawn_rate = Utils.get_number(ms.get("general.spawn_rate"));	
-			if (ms.contains("general.adult")) if (!Utils.get_random(ms.get("general.adult"))) setAge(-24000);
-			if (ms.contains("general.sheared")) setSheared(Utils.get_random(ms.get("general.sheared", false)));
-			colour = Utils.get_wool_colour(ms.get("general.wool_colors"));
-			if (ms.contains("general.always_sheared")) always_sheared = Utils.get_random(ms.get("general.always_sheared", false));
-			if (ms.contains("general.can_be_sheared")) can_be_sheared = Utils.get_random(ms.get("general.can_be_sheared", true));
-			if (ms.contains("general.can_remove_grass")) can_remove_grass = Utils.get_random(ms.get("general.can_remove_grass", true));
-			if (ms.contains("general.can_be_dyed")) can_be_dyed = Utils.get_random(ms.get("general.can_be_dyed", true));
-			if (ms.contains("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : ms.getMapList("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
+		Map<String, Object> u_general = null;
+		if (unique != null && unique.containsKey("general")) u_general = (Map<String, Object>)unique.get("general");
+
+		hp = Utils.set_int_property(8, general, u_general, "hp");
+		if (Utils.set_boolean_property(false, general, u_general, "adult")) setAge(-24000);
+		always_sheared = Utils.set_boolean_property(false, general, u_general, "always_sheared");
+		can_be_sheared = Utils.set_boolean_property(true, general, u_general, "can_be_sheared");
+		setSheared(Utils.set_boolean_property(false, general, u_general, "sheared"));
+		can_remove_grass = Utils.set_boolean_property(true, general, u_general, "can_remove_grass");
+		can_be_dyed = Utils.set_boolean_property(true, general, u_general, "can_be_dyed");
+		spawn_rate= Utils.set_int_property(0, general, u_general, "spawn_rate");
+		death_actions = Utils.set_death_actions(general, unique);
+		colour = Utils.set_byte_property(general, unique);
+		health = hp;				
 		
 		this.setColor(colour);
 		if (!can_be_sheared) setSheared(false);

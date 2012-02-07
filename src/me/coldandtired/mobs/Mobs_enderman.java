@@ -95,42 +95,20 @@ public class Mobs_enderman extends net.minecraft.server.EntityEnderman
 	}
 	
 	@SuppressWarnings("unchecked")
-	public void setup(MemorySection ms, Map<String, Object> unique, String spawn_reason)
+	public void setup(MemorySection general, Map<String, Object> unique, String spawn_reason)
 	{
 		this.spawn_reason = spawn_reason;
 		
-		if (unique != null)
-		{
-			if (unique.containsKey("general"))
-			{
-				Map<String, Object> general = (Map<String, Object>)unique.get("general");
-				if (general.containsKey("hp")) hp = Utils.get_number(general.get("hp"));
-				if (general.containsKey("spawn_rate")) spawn_rate = Utils.get_number(general.get("spawn_rate"));
-				if (general.containsKey("damages")) damage = Utils.get_number(general.get("damages")); 
-				if (general.containsKey("safe")) safe = Utils.get_random(general.get("safe"));
-				if (general.containsKey("move_blocks")) move_blocks = Utils.get_random(general.get("move_blocks")); 
-				if (general.containsKey("can_teleport")) can_teleport = Utils.get_random(general.get("can_teleport"));
-			}
-			if (unique.containsKey("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		else
-		{
-			if (ms.contains("general.hp")) hp = Utils.get_number(ms.get("general.hp"));
-			if (ms.contains("general.spawn_rate")) spawn_rate = Utils.get_number(ms.get("general.spawn_rate"));
-			if (ms.contains("general.damages")) damage = Utils.get_number(ms.get("general.damages"));
-			if (ms.contains("general.safe")) safe = Utils.get_random(ms.get("general.safe"));
-			if (ms.contains("general.move_blocks")) move_blocks = Utils.get_random(ms.get("general.move_blocks"));
-			if (ms.contains("general.can_teleport")) can_teleport = Utils.get_random(ms.get("general.can_teleport"));
-			if (ms.contains("death_rules"))
-			{
-				death_actions = new ArrayList<Death_action>();
-				for (Map<String, Object> o : ms.getMapList("death_rules")) death_actions.add(new Death_action(o));
-			}
-		}
-		health = hp;		
+		Map<String, Object> u_general = null;
+		if (unique != null && unique.containsKey("general")) u_general = (Map<String, Object>)unique.get("general");
+
+		hp = Utils.set_int_property(40, general, u_general, "hp");
+		damage = Utils.set_int_property(7, general, u_general, "damages");
+		safe = Utils.set_boolean_property(false, general, u_general, "safe");
+		move_blocks = Utils.set_boolean_property(true, general, u_general, "move_blocks");
+		can_teleport = Utils.set_boolean_property(true, general, u_general, "can_teleport");
+		spawn_rate= Utils.set_int_property(0, general, u_general, "spawn_rate");
+		death_actions = Utils.set_death_actions(general, unique);
+		health = hp;			
 	}
 }

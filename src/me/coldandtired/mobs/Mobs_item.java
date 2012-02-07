@@ -17,6 +17,7 @@ public class Mobs_item
 	Mobs_item(Map<String, Object> item, String name)
 	{
 		this.name = name.toUpperCase().trim();
+		
 		if (item.containsKey("quantities")) quantities = Utils.fill_int_array(item.get("quantities"));
 		if (item.containsKey("match_all_enchantments")) match_all_enchantments = (Boolean)item.get("match_all_enchantments");
 		if (item.containsKey("enchantments"))
