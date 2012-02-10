@@ -1,5 +1,5 @@
 name: Mobs
-version: 1.9 b12
+version: 1.9 8 b1
 author: coldandtired
 main: me.coldandtired.mobs.Main
 description: A fully-featured mob control plugin
@@ -8,17 +8,22 @@ commands:
     reload_mobs:
         description: Reloads the config
         aliases: rm
-        permission: mobs.can_reload_mobs
         usage: "Usage: /<command>"
-    spawn_mob:
+    spawn_mobs:
         description: Manually spawn some or all of the auto_spawns
         aliases: sm
-        permission: mobs.can_spawn_mob
         usage: "Usage: /spawn_mob (shortcut)"
+    purge_mobs:
+        description: Manually purge the list of mobs held in memory
+        aliases: pm
+        usage: "Usage: /<command>"
 permissions:
     mobs.can_reload_mobs:
         description: Allows reloading the configs
         default: false
-    mobs.can_spawn_mob:
+    mobs.can_spawn_mobs:
         description: Allows manual spawning
+        default: false
+    mobs.can_purge_mobs:
+        description: Allows removing any mob older than one hour from the list held in memory
         default: false

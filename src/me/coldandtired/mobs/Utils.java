@@ -1,13 +1,12 @@
 package me.coldandtired.mobs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import net.minecraft.server.Entity;
-import net.minecraft.server.World;
+import java.util.logging.Logger;
 
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
@@ -15,38 +14,22 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.MemorySection;
-import org.bukkit.entity.Blaze;
-import org.bukkit.entity.CaveSpider;
-import org.bukkit.entity.Chicken;
-import org.bukkit.entity.Cow;
-import org.bukkit.entity.Creeper;
-import org.bukkit.entity.EnderDragon;
-import org.bukkit.entity.Enderman;
-import org.bukkit.entity.Ghast;
-import org.bukkit.entity.Giant;
-import org.bukkit.entity.MagmaCube;
-import org.bukkit.entity.MushroomCow;
-import org.bukkit.entity.Pig;
-import org.bukkit.entity.PigZombie;
-import org.bukkit.entity.Sheep;
-import org.bukkit.entity.Silverfish;
-import org.bukkit.entity.Skeleton;
-import org.bukkit.entity.Slime;
-import org.bukkit.entity.Snowman;
-import org.bukkit.entity.Spider;
-import org.bukkit.entity.Squid;
-import org.bukkit.entity.Villager;
-import org.bukkit.entity.Wolf;
-import org.bukkit.entity.Zombie;
+import org.bukkit.entity.CreatureType;
+import org.bukkit.entity.Entity;
 
 public class Utils 
 {
 	static List<Matlist> matlists;
 	static Map<String, Matlist> groups;
 	static Random rng = new Random();
+	static List<String> mobs = Arrays.asList("blaze", "cavespider", "chicken", "cow", "creeper", "enderdragon", 
+			"enderman", "ghast", "giant", "magmacube", "mushroom_cow", "pig", "pigzombie", "sheep", "silverfish", 
+			"skeleton", "slime", "snowman", "spider", "squid", "villager", "wolf", "zombie");
+	static private Logger logger;
 	
-	static void setup_utils()
-	{
+	static void setup_utils(Main plugin)
+	{			
+		logger = plugin.getLogger();
 		matlists = new ArrayList<Matlist>();
 		Matlist woods = new Matlist(17, "GENERIC_LOG,REDWOOD_LOG,BIRCH_LOG");
 		Matlist wools = new Matlist(35, "WHITE_WOOL,ORANGE_WOOL,MAGENTA_WOOL,LIGHT_BLUE_WOOL,YELLOW_WOOL,LIME_WOOL,PINK_WOOL," + 
@@ -92,9 +75,34 @@ public class Utils
 		groups.put("armor", armor);
 	}
 	
+	static String get_mob(Entity creature)
+	{
+		String mob = creature.getClass().getName();
+		int c = mob.lastIndexOf ("Craft") + 5; 
+		if (c > 0) return mob.substring(c).toLowerCase(); else return null;
+	}
+	
+	static CreatureType get_creature_type(String name)
+	{
+		CreatureType creature_type;
+		if (name.equalsIgnoreCase("cavespider")) creature_type = CreatureType.CAVE_SPIDER;
+		else if (name.equalsIgnoreCase("enderdragon")) creature_type = CreatureType.ENDER_DRAGON;
+		else if (name.equalsIgnoreCase("magmacube")) creature_type = CreatureType.MAGMA_CUBE;
+		else if (name.equalsIgnoreCase("mushroomcow")) creature_type = CreatureType.MUSHROOM_COW;
+		else if (name.equalsIgnoreCase("pigzombie")) creature_type = CreatureType.PIG_ZOMBIE;		
+		else creature_type = CreatureType.valueOf(name.toUpperCase());
+		
+		return creature_type;
+	}
+	
 	static int get_quantity(ArrayList<Integer> choices)
 	{
 		 return choices.get(rng.nextInt(choices.size()));
+	}
+	
+	static void log(Object message)
+	{
+		logger.info("" + message);
 	}
 	
 	static boolean get_random(Object o)
@@ -182,10 +190,24 @@ public class Utils
 		return temp;
 	}
 	
+	@SuppressWarnings("unchecked")
 	static int set_int_property(int def, MemorySection general, Map<String, Object> unique, String node)
 	{
+		if (unique != null && unique.containsKey("general")) unique = (Map<String, Object>) unique.get("general");
 		if (unique != null && unique.containsKey(node)) return Utils.get_number(unique.get(node));
 		else if (general != null && general.contains("general." + node)) return Utils.get_number(general.get("general." + node));
+		else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static int set_burn_ticks(int def, MemorySection general, Map<String, Object> unique)
+	{
+		if (unique != null && unique.containsKey("burn_rules"))
+		{
+			unique = (Map<String, Object>)unique.get("burn_rules");
+			return Utils.get_number(unique.get("burn_ticks"));
+		}
+		else if (general != null && general.contains("burn.burn_ticks")) return Utils.get_number(general.get("general.burn_ticks"));
 		else return def;
 	}
 	
@@ -201,33 +223,35 @@ public class Utils
 		else return def;
 	}
 	
+	@SuppressWarnings("unchecked")
 	static boolean set_boolean_property(boolean def, MemorySection general, Map<String, Object> unique, String node)
 	{
+		if (unique != null && unique.containsKey("general")) unique = (Map<String, Object>) unique.get("general");
 		if (unique != null && unique.containsKey(node)) return Utils.get_random(unique.get(node));
 		else if (general != null && general.contains("general." + node)) return Utils.get_random(general.get("general." + node));
 		else return def;
 	}
 	
 	@SuppressWarnings("unchecked")
-	static ArrayList<Death_action> set_death_actions(MemorySection general, Map<String, Object> unique)
+	static ArrayList<Death_action> set_death_actions(MemorySection general, Map<String, Object> unique, int random)
 	{
 		if (unique != null && unique.containsKey("death_rules"))
 		{
 			ArrayList<Death_action> da = new ArrayList<Death_action>();
-			for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) da.add(new Death_action(o));
+			for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) da.add(new Death_action(o, random));
 			return da;
 		}
 		else if (general != null && general.contains("death_rules"))
 		{
 			ArrayList<Death_action> da = new ArrayList<Death_action>();
-			for (Map<String, Object> o : general.getMapList("death_rules")) da.add(new Death_action(o));
+			for (Map<String, Object> o : general.getMapList("death_rules")) da.add(new Death_action(o, random));
 			return da;
 		}
 		else return null;
 	}
 	
 	@SuppressWarnings("unchecked")
-	static ArrayList<Condition_group> set_burn_rules(MemorySection general, Map<String, Object> unique)
+	static ArrayList<Condition_group> set_burn_rules(MemorySection general, Map<String, Object> unique, int random)
 	{
 		ArrayList<Object> conds = null;
 		
@@ -241,47 +265,18 @@ public class Utils
 		if (conds != null && conds.size() > 0)
 		{
 			ArrayList<Condition_group> br = new ArrayList<Condition_group>();
-			for (Object o : conds) br.add(new Condition_group(o));			
+			for (Object o : conds) br.add(new Condition_group(o, random));			
 			return br;
 		} else return null;
 	}
 	
+	@SuppressWarnings("unchecked")
 	static byte set_byte_property(MemorySection general, Map<String, Object> unique)
 	{
+		if (unique != null && unique.containsKey("general")) unique = (Map<String, Object>) unique.get("general");
 		if (unique != null && unique.containsKey("wool_colors")) return get_wool_colour(unique.get("wool_colors"));
 		else if (general != null && general.contains("wool_colors")) return get_wool_colour(general.get("wool_colors"));
 		else return DyeColor.WHITE.getData();
 	}
-	
-	static Entity get_entity(org.bukkit.entity.Entity entity, String name, World world, Location loc)
-	{
-		Entity mob = null;
-		
-		if (entity instanceof Blaze || name.equalsIgnoreCase("blaze")) mob = new Mobs_blaze(world);
-		if (entity instanceof CaveSpider || name.equalsIgnoreCase("cave_spider")) mob = new Mobs_cave_spider(world);
-		if (entity instanceof Chicken || name.equalsIgnoreCase("chicken")) mob = new Mobs_chicken(world);
-		if (entity instanceof Cow || name.equalsIgnoreCase("cow")) mob = new Mobs_cow(world);
-		if (entity instanceof Creeper || name.equalsIgnoreCase("creeper")) mob = new Mobs_creeper(world);
-		if (entity instanceof EnderDragon || name.equalsIgnoreCase("ender_dragon")) mob = new Mobs_ender_dragon(world);
-		if (entity instanceof Enderman || name.equalsIgnoreCase("enderman")) mob = new Mobs_enderman(world);
-		if (entity instanceof Ghast || name.equalsIgnoreCase("ghast")) mob = new Mobs_ghast(world);
-		if (entity instanceof Giant || name.equalsIgnoreCase("giant")) mob = new Mobs_giant(world);
-		if (entity instanceof MagmaCube || name.equalsIgnoreCase("magma_cube")) mob = new Mobs_magma_cube(world);
-		if (entity instanceof MushroomCow || name.equalsIgnoreCase("mushroom_cow")) mob = new Mobs_mushroom_cow(world);
-		if (entity instanceof Pig || name.equalsIgnoreCase("pig")) mob = new Mobs_pig(world);
-		if (entity instanceof PigZombie || name.equalsIgnoreCase("pig_zombie")) mob = new Mobs_pig_zombie(world);
-		if (entity instanceof Sheep || name.equalsIgnoreCase("sheep")) mob = new Mobs_sheep(world);
-		if (entity instanceof Silverfish || name.equalsIgnoreCase("silverfish")) mob = new Mobs_silverfish(world);
-		if (entity instanceof Skeleton || name.equalsIgnoreCase("skeleton")) mob = new Mobs_skeleton(world);
-		if (entity instanceof Slime || name.equalsIgnoreCase("slime")) mob = new Mobs_slime(world);
-		if (entity instanceof Snowman || name.equalsIgnoreCase("snowman")) mob = new Mobs_snowman(world);
-		if (entity instanceof Spider || name.equalsIgnoreCase("spider")) mob = new Mobs_spider(world);
-		if (entity instanceof Squid || name.equalsIgnoreCase("squid")) mob = new Mobs_squid(world);
-		if (entity instanceof Villager || name.equalsIgnoreCase("villager")) mob = new Mobs_villager(world);
-		if (entity instanceof Wolf || name.equalsIgnoreCase("wolf")) mob = new Mobs_wolf(world);
-		if (entity instanceof Zombie || name.equalsIgnoreCase("zombie")) mob = new Mobs_zombie(world);
-		
-		mob.setPosition(loc.getX(), loc.getY(), loc.getZ());
-		return mob;
-	}
+
 }

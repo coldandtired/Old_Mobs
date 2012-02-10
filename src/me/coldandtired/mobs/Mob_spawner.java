@@ -1,11 +1,8 @@
 package me.coldandtired.mobs;
 
 import java.util.ArrayList;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 
 public class Mob_spawner implements Runnable
 {
@@ -32,9 +29,8 @@ public class Mob_spawner implements Runnable
 					if (!loc.getChunk().isLoaded()) return;
 					if (loc != null)
 					{
-						plugin.general_listener.unique = a.source;
-						net.minecraft.server.World world = ((CraftWorld) loc.getWorld()).getHandle();
-						world.addEntity(Utils.get_entity(null, a.name, world, loc), SpawnReason.CUSTOM);
+						plugin.listener.unique = a.source;
+						loc.getWorld().spawnCreature(loc, Utils.get_creature_type(a.name));
 					}
 				}				
 				else
@@ -46,9 +42,8 @@ public class Mob_spawner implements Runnable
 							loc = l.get_player_location(p.getName());
 							if (loc != null)
 							{
-								plugin.general_listener.unique = a.source;
-								net.minecraft.server.World world = ((CraftWorld) loc.getWorld()).getHandle();
-								world.addEntity(Utils.get_entity(null, a.name, world, loc), SpawnReason.CUSTOM);
+								plugin.listener.unique = a.source;
+								loc.getWorld().spawnCreature(loc, Utils.get_creature_type(a.name));
 							}
 						}
 					}
@@ -56,13 +51,12 @@ public class Mob_spawner implements Runnable
 					{
 						for (String s : l.players)
 						{
-							plugin.general_listener.unique = a.source;
+							plugin.listener.unique = a.source;
 							loc = l.get_player_location(s);
 							if (loc != null)
 							{
-								plugin.general_listener.unique = a.source;
-								net.minecraft.server.World world = ((CraftWorld) loc.getWorld()).getHandle();
-								world.addEntity(Utils.get_entity(null, a.name, world, loc), SpawnReason.CUSTOM);
+								plugin.listener.unique = a.source;
+								loc.getWorld().spawnCreature(loc, Utils.get_creature_type(a.name));
 							}
 						}
 					}
@@ -74,7 +68,7 @@ public class Mob_spawner implements Runnable
 	public void run() 
 	{
 		int player_count = plugin.config.contains("auto_spawn_min_player_count") ? plugin.config.getInt("auto_spawn_min_player_count") : 1;
-		if (Bukkit.getServer().getOnlinePlayers().length < player_count) return;	
+		if (plugin.getServer().getOnlinePlayers().length < player_count) return;	
 		for (Auto_spawn s : spawns) 
 		{
 			if (!s.manual) spawn_mobs(s, null);

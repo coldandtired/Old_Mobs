@@ -18,8 +18,6 @@ public class Loc
 	Area base;
 	Area range;
 	World world;
-//	int limit = -1;
-//	boolean topup = false;
 	boolean all_world = false;
 	Random rng = new Random();
 	ArrayList<String> players;

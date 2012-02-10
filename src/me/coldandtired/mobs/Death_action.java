@@ -6,14 +6,14 @@ import java.util.Map;
 public class Death_action 
 {
 	ArrayList<Condition_group> conditions;
-	ArrayList<Mobs_item> items;
+	ArrayList<Item> items;
 	ArrayList<Integer> exp;
 	ArrayList<Integer> money;
 	boolean replace_items = true;
 	boolean replace_exp = true;
 	
 	@SuppressWarnings("unchecked")
-	public Death_action(Map<String, Object> da) 
+	public Death_action(Map<String, Object> da, int random) 
 	{
 		da = (Map<String, Object>) da.get("action");
 		
@@ -26,18 +26,18 @@ public class Death_action
 		if (conds != null && conds.size() > 0)
 		{
 			if (conditions == null) conditions = new ArrayList<Condition_group>();
-			for (Object o : conds) conditions.add(new Condition_group(o));
+			for (Object o : conds) conditions.add(new Condition_group(o, random));
 		}
 		
 		ArrayList<Map<String, Object>> drops = (ArrayList<Map<String, Object>>)da.get("will_drop");
 		if (drops != null && drops.size() > 0)
 		{
-			if (items == null) items = new ArrayList<Mobs_item>();
+			if (items == null) items = new ArrayList<Item>();
 			for (Map<String, Object> o : drops)
 			{
 				o = (Map<String, Object>)o.get("item");
 				for (String s : (ArrayList<String>)o.get("names"))
-				items.add(new Mobs_item(o, s));
+				items.add(new Item(o, s));
 			}
 		}
 	}

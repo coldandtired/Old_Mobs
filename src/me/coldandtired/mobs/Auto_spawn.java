@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.bukkit.Bukkit;
 import org.bukkit.World;
 
 public class Auto_spawn 
 {
-	//CreatureType mob;
 	String name;
 	ArrayList<Integer> quantities;
 	ArrayList<Loc> locations = new ArrayList<Loc>();
@@ -18,12 +16,12 @@ public class Auto_spawn
 	boolean manual = false;
 	
 	@SuppressWarnings("unchecked")
-	Auto_spawn(String name, Map<String, Object> m)
-	{//zombie chicken skin no burn 
+	Auto_spawn(String name, Map<String, Object> m, Main plugin)
+	{
 		m = (Map<String, Object>) m.get("spawn_event");
 		source = m;
 		this.name = name;
-		//mob = CreatureType.valueOf(name);
+		List<World> all_worlds = plugin.getServer().getWorlds();
 		
 		if (m.containsKey("quantities")) quantities = Utils.fill_int_array(m.get("quantities"));
 		if (m.containsKey("manual")) manual = (Boolean)m.get("manual");
@@ -39,7 +37,7 @@ public class Auto_spawn
 				{
 					for (String s : (ArrayList<String>)loc.get("worlds"))
 					{
-						for (World w : Bukkit.getServer().getWorlds())
+						for (World w : all_worlds)
 						{
 							if (w.getName().equalsIgnoreCase(s))
 							{
@@ -49,7 +47,7 @@ public class Auto_spawn
 						}
 					}
 				}
-				else worlds.add(Bukkit.getServer().getWorlds().get(0));
+				else worlds.add(all_worlds.get(0));
 				
 				for (World w : worlds)
 				{
@@ -62,7 +60,7 @@ public class Auto_spawn
 				}
 			}
 		}
-		else locations.add(new Loc(Bukkit.getServer().getWorlds().get(0)));
+		else locations.add(new Loc(all_worlds.get(0)));
 		
 		Object o = m.get("shortcut");
 		if (o != null)

@@ -5,7 +5,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import net.milkbowl.vault.economy.Economy;
 
@@ -76,15 +75,16 @@ public class Condition_group
 	//end mob
 	//player
 	ArrayList<String> player_names;
-	ArrayList<Mobs_item> player_holding;
-	ArrayList<Mobs_item> player_wearing;
-	ArrayList<Mobs_item> player_items;
+	ArrayList<Item> player_holding;
+	ArrayList<Item> player_wearing;
+	ArrayList<Item> player_items;
 	ArrayList<Number_condition> player_money;
 	ArrayList<String> player_standing_on;
 	boolean match_all_items;	
 	boolean match_all_wearing;
 	HashMap<Loc, ArrayList<Number_condition>> area_mob_count;
 	HashMap<Loc, ArrayList<Number_condition>> area_mob_class_count;
+	int random;
 	
 	@SuppressWarnings("unchecked")
 	//end player
@@ -102,8 +102,9 @@ public class Condition_group
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Condition_group(Object ob)
+	public Condition_group(Object ob, int random)
 	{
+		this.random = random;
 		Map<String, Object> conditional = (Map<String, Object>)ob;
 		conditional = (Map<String, Object>) conditional.get("condition_group");
 		
@@ -201,25 +202,25 @@ public class Condition_group
 		
 		if (conditional.containsKey("player_holding"))
 		{
-			player_holding = new ArrayList<Mobs_item>();
+			player_holding = new ArrayList<Item>();
 			for (Map<String, Object> w : (ArrayList<Map<String, Object>>)conditional.get("player_holding"))
 			{
 				Matlist groups = Utils.groups.get((String)w.get("name"));
-				if (groups == null) for (String s : ((String)w.get("name")).split(","))	player_holding.add(new Mobs_item(w, s));
-				else for (String s : groups.names) player_holding.add(new Mobs_item(w, s));
+				if (groups == null) for (String s : ((String)w.get("name")).split(","))	player_holding.add(new Item(w, s));
+				else for (String s : groups.names) player_holding.add(new Item(w, s));
 			}
 		} 
 		
 		if (conditional.containsKey("player_wearing"))
 		{
-			player_wearing = new ArrayList<Mobs_item>();
+			player_wearing = new ArrayList<Item>();
 			for (Map<String, Object> w : (ArrayList<Map<String, Object>>)conditional.get("player_wearing"))
 			{
 				Matlist groups = Utils.groups.get((String)w.get("name"));
-				if (groups == null) for (String s : ((String)w.get("name")).split(","))	player_wearing.add(new Mobs_item(w, s));
+				if (groups == null) for (String s : ((String)w.get("name")).split(","))	player_wearing.add(new Item(w, s));
 				else 
 				{
-					for (String s : groups.names) player_wearing.add(new Mobs_item(w, s));
+					for (String s : groups.names) player_wearing.add(new Item(w, s));
 					match_all_wearing = false;
 				}
 			}
@@ -227,14 +228,14 @@ public class Condition_group
 		
 		if (conditional.containsKey("player_items"))
 		{
-			player_items = new ArrayList<Mobs_item>();
+			player_items = new ArrayList<Item>();
 			for (Map<String, Object> i : (ArrayList<Map<String, Object>>)conditional.get("player_items"))
 			{
 				Matlist groups = Utils.groups.get((String)i.get("group"));
-				if (groups == null) for (String s : ((String)i.get("name")).split(","))	player_items.add(new Mobs_item(i, s));
+				if (groups == null) for (String s : ((String)i.get("name")).split(","))	player_items.add(new Item(i, s));
 				else
 				{
-					for (String s : groups.names) player_items.add(new Mobs_item(i, s));
+					for (String s : groups.names) player_items.add(new Item(i, s));
 					match_all_items = false;
 				}
 			}
@@ -243,11 +244,13 @@ public class Condition_group
 	}
 	
 	@SuppressWarnings("unchecked")
-	public Boolean matches_all_conditions(LivingEntity le, String spawn_reason, Player player)
+	public Boolean matches_all_conditions(Entity entity, String spawn_reason, Player player)
 	{
+		LivingEntity le = (LivingEntity)entity;
 		World world = le.getWorld();
 		Location loc = le.getLocation();
 		Calendar cal = Calendar.getInstance();
+		
 		boolean validmob =  matches_killed_player_name(le)				
 				&& matches_mob_age(le)
 				&& matches_saddled(le)
@@ -300,9 +303,7 @@ public class Condition_group
 				&& matches_player_standing_on(player.getLocation());
 		else validplayer = true;
 		
-		Random rng = new Random();
-		
-		return matches_number_condition(percent, rng.nextInt(100) + 1) && validmob && validworld && validtime && validplayer;
+		return matches_number_condition(percent, random) && validmob && validworld && validtime && validplayer;
 	}
 	
 	boolean matches_number_condition(ArrayList<Number_condition> temp, int value)
@@ -383,13 +384,10 @@ public class Condition_group
 			if (temp == null) temp = loc;
 			for (Entity e : world.getEntitiesByClass(le.getClass()))
 			{
-				if (e instanceof LivingEntity && !(e instanceof Player))
-				{
-					ll = e.getLocation();
-					if (ll.getBlockX() >= (temp.base.x - temp.range.x) && ll.getBlockX() <= (temp.base.x + temp.range.x) 
-							&& ll.getBlockY() >= (temp.base.y - temp.range.y) && ll.getBlockY() <= (temp.base.y + temp.range.y)
-							& ll.getBlockZ() >= (temp.base.z - temp.range.z) && ll.getBlockZ() <= (temp.base.z + temp.range.z)) i++;
-				}
+				ll = e.getLocation();
+				if (ll.getBlockX() >= (temp.base.x - temp.range.x) && ll.getBlockX() <= (temp.base.x + temp.range.x) 
+						&& ll.getBlockY() >= (temp.base.y - temp.range.y) && ll.getBlockY() <= (temp.base.y + temp.range.y)
+						&& ll.getBlockZ() >= (temp.base.z - temp.range.z) && ll.getBlockZ() <= (temp.base.z + temp.range.z)) i++;
 			}
 			return matches_number_condition(area_mob_class_count.get(loc), i);
 		}
@@ -418,7 +416,7 @@ public class Condition_group
 					ll = e.getLocation();
 					if (ll.getBlockX() >= (temp.base.x - temp.range.x) && ll.getBlockX() <= (temp.base.x + temp.range.x) 
 							&& ll.getBlockY() >= (temp.base.y - temp.range.y) && ll.getBlockY() <= (temp.base.y + temp.range.y)
-							& ll.getBlockZ() >= (temp.base.z - temp.range.z) && ll.getBlockZ() <= (temp.base.z + temp.range.z)) i++;
+							&& ll.getBlockZ() >= (temp.base.z - temp.range.z) && ll.getBlockZ() <= (temp.base.z + temp.range.z)) i++;
 				}
 			}
 			return matches_number_condition(area_mob_count.get(loc), i);
@@ -550,7 +548,7 @@ public class Condition_group
 
 	//end mob matches
 
-	boolean matches_enchantments(ItemStack is, Mobs_item i)
+	boolean matches_enchantments(ItemStack is, Item i)
 	{
 		if (is.getEnchantments().size() == 0) return false;
 
@@ -602,7 +600,7 @@ public class Condition_group
 		temp.add(player.getInventory().getBoots());
 		if (temp.size() != 0)
 		{
-			for (Mobs_item w : player_wearing)
+			for (Item w : player_wearing)
 			{
 				for (ItemStack is : temp)
 				if (is != null)
@@ -643,7 +641,7 @@ public class Condition_group
 		return false;
 	}
 	
-	boolean matches_quantity(Mobs_item item, int amount)
+	boolean matches_quantity(Item item, int amount)
 	{
 		if (item.quantities == null) return true;
 		if (item.quantities.contains(amount)) return true;
@@ -657,7 +655,7 @@ public class Condition_group
 		boolean validholding = false;
 		ItemStack is = player.getItemInHand();
 		int amount = is.getAmount();
-		for (Mobs_item w : player_holding)
+		for (Item w : player_holding)
 		{
 			Material material = Material.matchMaterial(w.name);
 			boolean matches = false;
@@ -706,7 +704,7 @@ public class Condition_group
 		if (player_items == null) return true;
 		
 		boolean validitems = false;
-		for (Mobs_item i : player_items)
+		for (Item i : player_items)
 		{
 			int count = 0;
 			for (ItemStack is : player.getInventory().getContents())

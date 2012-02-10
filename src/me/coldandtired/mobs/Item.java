@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.bukkit.enchantments.Enchantment;
 
-public class Mobs_item 
+public class Item 
 {
 	String name;
 	ArrayList<Integer> quantities;
@@ -14,7 +14,7 @@ public class Mobs_item
 	Map<Enchantment, ArrayList<Integer>> enchantments;
 	
 	@SuppressWarnings("unchecked")
-	Mobs_item(Map<String, Object> item, String name)
+	Item(Map<String, Object> item, String name)
 	{
 		this.name = name.toUpperCase().trim();
 		
