@@ -8,7 +8,6 @@ import java.util.UUID;
 
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
-import org.bukkit.configuration.MemorySection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Creeper;
@@ -27,7 +26,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.CreeperPowerEvent;
-import org.bukkit.event.entity.EndermanPickupEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityCreatePortalEvent;
@@ -43,6 +41,7 @@ import org.bukkit.event.entity.SheepDyeWoolEvent;
 import org.bukkit.event.entity.SheepRegrowWoolEvent;
 import org.bukkit.event.entity.SlimeSplitEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class Mobs_listener implements Listener
@@ -56,7 +55,6 @@ public class Mobs_listener implements Listener
 	boolean overrule_spawn = false;
 	boolean overrule_target = false;
 	boolean overrule_explode = false;
-	boolean overrule_enderman_pickup = false;
 	boolean overrule_create_portal = false;
 	boolean overrule_split = false;
 	boolean overrule_regrow_wool = false;
@@ -66,7 +64,6 @@ public class Mobs_listener implements Listener
 	boolean overrule_become_powered_creeper = false;
 	boolean overrule_tame = false;
 	boolean overrule_become_pig_zombie = false;
-	boolean allow = false;
 	Map<UUID, Mob> mobs = new HashMap<UUID, Mob>();
 	
 	@SuppressWarnings("unchecked")
@@ -74,25 +71,24 @@ public class Mobs_listener implements Listener
 	{
 		this.plugin = plugin;
 		tracked_mobs = new ArrayList<String>();
-		overrule_damage = plugin.config.getBoolean("overrule.damaging", false);
-		overrule_burn = plugin.config.getBoolean("overrule.burning", false);
-		overrule_spawn = plugin.config.getBoolean("overrule.spawning", false);
-		overrule_target = plugin.config.getBoolean("overrule.targeting", false);
-		overrule_explode = plugin.config.getBoolean("overrule.exploding", false);
-		overrule_enderman_pickup = plugin.config.getBoolean("overrule.enderman_moving_blocks", false);
-		overrule_create_portal = plugin.config.getBoolean("overrule.creating_portal", false);
-		overrule_split = plugin.config.getBoolean("overrule.splitting", false);
-		overrule_regrow_wool = plugin.config.getBoolean("overrule.regrowing_wool", false);
-		overrule_dye_wool = plugin.config.getBoolean("overrule.dying_wool", false);
-		overrule_shear = plugin.config.getBoolean("overrule.shearing", false);
-		overrule_change_block = plugin.config.getBoolean("overrule.changing_block", false);
-		overrule_tame = plugin.config.getBoolean("overrule.taming", false);
-		overrule_become_powered_creeper = plugin.config.getBoolean("overrule.becoming_powered_creeper", false);		
-		overrule_become_pig_zombie = plugin.config.getBoolean("overrule.becoming_pig_zombie", false);
+		overrule_damage = Configs.get_bool(null, "overrule.damaging", false);
+		overrule_burn = Configs.get_bool(null, "overrule.burning", false);
+		overrule_spawn = Configs.get_bool(null, "overrule.spawning", false);
+		overrule_target = Configs.get_bool(null, "overrule.targeting", false);
+		overrule_explode = Configs.get_bool(null, "overrule.exploding", false);
+		overrule_create_portal = Configs.get_bool(null, "overrule.creating_portal", false);
+		overrule_split = Configs.get_bool(null, "overrule.splitting", false);
+		overrule_regrow_wool = Configs.get_bool(null, "overrule.regrowing_wool", false);
+		overrule_dye_wool = Configs.get_bool(null, "overrule.dying_wool", false);
+		overrule_shear = Configs.get_bool(null, "overrule.shearing", false);
+		overrule_change_block = Configs.get_bool(null, "overrule.changing_block", false);
+		overrule_tame = Configs.get_bool(null, "overrule.taming", false);
+		overrule_become_powered_creeper = Configs.get_bool(null, "overrule.becoming_powered_creeper", false);	
+		overrule_become_pig_zombie = Configs.get_bool(null, "overrule.becoming_pig_zombie", false);
 		Map<String, String> temp = new HashMap<String, String>();
 		for (String s : Utils.mobs)
 		{
-			MemorySection ms = (MemorySection)plugin.config.get(s);
+			Map<String, Object> ms = Configs.get_section(s);
 			if ( ms != null)
 			{
 				if (!(ms.get("general") == null && ms.get("auto_spawn") == null && ms.get("spawn_rules") == null
@@ -103,7 +99,7 @@ public class Mobs_listener implements Listener
 					if (ms.get("auto_spawn") != null)
 					{
 						ss = s + " (auto_spawn)";
-						for (Map<String, Object> map : ms.getMapList("auto_spawn"))
+						for (Map<String, Object> map : (ArrayList<Map<String, Object>>)ms.get("auto_spawn"))
 						{	
 							map = (Map<String, Object>) map.get("spawn_event");		
 							if (!(map.get("general") == null && map.get("spawn_rules") == null
@@ -137,7 +133,7 @@ public class Mobs_listener implements Listener
 		{
 			for (Death_action da : mob.death_actions)
 			{
-				if (matches_condition(da.conditions, le, mob.spawn_reason, p))
+				if (matches_condition(da.conditions, le, mob.spawn_reason, p, mob.random))
 				{
 					if (da.exp != null)
 					{
@@ -201,11 +197,11 @@ public class Mobs_listener implements Listener
 	}
 	
 	@SuppressWarnings("unchecked")
-	boolean can_spawn(MemorySection ms, Entity entity, SpawnReason spawn_reason, Player player, int random)
+	boolean can_spawn(Map<String, Object> ms, LivingEntity entity, SpawnReason spawn_reason, Player player, int random)
 	{
 		if (ms == null) return true;
-		
-		ArrayList<Condition_group> conditions = null;
+
+		ArrayList<Con_group> conditions = null;
 		boolean def = true;
 		if (unique != null)
 		{
@@ -213,28 +209,50 @@ public class Mobs_listener implements Listener
 			if (temp != null)
 			{
 				if (temp.containsKey("spawn")) def = (Boolean)temp.get("spawn");
-				ArrayList<Object> conds = (ArrayList<Object>)temp.get("unless");
-				if (conds != null && conds.size() > 0)
+				Object ob = temp.get("unless");
+				if (ob instanceof ArrayList)
 				{
-					if (conditions == null) conditions = new ArrayList<Condition_group>();
-					for (Object o : conds) conditions.add(new Condition_group(o, random));
+					ArrayList<Object> conds = (ArrayList<Object>)ob;
+					if (conds != null && conds.size() > 0)
+					{
+						if (conditions == null) conditions = new ArrayList<Con_group>();
+						for (Object o : conds) conditions.add(new Con_group(((Map<String, Object>)o).get("condition_group")));
+					}
 				}
+				else
+				{
+					if (conditions == null) conditions = new ArrayList<Con_group>();
+					conditions.add(new Con_group(((Map<String, Object>)ob).get("condition_group")));
+				}					
 			}
 		}
 		else
 		{
-			def = ms.getBoolean("spawn_rules.spawn", true);
-			ArrayList<Object> conds = (ArrayList<Object>)ms.get("spawn_rules.unless");
-			if (conds != null && conds.size() > 0)
+			def = Configs.get_bool(ms, "spawn_rules.spawn", true);
+			//def = ms.getBoolean("spawn_rules.spawn", true);
+			Object ob = ms.get("spawn_rules.unless");
+			if (ob != null)
 			{
-				if (conditions == null) conditions = new ArrayList<Condition_group>();
-				for (Object o : conds) conditions.add(new Condition_group(o, random));
+				if (ob instanceof ArrayList)
+				{
+					ArrayList<Object> conds = (ArrayList<Object>)ob;
+					if (conds != null && conds.size() > 0)
+					{
+						if (conditions == null) conditions = new ArrayList<Con_group>();
+						for (Object o : conds) conditions.add(new Con_group(((Map<String, Object>)o).get("condition_group")));
+					}
+				}
+				else
+				{
+					if (conditions == null) conditions = new ArrayList<Con_group>();
+					conditions.add(new Con_group(((Map<String, Object>)ob).get("condition_group")));
+				}
 			}
 		}
 		
 		if (conditions == null || conditions.size() == 0) return def;
-		
-		for (Condition_group c : conditions) if (c.matches_all_conditions(entity, spawn_reason.name(), player)) return !def;
+
+		for (Con_group c : conditions) if (c.check(entity, entity.getWorld(), entity.getLocation(), spawn_reason.name(), player, random)) return !def;
 		return def;
 	}
 	
@@ -245,16 +263,19 @@ public class Mobs_listener implements Listener
 		{
 			if (overrule_spawn) event.setCancelled(false); else return;
 		}
-		
+		try {
 		Entity entity = event.getEntity();
 		String s = Utils.get_mob(entity);
 		if (!tracked_mobs.contains(s)) return;
 		
-		MemorySection ms = (MemorySection) plugin.config.get(s);
+		Map<String, Object> ms = Configs.get_section(s);
+		
+		if (unique == null && ms.get("spawn_rules") == null && ms.get("burn_rules") == null && ms.get("death_rules") == null) return;
+		
 		SpawnReason spawn_reason = event.getSpawnReason();
 		
 		Mob mob = new Mob(ms, unique, spawn_reason.name());
-		if (!can_spawn(ms, entity, spawn_reason, null, mob.random))
+		if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null, mob.random))
     	{
     		event.setCancelled(true);
     		return;
@@ -286,27 +307,18 @@ public class Mobs_listener implements Listener
 			Sheep sheep = (Sheep)entity;
 			sheep.setSheared(Utils.set_boolean_property(sheep.isSheared(), ms, unique, "sheared"));
 			if (!mob.can_grow_wool) sheep.setSheared(true);
-			sheep.setColor(DyeColor.getByData(Utils.set_byte_property(ms, unique)));
+			byte colour = Utils.set_byte_property(ms, unique);
+			if (colour > -1) sheep.setColor(DyeColor.getByData(colour));
 		}
 		else if (entity instanceof Creeper) ((Creeper)entity).setPowered(Utils.set_boolean_property(((Creeper)entity).isPowered(), ms, unique, "powered"));
-		
-		/*if (allow)
+        }
+		catch (Exception e)
 		{
-			World world = entity.getWorld();
-			Location location = entity.getLocation();
-			int x = location.getChunk().getX();
-			int z = location.getChunk().getZ();
-
-			int sr = mob.spawn_rate;
-			for (int i = 0; i < sr; i++)
-			{
-				Location loc = Utils.get_safe_block(world.getBlockAt(x + rng.nextInt(16), (int) location.getY(), z + rng.nextInt(16)));
-				world.spawnCreature(loc, Utils.get_creature_type(s));
-			}
-		}*/
-        unique = null;
+			Utils.warn("Problem with " + Utils.get_mob(event.getEntity()) + " in world " + event.getEntity().getWorld().getName());
+		}
+		unique = null;
 	}
-	
+		
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDamage(EntityDamageEvent event)
 	{
@@ -335,15 +347,15 @@ public class Mobs_listener implements Listener
 			if (mob.hp < 1) event.setDamage(2000); else event.setDamage(-1);
 		} else event.setDamage(damage);
 	}
-	
-	static boolean matches_condition(ArrayList<Condition_group> conditions, Entity entity, String spawn_reason, Player player)
+		
+	static boolean matches_condition(ArrayList<Con_group> conditions, LivingEntity entity, String spawn_reason, Player player, int random)
 	{
 		if (conditions == null || conditions.size() == 0) return true;
 		
-		for (Condition_group c : conditions) if (c.matches_all_conditions(entity, spawn_reason, player)) return true;
+		for (Con_group c : conditions) if (c.check(entity, entity.getWorld(), entity.getLocation(), spawn_reason, player, random)) return true;
 		return false;
 	}
-	
+		
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCombust(EntityCombustEvent event)
 	{		
@@ -361,12 +373,12 @@ public class Mobs_listener implements Listener
 			boolean burn = mob.can_burn;
 			if (mob.burn_rules != null)
 			{
-				if (matches_condition(mob.burn_rules, entity, mob.spawn_reason, null)) burn = !burn;
+				if (matches_condition(mob.burn_rules, (LivingEntity)entity, mob.spawn_reason, null, mob.random)) burn = !burn;
 			}
 			if (!burn) event.setCancelled(true);
 		}
-	}	
-	
+	}
+		
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTarget(EntityTargetEvent event)
 	{
@@ -404,7 +416,7 @@ public class Mobs_listener implements Listener
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityExplode(EntityExplodeEvent event)
-	{
+	{try{
 		if (event.isCancelled())
 		{
 			if (overrule_explode) event.setCancelled(false); else return;
@@ -420,20 +432,7 @@ public class Mobs_listener implements Listener
         	if (mob.safe) event.setCancelled(true);
 		}
 	}
-	
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onEndermanPickup(EndermanPickupEvent event)
-	{
-		if (event.isCancelled())
-		{
-			if (overrule_enderman_pickup) event.setCancelled(false); else return;
-		}
-		
-		Entity entity = event.getEntity();
-		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
-		
-		Mob mob = mobs.get(entity.getUniqueId());
-		if (mob != null && !mob.can_move_blocks) event.setCancelled(true);
+	catch (Exception e) {Utils.log("exploding problem with " + event.getEntity().toString());}
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -523,7 +522,7 @@ public class Mobs_listener implements Listener
 		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
 		
 		Mob mob = mobs.get(entity.getUniqueId());
-		if (mob != null && !mob.can_remove_grass) event.setCancelled(true);
+		if (mob != null && (!mob.can_remove_grass || !mob.can_move_blocks)) event.setCancelled(true);
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -541,11 +540,6 @@ public class Mobs_listener implements Listener
 		if (mob != null && !mob.can_become_powered) event.setCancelled(true);
 	}
 	
-	//public void onItemDespawn(ItemDespawnEvent event)
-	//{
-		//??
-	//}
-	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTame(EntityTameEvent event)
 	{		
@@ -558,7 +552,11 @@ public class Mobs_listener implements Listener
 		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
 		
 		Mob mob = mobs.get(entity.getUniqueId());
-		if (mob != null && !mob.can_be_tamed) event.setCancelled(true);
+		if (mob != null)
+		{			
+			if (mob.can_be_tamed) event.setCancelled(true);
+			else if (mob.tamed_hp > -1) mob.hp = mob.tamed_hp;
+		}
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -574,5 +572,19 @@ public class Mobs_listener implements Listener
 		
 		Mob mob = mobs.get(entity.getUniqueId());
 		if (mob != null && !mob.can_become_pig_zombie) event.setCancelled(true);
+	}
+	
+	@EventHandler
+	public void onChunkLoad(ChunkLoadEvent event)
+	{
+		for (Entity ee: event.getChunk().getEntities()) 
+		{
+			if (ee instanceof LivingEntity && tracked_mobs.contains(Utils.get_mob(ee)))
+			{
+				String s = Utils.get_mob(ee);
+				if (Main.debug) Utils.log("Found a vanilla " + s + " and converted to a Mobs " + s + "!");
+				mobs.put(ee.getUniqueId(), new Mob(Configs.get_section(s), null, SpawnReason.NATURAL.name()));
+			}
+		}
 	}
 }

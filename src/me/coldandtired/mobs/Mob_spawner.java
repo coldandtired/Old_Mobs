@@ -17,6 +17,7 @@ public class Mob_spawner implements Runnable
 	
 	void spawn_mobs(Auto_spawn a, Location loc)
 	{
+		if (Main.debug && !a.shortcut.equalsIgnoreCase("")) Utils.log("Auto spawning shortcut" + a.shortcut);
 		int quantity = a.quantities != null ? Utils.get_quantity(a.quantities) : 1;
 		for (int i = 0; i < quantity; i++)
 		{
@@ -62,12 +63,13 @@ public class Mob_spawner implements Runnable
 					}
 				}
 			}
+			if (Main.debug && !a.shortcut.equalsIgnoreCase(""))Utils.log("Spawned shortcut" + a.shortcut);
 		}
 	}
 	
 	public void run() 
 	{
-		int player_count = plugin.config.contains("auto_spawn_min_player_count") ? plugin.config.getInt("auto_spawn_min_player_count") : 1;
+		int player_count = Main.config.containsKey("auto_spawn_min_player_count") ? (Integer)Main.config.get("auto_spawn_min_player_count") : 1;
 		if (plugin.getServer().getOnlinePlayers().length < player_count) return;	
 		for (Auto_spawn s : spawns) 
 		{

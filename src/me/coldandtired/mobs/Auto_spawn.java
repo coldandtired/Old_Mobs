@@ -13,7 +13,7 @@ public class Auto_spawn
 	ArrayList<Loc> locations = new ArrayList<Loc>();
 	Map<String, Object> source;
 	String shortcut = "";
-	boolean manual = false;
+	boolean manual = false;	
 	
 	@SuppressWarnings("unchecked")
 	Auto_spawn(String name, Map<String, Object> m, Main plugin)
@@ -37,22 +37,29 @@ public class Auto_spawn
 				{
 					for (String s : (ArrayList<String>)loc.get("worlds"))
 					{
+						Boolean found = false;
 						for (World w : all_worlds)
 						{
 							if (w.getName().equalsIgnoreCase(s))
 							{
 								worlds.add(w);
+								found = true;
 								break;
 							}
 						}
-					}
+						if (!found) Utils.log("The world called " + s + " (" + name + ") does not exist!");
+					}					
 				}
 				else worlds.add(all_worlds.get(0));
 				
 				for (World w : worlds)
 				{
 					if (loc.containsKey("regions") && Main.world_guard != null)
-						for (String s : (ArrayList<String>)loc.get("regions")) locations.add(new Loc(w, s));
+						for (String s : (ArrayList<String>)loc.get("regions"))
+						{
+							if (Utils.check_region(w.getName(), s)) locations.add(new Loc(w, s));
+							else Utils.log("The world called " + w.getName() + " has no region called " + s + " (" + name + " section)!");
+						}
 					else if (loc.containsKey("players"))
 						for (String s : (ArrayList<String>)loc.get("players")) locations.add(new Loc(w, loc, s));
 					else if (loc.containsKey("base") || loc.containsKey("range")) locations.add(new Loc(w, loc));

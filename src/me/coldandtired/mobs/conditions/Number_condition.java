@@ -1,4 +1,4 @@
-package me.coldandtired.mobs;
+package me.coldandtired.mobs.conditions;
 
 public class Number_condition 
 {
@@ -6,7 +6,7 @@ public class Number_condition
 	int low;
 	int high;
 	
-	Number_condition(Object o)
+	public Number_condition(Object o)
 	{
 		if (o instanceof Integer)
 		{
@@ -39,7 +39,7 @@ public class Number_condition
 		}
 	}
 	
-	boolean matches_number(int number)
+	public boolean matches_number(int number)
 	{
 		if (type.equalsIgnoreCase("equals") && low == number) return true;
 		

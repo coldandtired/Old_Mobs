@@ -5,8 +5,8 @@ import java.util.List;
 
 public class Matlist 
 {
-	int id;
-	List<String> names = new ArrayList<String>();
+	public int id;
+	public List<String> names = new ArrayList<String>();
 	
 	public Matlist(int id, String values)
 	{

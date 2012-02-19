@@ -15,22 +15,23 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class Loc 
 {
-	Area base;
-	Area range;
+	public Area base;
+	public Area range;
 	World world;
 	boolean all_world = false;
 	Random rng = new Random();
 	ArrayList<String> players;
-	String region_name = "";
+	public String region_name = "";
 	
-	Loc(String region_name)
+	public Loc(String region_name)
 	{
 		this.region_name = region_name;
 	}
 	
-	Loc(World world, String region)
-	{
+	public Loc(World world, String region)
+	{		//if (world == null) this.world = Bukkit.getWorlds().get(0); else	
 		this.world = world;
+		this.region_name = region;
 		ProtectedRegion pr = Main.world_guard.getRegionManager(world).getRegions().get(region);
 		BlockVector min = pr.getMinimumPoint();
 		BlockVector max = pr.getMaximumPoint();
@@ -52,6 +53,7 @@ public class Loc
 	}
 	
 	@SuppressWarnings("unchecked")
+	public
 	Loc(Map<String, Object> loc)
 	{
 		if (loc.containsKey("base")) base = new Area((Map<String, Integer>)loc.get("base"));

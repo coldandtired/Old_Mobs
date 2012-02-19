@@ -8,16 +8,17 @@ import org.bukkit.enchantments.Enchantment;
 
 public class Item 
 {
-	String name;
+	public String name;
 	ArrayList<Integer> quantities;
-	boolean match_all_enchantments = false;
-	Map<Enchantment, ArrayList<Integer>> enchantments;
+	public boolean match_all_enchantments = false;
+	public Map<Enchantment, ArrayList<Integer>> enchantments;
 	
 	@SuppressWarnings("unchecked")
+	public
 	Item(Map<String, Object> item, String name)
 	{
 		this.name = name.toUpperCase().trim();
-		
+
 		if (item.containsKey("quantities")) quantities = Utils.fill_int_array(item.get("quantities"));
 		if (item.containsKey("match_all_enchantments")) match_all_enchantments = (Boolean)item.get("match_all_enchantments");
 		if (item.containsKey("enchantments"))

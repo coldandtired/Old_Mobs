@@ -6,11 +6,12 @@ import org.bukkit.Location;
 
 public class Area 
 {
-	int x = 0;
-	int y = 0;
-	int z = 0;
+	public int x = 0;
+	public int y = 0;
+	public int z = 0;
 	
 	@SuppressWarnings("unchecked")
+	public
 	Area (Object o)
 	{
 		Map<String, Integer> a = (Map<String, Integer>)o;

@@ -8,24 +8,50 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import me.coldandtired.mobs.conditions.Number_condition;
+
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.configuration.MemorySection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
+import org.bukkit.inventory.ItemStack;
 
 public class Utils 
 {
-	static List<Matlist> matlists;
-	static Map<String, Matlist> groups;
+	public static List<Matlist> matlists;
+	public static Map<String, Matlist> groups;
 	static Random rng = new Random();
 	static List<String> mobs = Arrays.asList("blaze", "cavespider", "chicken", "cow", "creeper", "enderdragon", 
 			"enderman", "ghast", "giant", "magmacube", "mushroom_cow", "pig", "pigzombie", "sheep", "silverfish", 
 			"skeleton", "slime", "snowman", "spider", "squid", "villager", "wolf", "zombie");
 	static private Logger logger;
+	
+	@SuppressWarnings("unchecked")
+	public
+	static ArrayList<String> fill_string_array(Object o)
+	{
+		ArrayList<String> temp = new ArrayList<String>();
+		if (o instanceof ArrayList) for (String s : (ArrayList<String>)o) temp.add(s.replaceAll(" ", "").toUpperCase());
+		else temp.add(((String)o).replaceAll(" ", "").toUpperCase());
+		return temp;
+	}
+	
+	public static boolean matches_string(ArrayList<String> values, String value)
+	{
+		if (values == null) return true;
+		
+		if (values.contains(value.toUpperCase())) return true;
+		return false;
+	}
+	
+	public static int fill_boolean(Object o)
+	{
+		if ((Boolean)o) return 1; else return 0;
+	}
 	
 	static void setup_utils(Main plugin)
 	{			
@@ -75,7 +101,48 @@ public class Utils
 		groups.put("armor", armor);
 	}
 	
-	static String get_mob(Entity creature)
+	public static boolean check_region(String world_name, String region_name)
+	{
+		if (Main.found_regions == null) return false;
+		ArrayList<String> regions = Main.found_regions.get(world_name);
+		if (regions == null) return false;
+		for (String s : regions)
+		{
+			if (s.equals(region_name)) return true;
+		}
+		return false;
+	}
+	
+	public static boolean matches_quantity(Item item, int amount)
+	{
+		if (item.quantities == null) return true;
+		if (item.quantities.contains(amount)) return true;
+		return false;
+	}
+	
+	public static boolean matches_enchantments(ItemStack is, Item i)
+	{
+		if (is.getEnchantments().size() == 0) return false;
+
+		boolean validtemp = false;
+		for (Enchantment e : i.enchantments.keySet())
+		{									
+			int ench_level = is.getEnchantmentLevel(Enchantment.getByName(e.getName().toUpperCase()));
+			validtemp = i.enchantments.get(e).contains(ench_level);
+			
+			if (!i.match_all_enchantments)
+			{
+				if (validtemp) return true;
+			}
+			else
+			{
+				if (!validtemp) return false;
+			}
+		}	
+		return validtemp;
+	}
+	
+	public static String get_mob(Entity creature)
 	{
 		String mob = creature.getClass().getName();
 		int c = mob.lastIndexOf ("Craft") + 5; 
@@ -100,9 +167,14 @@ public class Utils
 		 return choices.get(rng.nextInt(choices.size()));
 	}
 	
-	static void log(Object message)
+	public static void log(Object message)
 	{
 		logger.info("" + message);
+	}
+	
+	public static void warn(Object message)
+	{
+		logger.warning("" + message);
 	}
 	
 	static boolean get_random(Object o)
@@ -115,14 +187,25 @@ public class Utils
 	}
 	
 	@SuppressWarnings("unchecked")
-	static ArrayList<Number_condition> fill_number_condition_array(Object ints)
+	public static ArrayList<Number_condition> fill_number_condition_array(Object ints)
 	{
 		ArrayList<Number_condition> temp = new ArrayList<Number_condition>();
-		for (Object o : (ArrayList<Object>)ints)
+		if (ints instanceof ArrayList)
 		{
-			temp.add(new Number_condition(o));
+			for (Object o : (ArrayList<Object>)ints) temp.add(new Number_condition(o));
 		}
+		else temp.add(new Number_condition(ints));
 		return temp;
+	}
+	
+	public static boolean matches_number_condition(ArrayList<Number_condition> values, int value)
+	{
+		if (values == null) return true;
+		for (Number_condition nc : values)
+		{
+			if (nc.matches_number(value)) return true;
+		}
+		return false;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -191,92 +274,102 @@ public class Utils
 	}
 	
 	@SuppressWarnings("unchecked")
-	static int set_int_property(int def, MemorySection general, Map<String, Object> unique, String node)
+	static int set_int_property(int def, Map<String, Object> general, Map<String, Object> unique, String node)
 	{
-		if (unique != null && unique.containsKey("general")) unique = (Map<String, Object>) unique.get("general");
-		if (unique != null && unique.containsKey(node)) return Utils.get_number(unique.get(node));
-		else if (general != null && general.contains("general." + node)) return Utils.get_number(general.get("general." + node));
-		else return def;
-	}
-	
-	@SuppressWarnings("unchecked")
-	static int set_burn_ticks(int def, MemorySection general, Map<String, Object> unique)
-	{
-		if (unique != null && unique.containsKey("burn_rules"))
-		{
-			unique = (Map<String, Object>)unique.get("burn_rules");
-			return Utils.get_number(unique.get("burn_ticks"));
-		}
-		else if (general != null && general.contains("burn.burn_ticks")) return Utils.get_number(general.get("general.burn_ticks"));
-		else return def;
-	}
-	
-	@SuppressWarnings("unchecked")
-	static boolean set_burn_property(boolean def, MemorySection general, Map<String, Object> unique)
-	{
-		if (unique != null && unique.containsKey("burn_rules"))
-		{
-			unique = (Map<String, Object>)unique.get("burn_rules");
-			return Utils.get_random(unique.get("burn"));
-		}
-		else if (general != null && general.contains("burn_rules.burn")) return Utils.get_random(general.get("burn_rules.burn"));
-		else return def;
-	}
-	
-	@SuppressWarnings("unchecked")
-	static boolean set_boolean_property(boolean def, MemorySection general, Map<String, Object> unique, String node)
-	{
-		if (unique != null && unique.containsKey("general")) unique = (Map<String, Object>) unique.get("general");
-		if (unique != null && unique.containsKey(node)) return Utils.get_random(unique.get(node));
-		else if (general != null && general.contains("general." + node)) return Utils.get_random(general.get("general." + node));
-		else return def;
-	}
-	
-	@SuppressWarnings("unchecked")
-	static ArrayList<Death_action> set_death_actions(MemorySection general, Map<String, Object> unique, int random)
-	{
-		if (unique != null && unique.containsKey("death_rules"))
-		{
-			ArrayList<Death_action> da = new ArrayList<Death_action>();
-			for (Map<String, Object> o : (ArrayList<Map<String, Object>>)unique.get("death_rules")) da.add(new Death_action(o, random));
-			return da;
-		}
-		else if (general != null && general.contains("death_rules"))
-		{
-			ArrayList<Death_action> da = new ArrayList<Death_action>();
-			for (Map<String, Object> o : general.getMapList("death_rules")) da.add(new Death_action(o, random));
-			return da;
-		}
-		else return null;
-	}
-	
-	@SuppressWarnings("unchecked")
-	static ArrayList<Condition_group> set_burn_rules(MemorySection general, Map<String, Object> unique, int random)
-	{
-		ArrayList<Object> conds = null;
+		if (general == null && unique == null) return def;
 		
-		if (unique != null && unique.containsKey("burn_rules"))
-		{
-			unique = (Map<String, Object>)unique.get("burn_rules");
-			conds = (ArrayList<Object>)unique.get("unless");
-		}
-		else if (general != null && general.contains("burn_rules")) conds = (ArrayList<Object>)general.get("burn_rules.unless");
-			
-		if (conds != null && conds.size() > 0)
-		{
-			ArrayList<Condition_group> br = new ArrayList<Condition_group>();
-			for (Object o : conds) br.add(new Condition_group(o, random));			
-			return br;
-		} else return null;
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("general")) temp = (Map<String, Object>) temp.get("general");
+		if (temp != null && temp.containsKey(node)) return get_number(temp.get(node)); else return def;
 	}
 	
 	@SuppressWarnings("unchecked")
-	static byte set_byte_property(MemorySection general, Map<String, Object> unique)
+	static int set_burn_ticks(int def, Map<String, Object> general, Map<String, Object> unique)
 	{
-		if (unique != null && unique.containsKey("general")) unique = (Map<String, Object>) unique.get("general");
-		if (unique != null && unique.containsKey("wool_colors")) return get_wool_colour(unique.get("wool_colors"));
-		else if (general != null && general.contains("wool_colors")) return get_wool_colour(general.get("wool_colors"));
-		else return DyeColor.WHITE.getData();
+		if (general == null && unique == null) return def;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("burn_rules")) temp = (Map<String, Object>) temp.get("burn_rules");
+		if (temp != null && temp.containsKey("burn_ticks")) return get_number(temp.get("burn_ticks")); else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static boolean set_burn_property(boolean def, Map<String, Object> general, Map<String, Object> unique)
+	{
+		if (general == null && unique == null) return def;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("burn_rules")) temp = (Map<String, Object>) temp.get("burn_rules");
+		if (temp != null && temp.containsKey("burn")) return get_random(temp.get("burn")); else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static boolean set_boolean_property(boolean def, Map<String, Object> general, Map<String, Object> unique, String node)
+	{
+		if (general == null && unique == null) return def;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("general")) temp = (Map<String, Object>) temp.get("general");
+		if (temp != null && temp.containsKey(node)) return get_random(temp.get(node)); else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static ArrayList<Death_action> set_death_actions(Map<String, Object> general, Map<String, Object> unique, int random)
+	{
+		if ((general == null || general.get("death_rules") == null) && (unique == null || unique.get("death_rules") == null)) return null;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		Object ob = temp.containsKey("death_rules") ? temp.get("death_rules") : null;
+		
+		if (ob == null) return null;
+		
+		if (ob instanceof ArrayList)
+		{
+			ArrayList<Death_action> da = new ArrayList<Death_action>();			
+			for (Map<String, Object> o : (ArrayList<Map<String, Object>>)ob) da.add(new Death_action((Map<String, Object>)o, random));
+			return da;
+		}
+		else
+		{
+			ArrayList<Death_action> da = new ArrayList<Death_action>();
+			da.add(new Death_action((Map<String, Object>) ob, random));
+			return da;
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	static ArrayList<Con_group> set_burn_rules(Map<String, Object> general, Map<String, Object> unique, int random)
+	{
+		if ((general == null || general.get("burn_rules") == null) && (unique == null || unique.get("burn_rules") == null)) return null;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("burn_rules")) temp = (Map<String, Object>) temp.get("burn_rules");
+		Object ob = temp.containsKey("unless") ? temp.get("unless") : null;
+			
+		if (ob == null) return null;
+		
+		if (ob instanceof ArrayList)
+		{
+			ArrayList<Con_group> br = new ArrayList<Con_group>();
+			for (Object o : (ArrayList<Object>)ob) br.add(new Con_group(((Map<String, Object>)o).get("condition_group")));
+			return br;
+		}
+		else
+		{
+			ArrayList<Con_group> br = new ArrayList<Con_group>();
+			br.add(new Con_group(((Map<String, Object>)ob).get("condition_group")));
+			return br;
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	static byte set_byte_property(Map<String, Object> general, Map<String, Object> unique)
+	{
+		if (general == null && unique == null) return -1;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("general")) temp = (Map<String, Object>) temp.get("general");
+		if (temp != null && temp.containsKey("wool_colors")) return get_wool_colour(temp.get("wool_colors")); else return -1;
 	}
 
 }

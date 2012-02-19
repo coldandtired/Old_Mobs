@@ -1,22 +1,24 @@
 package me.coldandtired.mobs;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
+import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.MemorySection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -25,6 +27,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.yaml.snakeyaml.Yaml;
 
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
@@ -35,7 +38,25 @@ public class Main extends JavaPlugin
 	public static Economy economy = null;
 	Mob_spawner spawner;
 	Mob_purger purger;
-	FileConfiguration config;
+	//FileConfiguration 
+	static Map<String, Object> config;	
+	static Map<String, ArrayList<String>> found_regions;
+	static boolean debug;
+	
+	public Map<String, ArrayList<String>> get_regions()
+	{
+		if (world_guard == null) return null;
+		Map<String, ArrayList<String>> temp = new HashMap<String, ArrayList<String>>();
+		
+		for (World world : getServer().getWorlds())
+		{
+			ArrayList<String> temp2 = new ArrayList<String>();
+			for (String s : world_guard.getRegionManager(world).getRegions().keySet())
+				temp2.add(s);
+			temp.put(world.getName(), temp2);
+		}		
+		return temp;
+	}
 	
 	public void onDisable() 
 	{
@@ -67,23 +88,16 @@ public class Main extends JavaPlugin
 	}
 	
 	public void onEnable() 
-	{
+	{		
 		Utils.setup_utils(this);
-		make_example();
-		load_config();		
-		world_guard = get_world_guard();
-		if (getServer().getPluginManager().getPlugin("Vault") != null) setup_economy();
-		listener = new Mobs_listener();
-		listener.setup(this);
-
-		if (listener.tracked_mobs.size() == 0)
-		{
-			Utils.log("No mobs found in the config - stopping!");
-			this.setEnabled(false);
-			return;
-		}
-        getServer().getPluginManager().registerEvents(listener, this);
-        convert_mobs();
+		make_example();		
+		setup();
+		Server server = getServer();
+		if (server.getPluginManager().getPlugin("Vault") != null) setup_economy();		
+		server.getPluginManager().registerEvents(listener, this);
+		server.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {			 
+            public void run() {convert_mobs();}
+        }, 1L);
 	}
 
 	void make_example()
@@ -103,9 +117,12 @@ public class Main extends JavaPlugin
 			fw.write("spawn_interval: 600\n");
 			fw.write("\n");
 			fw.write("# This is the number of players that must be on the server\n");
-			fw.write("# for any spawn_event to activate.  Set it to a high number to test things before\n");
+			fw.write("# for any spawn_event to activate.  Set it to a high number to Light_levels things before\n");
 			fw.write("# unleashing the config.\n");
 			fw.write("auto_spawn_min_player_count: 1\n");
+			fw.write("\n");
+			fw.write("# Sets whether to show extra information about what the plugin is doing.\n");
+			fw.write("debug_mode: no\n");
 			fw.write("\n");
 			fw.write("# This section controls whether Mobs should overrule other plugins if they try to\n");
 			fw.write("# cancel an event.  Try setting them all to yes if you experience unexpected behaviour\n");
@@ -202,7 +219,7 @@ public class Main extends JavaPlugin
 			fw.write("        raining: no\n");
 			fw.write("  death_rules:\n");
 			fw.write("  - action:\n");
-			fw.write("      replace_drops: yes\n");
+			fw.write("      replace_items: yes\n");
 			fw.write("      replace_exp: yes\n");
 			fw.write("      will_drop:\n");
 			fw.write("      - item:\n");
@@ -219,25 +236,40 @@ public class Main extends JavaPlugin
 	
 	void convert_mobs()
 	{
-		listener.allow = false;
 		for (World world : getServer().getWorlds())
 		{
 			for (Entity ee: world.getEntities()) 
 			{
 				if (ee instanceof LivingEntity && listener.tracked_mobs.contains(Utils.get_mob(ee)))
 				{
-					MemorySection ms = (MemorySection) config.get(Utils.get_mob(ee));
-					listener.mobs.put(ee.getUniqueId(), new Mob(ms, null, SpawnReason.NATURAL.name()));
+					listener.mobs.put(ee.getUniqueId(), new Mob(Configs.get_section(Utils.get_mob(ee)), null, SpawnReason.NATURAL.name()));
 				}
 			}
 		}
-		listener.allow = true;
-		setup_spawns();
+
+		found_regions = get_regions();
+		if (debug)
+		{
+			Utils.log("-------");
+			if (found_regions != null)
+			{
+				for (String s : found_regions.keySet())
+				{
+					Utils.log(s + " regions:");
+					for (String ss : found_regions.get(s))
+					{
+						Utils.log(ss);
+					}
+				}
+			}
+			else Utils.log("WorldGuard not found!");
+		}		
 	}
 	
+	@SuppressWarnings("unchecked")
 	void load_config()
 	{
-		world_guard = null;
+		world_guard = get_world_guard();
 		economy = null;
 		config = null;
 		spawner = null;
@@ -253,6 +285,7 @@ public class Main extends JavaPlugin
 				FileWriter fw = new FileWriter(f);
 				fw.write("spawn_interval: 600\n");
 				fw.write("auto_spawn_min_player_count: 1\n");
+				fw.write("debug_mode: no\n");
 				fw.write("overrule:\n");
 				fw.write("  damaging: no\n");
 				fw.write("  burning: no\n");
@@ -270,41 +303,63 @@ public class Main extends JavaPlugin
 				fw.write("  becoming_powered_creeper: no\n");
 				fw.write("  becoming_pig_zombie: no\n");
 				fw.close();
-				config = YamlConfiguration.loadConfiguration(f);
+				//config = YamlConfiguration.loadConfiguration(f);
 			} 
 			catch (Exception e) {e.printStackTrace();}
-		}
-		else
+		}	
+		
+		InputStream input;
 		try 
 		{
-			config = YamlConfiguration.loadConfiguration(f);
-		}		
-		catch (Exception e) {e.printStackTrace();}
+			input = new FileInputStream(f);
+			Yaml yaml = new Yaml();
+			config = (Map<String, Object>)yaml.load(input);
+			Configs.config = config;
+		} 
+		catch (FileNotFoundException e) {e.printStackTrace();}		
 	}
 	
+	@SuppressWarnings("unchecked")
 	void setup_spawns()
 	{
 		BukkitScheduler scheduler = getServer().getScheduler();
 		scheduler.cancelTasks(this);
-		boolean needs_spawner = false;
 		
+		List<Auto_spawn> temp = new ArrayList<Auto_spawn>();
+		Map<String, Object> section = null;
 		for (String s : Utils.mobs)
 		{
-			if (config.contains(s + ".auto_spawn"))
+			section = Configs.get_section(s);
+			if (section != null && section.containsKey("auto_spawn"))
 			{
-				List<Map<String, Object>> o = config.getMapList(s + ".auto_spawn");
-				if (o.size() > 0)
-				{
-					if(spawner == null) spawner = new Mob_spawner(this);			
-					for (Map<String, Object> m : o) spawner.spawns.add(new Auto_spawn(s, m, this));
-					needs_spawner = true;
-				}
+				List<Map<String, Object>> o = (List<Map<String, Object>>) section.get("auto_spawn");
+				if (o.size() > 0) for (Map<String, Object> m : o)temp.add(new Auto_spawn(s, m, this));
 			}
 		}
 		
-		if (needs_spawner)
+		if (temp.size() > 0)
 		{
-			long spawn_interval = config.contains("spawn_interval") ? config.getLong("spawn_interval") * 20 : 12000L;
+			spawner = new Mob_spawner(this);
+			for (Auto_spawn a : temp)
+			{
+				if (a.locations == null || a.locations.size() == 0)
+				{
+					Utils.warn
+					("-----");
+					Utils.warn("Removed a faulty auto_spawn from the " + a.name + " section!");
+					if (debug)
+					{
+						Utils.log(a.source);
+					}
+					continue;
+				}
+				else spawner.spawns.add(a);
+			}
+		}
+		
+		if (spawner != null)
+		{
+			long spawn_interval = config.containsKey("spawn_interval") ? (Integer)config.get("spawn_interval") * 20 : 12000L;
 			scheduler.scheduleSyncRepeatingTask(this, spawner, spawn_interval, spawn_interval);
 		}
 		scheduler.scheduleSyncRepeatingTask(this, new Mob_purger(this), 72000, 72000);
@@ -320,6 +375,21 @@ public class Main extends JavaPlugin
 			if (listener.mobs.get(id).spawned_at.before(old.getTime())) temp.add(id);
 		}
 		for (UUID id : temp) listener.mobs.remove(id);
+	}
+	
+	void setup()
+	{
+		load_config();
+		debug = config.containsKey("debug_mode") ? (Boolean)config.get("debug_mode") : false;
+		if (listener == null) listener = new Mobs_listener();
+		listener.setup(this);		
+		if (listener.tracked_mobs.size() == 0)
+		{
+			Utils.log("No mobs found in the config - stopping!");
+			this.setEnabled(false);
+			return;
+		}		
+		setup_spawns();
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
@@ -363,8 +433,7 @@ public class Main extends JavaPlugin
 				return true;
 			}
 			
-			load_config();
-			listener.setup(this);
+			setup();
 			convert_mobs();
 			Utils.log("Config reloaded!");
 			if (sender instanceof Player) sender.sendMessage(ChatColor.GREEN + "[Mobs] Config reloaded!");
