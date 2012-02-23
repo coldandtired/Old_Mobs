@@ -38,7 +38,6 @@ public class Main extends JavaPlugin
 	public static Economy economy = null;
 	Mob_spawner spawner;
 	Mob_purger purger;
-	//FileConfiguration 
 	static Map<String, Object> config;	
 	static Map<String, ArrayList<String>> found_regions;
 	static boolean debug;
@@ -90,14 +89,35 @@ public class Main extends JavaPlugin
 	public void onEnable() 
 	{		
 		Utils.setup_utils(this);
-		make_example();		
-		setup();
-		Server server = getServer();
-		if (server.getPluginManager().getPlugin("Vault") != null) setup_economy();		
-		server.getPluginManager().registerEvents(listener, this);
-		server.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {			 
-            public void run() {convert_mobs();}
-        }, 1L);
+		make_example();
+		world_guard = get_world_guard();
+		if (world_guard == null) Utils.log("No WorldGuard found!");
+		else
+		{
+			found_regions = get_regions();
+			if (debug)
+			{
+				Utils.log("-------");
+				if (found_regions != null)
+				{
+					for (String s : found_regions.keySet())
+					{
+						Utils.log(s + " regions:");
+						for (String ss : found_regions.get(s)) Utils.log(ss);
+					}
+				}
+			}	
+		}
+		
+		if (setup())
+		{
+			Server server = getServer();
+			if (server.getPluginManager().getPlugin("Vault") != null) setup_economy();		
+			server.getPluginManager().registerEvents(listener, this);
+			server.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {			 
+				public void run() {convert_mobs();}
+			}, 1L);
+		}
 	}
 
 	void make_example()
@@ -144,9 +164,6 @@ public class Main extends JavaPlugin
 			fw.write("# Controls whether mobs are allowed to explode\n");
 			fw.write("  exploding: no\n");
 			fw.write("\n");
-			fw.write("# Controls whether endermen can pick up blocks.\n");
-			fw.write("  enderman_moving_blocks: no\n");
-			fw.write("\n");
 			fw.write("# Controls whether ender dragons should create a portal when killed.\n");
 			fw.write("  creating_portal: no\n");
 			fw.write("\n");
@@ -174,6 +191,9 @@ public class Main extends JavaPlugin
 			fw.write("# Controls whether pigs are allowed to become pig zombies\n");
 			fw.write("  becoming_pig_zombie: no\n");
 			fw.write("\n");
+			fw.write("# Controls whether endermen can teleport away\n");
+			fw.write("  teleporting: no\n");
+			fw.write("\n");
 			fw.write("# Each mob section looks like this.\n");
 			fw.write("# The availabe mobs names are blaze, cavespider, chicken, cow, creeper,\n");
 			fw.write("# enderdragon, enderman, ghast, giant, magmacube, mushroom_cow, pig, pigzombie,\n");
@@ -196,6 +216,7 @@ public class Main extends JavaPlugin
 			fw.write("  - spawn_event:\n");
 			fw.write("      where_to_spawn:\n");
 			fw.write("      - location:\n");
+			fw.write("          worlds: [name_of_world]");
 			fw.write("          regions: [name_of_region1, name_of_region2]\n");
 			fw.write("      - location:\n");
 			fw.write("          worlds: [world1, world2]\n");
@@ -245,31 +266,12 @@ public class Main extends JavaPlugin
 					listener.mobs.put(ee.getUniqueId(), new Mob(Configs.get_section(Utils.get_mob(ee)), null, SpawnReason.NATURAL.name()));
 				}
 			}
-		}
-
-		found_regions = get_regions();
-		if (debug)
-		{
-			Utils.log("-------");
-			if (found_regions != null)
-			{
-				for (String s : found_regions.keySet())
-				{
-					Utils.log(s + " regions:");
-					for (String ss : found_regions.get(s))
-					{
-						Utils.log(ss);
-					}
-				}
-			}
-			else Utils.log("WorldGuard not found!");
-		}		
+		}			
 	}
 	
 	@SuppressWarnings("unchecked")
 	void load_config()
-	{
-		world_guard = get_world_guard();
+	{		
 		economy = null;
 		config = null;
 		spawner = null;
@@ -292,7 +294,7 @@ public class Main extends JavaPlugin
 				fw.write("  spawning: no\n");
 				fw.write("  targeting: no\n");
 				fw.write("  exploding: no\n");
-				fw.write("  enderman_moving_blocks: no\n");
+				fw.write("  teleporting: no\n");
 				fw.write("  creating_portal: no\n");
 				fw.write("  splitting: no\n");
 				fw.write("  regrowing_wool: no\n");
@@ -303,7 +305,6 @@ public class Main extends JavaPlugin
 				fw.write("  becoming_powered_creeper: no\n");
 				fw.write("  becoming_pig_zombie: no\n");
 				fw.close();
-				//config = YamlConfiguration.loadConfiguration(f);
 			} 
 			catch (Exception e) {e.printStackTrace();}
 		}	
@@ -330,7 +331,7 @@ public class Main extends JavaPlugin
 		for (String s : Utils.mobs)
 		{
 			section = Configs.get_section(s);
-			if (section != null && section.containsKey("auto_spawn"))
+			if (section != null && section.get("auto_spawn") != null)
 			{
 				List<Map<String, Object>> o = (List<Map<String, Object>>) section.get("auto_spawn");
 				if (o.size() > 0) for (Map<String, Object> m : o)temp.add(new Auto_spawn(s, m, this));
@@ -377,7 +378,7 @@ public class Main extends JavaPlugin
 		for (UUID id : temp) listener.mobs.remove(id);
 	}
 	
-	void setup()
+	boolean setup()
 	{
 		load_config();
 		debug = config.containsKey("debug_mode") ? (Boolean)config.get("debug_mode") : false;
@@ -387,9 +388,10 @@ public class Main extends JavaPlugin
 		{
 			Utils.log("No mobs found in the config - stopping!");
 			this.setEnabled(false);
-			return;
+			return false;
 		}		
 		setup_spawns();
+		return true;
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)

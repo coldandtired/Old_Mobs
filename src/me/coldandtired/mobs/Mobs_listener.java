@@ -1,6 +1,7 @@
 package me.coldandtired.mobs;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -35,6 +36,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.entity.PigZapEvent;
 import org.bukkit.event.entity.SheepDyeWoolEvent;
@@ -43,6 +45,7 @@ import org.bukkit.event.entity.SlimeSplitEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
 
 public class Mobs_listener implements Listener
 {
@@ -54,6 +57,7 @@ public class Mobs_listener implements Listener
 	boolean overrule_burn = false;
 	boolean overrule_spawn = false;
 	boolean overrule_target = false;
+	boolean overrule_teleport = false;
 	boolean overrule_explode = false;
 	boolean overrule_create_portal = false;
 	boolean overrule_split = false;
@@ -65,6 +69,7 @@ public class Mobs_listener implements Listener
 	boolean overrule_tame = false;
 	boolean overrule_become_pig_zombie = false;
 	Map<UUID, Mob> mobs = new HashMap<UUID, Mob>();
+	int split_count = 0;
 	
 	@SuppressWarnings("unchecked")
 	boolean setup(Main plugin)
@@ -75,6 +80,7 @@ public class Mobs_listener implements Listener
 		overrule_burn = Configs.get_bool(null, "overrule.burning", false);
 		overrule_spawn = Configs.get_bool(null, "overrule.spawning", false);
 		overrule_target = Configs.get_bool(null, "overrule.targeting", false);
+		overrule_teleport = Configs.get_bool(null, "overrule.teleporting", false);
 		overrule_explode = Configs.get_bool(null, "overrule.exploding", false);
 		overrule_create_portal = Configs.get_bool(null, "overrule.creating_portal", false);
 		overrule_split = Configs.get_bool(null, "overrule.splitting", false);
@@ -133,7 +139,7 @@ public class Mobs_listener implements Listener
 		{
 			for (Death_action da : mob.death_actions)
 			{
-				if (matches_condition(da.conditions, le, mob.spawn_reason, p, mob.random))
+				if (Utils.matches_condition(da.conditions, le, mob.spawn_reason, p, mob.random))
 				{
 					if (da.exp != null)
 					{
@@ -196,66 +202,6 @@ public class Mobs_listener implements Listener
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	boolean can_spawn(Map<String, Object> ms, LivingEntity entity, SpawnReason spawn_reason, Player player, int random)
-	{
-		if (ms == null) return true;
-
-		ArrayList<Con_group> conditions = null;
-		boolean def = true;
-		if (unique != null)
-		{
-			Map<String, Object> temp = (Map<String, Object>)unique.get("spawn_rules");
-			if (temp != null)
-			{
-				if (temp.containsKey("spawn")) def = (Boolean)temp.get("spawn");
-				Object ob = temp.get("unless");
-				if (ob instanceof ArrayList)
-				{
-					ArrayList<Object> conds = (ArrayList<Object>)ob;
-					if (conds != null && conds.size() > 0)
-					{
-						if (conditions == null) conditions = new ArrayList<Con_group>();
-						for (Object o : conds) conditions.add(new Con_group(((Map<String, Object>)o).get("condition_group")));
-					}
-				}
-				else
-				{
-					if (conditions == null) conditions = new ArrayList<Con_group>();
-					conditions.add(new Con_group(((Map<String, Object>)ob).get("condition_group")));
-				}					
-			}
-		}
-		else
-		{
-			def = Configs.get_bool(ms, "spawn_rules.spawn", true);
-			//def = ms.getBoolean("spawn_rules.spawn", true);
-			Object ob = ms.get("spawn_rules.unless");
-			if (ob != null)
-			{
-				if (ob instanceof ArrayList)
-				{
-					ArrayList<Object> conds = (ArrayList<Object>)ob;
-					if (conds != null && conds.size() > 0)
-					{
-						if (conditions == null) conditions = new ArrayList<Con_group>();
-						for (Object o : conds) conditions.add(new Con_group(((Map<String, Object>)o).get("condition_group")));
-					}
-				}
-				else
-				{
-					if (conditions == null) conditions = new ArrayList<Con_group>();
-					conditions.add(new Con_group(((Map<String, Object>)ob).get("condition_group")));
-				}
-			}
-		}
-		
-		if (conditions == null || conditions.size() == 0) return def;
-
-		for (Con_group c : conditions) if (c.check(entity, entity.getWorld(), entity.getLocation(), spawn_reason.name(), player, random)) return !def;
-		return def;
-	}
-	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onCreatureSpawn(CreatureSpawnEvent event)
 	{
@@ -264,18 +210,21 @@ public class Mobs_listener implements Listener
 			if (overrule_spawn) event.setCancelled(false); else return;
 		}
 		try {
-		Entity entity = event.getEntity();
+		Entity temp = event.getEntity();
+		LivingEntity entity;
+		if (temp instanceof LivingEntity) entity = (LivingEntity)temp; else return;
+		
 		String s = Utils.get_mob(entity);
 		if (!tracked_mobs.contains(s)) return;
 		
-		Map<String, Object> ms = Configs.get_section(s);
+		Map<String, Object> general = Configs.get_section(s);
 		
-		if (unique == null && ms.get("spawn_rules") == null && ms.get("burn_rules") == null && ms.get("death_rules") == null) return;
+		if (Utils.is_empty_mob(general, unique)) return;
 		
 		SpawnReason spawn_reason = event.getSpawnReason();
 		
-		Mob mob = new Mob(ms, unique, spawn_reason.name());
-		if (!can_spawn(ms, (LivingEntity)entity, spawn_reason, null, mob.random))
+		Mob mob = new Mob(general, unique, spawn_reason.name());
+		if (!Utils.can_spawn(general, unique, (LivingEntity)entity, spawn_reason, null, mob.random))
     	{
     		event.setCancelled(true);
     		return;
@@ -283,34 +232,43 @@ public class Mobs_listener implements Listener
 		
 		if (entity instanceof Slime)
 		{
-			int hp_per_size = Utils.set_int_property(-1, ms, unique, "hp_per_size");
-			if (hp_per_size > -1) mob.hp = ((Slime)entity).getSize() * hp_per_size;
+			Slime slime = (Slime)entity;
+			if (split_count <= 0)
+			{
+				int size = Utils.set_int_property(-1, general, unique, "size");
+				if (size > -1) slime.setSize(size);
+			} else split_count--;
+			int hp_per_size = Utils.set_int_property(-1, general, unique, "hp_per_size");
+			if (hp_per_size > -1) mob.hp = slime.getSize() * hp_per_size;
 		}
 		
+		Collection<PotionEffect> pe = Utils.get_potion_effects(general, unique);
+		if (pe != null) entity.addPotionEffects(pe);
+
 		mobs.put(entity.getUniqueId(), mob);
 		if (entity instanceof Animals)
 		{
 			Animals animal = (Animals)entity;
-			if (Utils.set_boolean_property(animal.isAdult(), ms, unique, "adult")) animal.setAdult(); else animal.setBaby();
+			if (Utils.set_boolean_property(animal.isAdult(), general, unique, "adult")) animal.setAdult(); else animal.setBaby();
 		}
-		if (entity instanceof Pig) ((Pig)entity).setSaddle(Utils.set_boolean_property(((Pig)entity).hasSaddle(), ms, unique, "saddled"));
-		else if (entity instanceof PigZombie) ((PigZombie)entity).setAngry(Utils.set_boolean_property(((PigZombie)entity).isAngry(), ms, unique, "angry"));
+		if (entity instanceof Pig) ((Pig)entity).setSaddle(Utils.set_boolean_property(((Pig)entity).hasSaddle(), general, unique, "saddled"));
+		else if (entity instanceof PigZombie) ((PigZombie)entity).setAngry(Utils.set_boolean_property(((PigZombie)entity).isAngry(), general, unique, "angry"));
 		else if (entity instanceof Wolf)
 		{
 			Wolf wolf = (Wolf)entity;
-			wolf.setAngry(Utils.set_boolean_property(wolf.isAngry(), ms, unique, "angry"));
-			wolf.setTamed(Utils.set_boolean_property(wolf.isTamed(), ms, unique, "tamed"));
+			wolf.setAngry(Utils.set_boolean_property(wolf.isAngry(), general, unique, "angry"));
+			wolf.setTamed(Utils.set_boolean_property(wolf.isTamed(), general, unique, "tamed"));
 			if (!mob.can_be_tamed) wolf.setTamed(false);
 		}
 		else if (entity instanceof Sheep)
 		{
 			Sheep sheep = (Sheep)entity;
-			sheep.setSheared(Utils.set_boolean_property(sheep.isSheared(), ms, unique, "sheared"));
+			sheep.setSheared(Utils.set_boolean_property(sheep.isSheared(), general, unique, "sheared"));
 			if (!mob.can_grow_wool) sheep.setSheared(true);
-			byte colour = Utils.set_byte_property(ms, unique);
+			byte colour = Utils.set_byte_property(general, unique);
 			if (colour > -1) sheep.setColor(DyeColor.getByData(colour));
 		}
-		else if (entity instanceof Creeper) ((Creeper)entity).setPowered(Utils.set_boolean_property(((Creeper)entity).isPowered(), ms, unique, "powered"));
+		else if (entity instanceof Creeper) ((Creeper)entity).setPowered(Utils.set_boolean_property(((Creeper)entity).isPowered(), general, unique, "powered"));
         }
 		catch (Exception e)
 		{
@@ -348,14 +306,6 @@ public class Mobs_listener implements Listener
 		} else event.setDamage(damage);
 	}
 		
-	static boolean matches_condition(ArrayList<Con_group> conditions, LivingEntity entity, String spawn_reason, Player player, int random)
-	{
-		if (conditions == null || conditions.size() == 0) return true;
-		
-		for (Con_group c : conditions) if (c.check(entity, entity.getWorld(), entity.getLocation(), spawn_reason, player, random)) return true;
-		return false;
-	}
-		
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCombust(EntityCombustEvent event)
 	{		
@@ -373,7 +323,7 @@ public class Mobs_listener implements Listener
 			boolean burn = mob.can_burn;
 			if (mob.burn_rules != null)
 			{
-				if (matches_condition(mob.burn_rules, (LivingEntity)entity, mob.spawn_reason, null, mob.random)) burn = !burn;
+				if (Utils.matches_condition(mob.burn_rules, (LivingEntity)entity, mob.spawn_reason, null, mob.random)) burn = !burn;
 			}
 			if (!burn) event.setCancelled(true);
 		}
@@ -462,7 +412,16 @@ public class Mobs_listener implements Listener
 		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
 		
 		Mob mob = mobs.get(entity.getUniqueId());
-		if (mob != null && !mob.can_split) event.setCancelled(true);
+		if (mob != null)
+		{
+			if (!mob.can_split)
+			{
+				event.setCancelled(true);
+				return;
+			}
+			if (mob.split_into > -1) event.setCount(mob.split_into);
+			split_count = event.getCount();
+		}		
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -572,6 +531,21 @@ public class Mobs_listener implements Listener
 		
 		Mob mob = mobs.get(entity.getUniqueId());
 		if (mob != null && !mob.can_become_pig_zombie) event.setCancelled(true);
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onEntityTeleport(EntityTeleportEvent event)
+	{
+		if (event.isCancelled())
+		{
+			if (overrule_teleport) event.setCancelled(false); else return;
+		}
+		
+		Entity entity = event.getEntity();
+		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
+		
+		Mob mob = mobs.get(entity.getUniqueId());
+		if (mob != null && !mob.can_teleport) event.setCancelled(true);
 	}
 	
 	@EventHandler

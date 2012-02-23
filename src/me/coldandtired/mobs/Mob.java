@@ -10,6 +10,8 @@ public class Mob
 	
 	Date spawned_at;
 	int hp;
+	int size;
+	int split_into;
 	int tamed_hp;
 	int damage;
 	String spawn_reason;
@@ -25,13 +27,14 @@ public class Mob
 	boolean can_move_blocks;
 	boolean can_grow_wool;
 	boolean can_remove_grass;
-	boolean can_split;	
+	boolean can_split;
+	boolean can_teleport;
 	boolean safe;
 	ArrayList<Con_group> burn_rules;
 	ArrayList<Death_action> death_actions;
 	int burn_duration;
 	boolean fire_explosion;
-	//teleport enderman
+	//slime split count
 
 	Mob(Map<String, Object> general, Map<String, Object> unique, String spawn_reason)
 	{
@@ -39,6 +42,8 @@ public class Mob
 		spawned_at = Calendar.getInstance().getTime();
 		
 		hp = Utils.set_int_property(-1, general, unique, "hp");
+		size = Utils.set_int_property(-1, general, unique, "size");
+		split_into = Utils.set_int_property(-1, general, unique, "split_into");
 		tamed_hp = Utils.set_int_property(-1, general, unique, "tamed_hp");		
 		damage = Utils.set_int_property(-1, general, unique, "damages");
 		safe = Utils.set_boolean_property(false, general, unique, "safe");
@@ -53,7 +58,8 @@ public class Mob
 		can_move_blocks = Utils.set_boolean_property(true, general, unique, "can_move_blocks");	
 		can_grow_wool = Utils.set_boolean_property(true, general, unique, "can_grow_wool");		
 		can_remove_grass = Utils.set_boolean_property(true, general, unique, "can_remove_grass");		
-		can_split = Utils.set_boolean_property(true, general, unique, "can_split");		
+		can_split = Utils.set_boolean_property(true, general, unique, "can_split");	
+		can_teleport = Utils.set_boolean_property(true, general, unique, "can_teleport");	
 		fire_explosion = Utils.set_boolean_property(false, general, unique, "fire_explosion");		
 		death_actions = Utils.set_death_actions(general, unique, random);
 		burn_rules = Utils.set_burn_rules(general, unique, random);

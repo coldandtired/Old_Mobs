@@ -2,6 +2,7 @@ package me.coldandtired.mobs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,12 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 public class Utils 
 {
@@ -31,13 +37,123 @@ public class Utils
 	static private Logger logger;
 	
 	@SuppressWarnings("unchecked")
-	public
-	static ArrayList<String> fill_string_array(Object o)
+	public static ArrayList<String> fill_string_array(Object o)
 	{
 		ArrayList<String> temp = new ArrayList<String>();
 		if (o instanceof ArrayList) for (String s : (ArrayList<String>)o) temp.add(s.replaceAll(" ", "").toUpperCase());
 		else temp.add(((String)o).replaceAll(" ", "").toUpperCase());
 		return temp;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static Collection<PotionEffect> get_potion_effects(Map<String, Object> general, Map<String, Object> unique)
+	{
+		if (general == null && unique == null) return null;
+		
+		Map<String, Object> temp = null;
+		Object ob = null;
+		if (unique != null)
+		{
+			temp = (Map<String, Object>) unique.get("general");
+			if (temp != null) ob = temp.get("potions");
+		}
+		if (ob == null && general != null)
+		{
+			temp = (Map<String, Object>) general.get("general");
+			if (temp != null) ob = temp.get("potions");
+		}
+		
+		if (ob != null)
+		{
+			
+			List<PotionEffect> col = new ArrayList<PotionEffect>();
+			if (ob instanceof ArrayList)
+			{
+				for (Map<String, Object> map : (ArrayList<Map<String, Object>>)ob)
+				{
+					map = (Map<String, Object>) map.get("potion");
+					ArrayList<String> ts = fill_string_array(map.get("effect"));
+					for (String s : ts)
+					{
+						int duration = map.containsKey("duration") ? get_number(map.get("duration")) * 20 : 72000;
+						int level = map.containsKey("level") ? get_number(map.get("level")) : 1;
+						col.add(new PotionEffect(PotionEffectType.getByName(s), duration, level));
+					}
+				}
+			}
+			else if (ob instanceof Map)
+			{
+				Map <String, Object> map = (Map<String, Object>)ob;
+				map = (Map<String, Object>) map.get("potion");
+				ArrayList<String> ts = fill_string_array(map.get("effect"));
+				for (String s : ts)
+				{
+					int duration = map.containsKey("duration") ? get_number(map.get("duration")) * 20 : 72000;
+					int level = map.containsKey("level") ? get_number(map.get("level")) : 1;
+					col.add(new PotionEffect(PotionEffectType.getByName(s), duration, level));
+				}
+			}
+			return col;
+		}
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static boolean can_spawn(Map<String, Object> general, Map<String, Object> unique, LivingEntity entity, SpawnReason spawn_reason, 
+			Player player, int random)
+	{
+		if (general == null) return true;
+
+		ArrayList<Con_group> conditions = null;
+		boolean def = true;
+		Map<String, Object> mob;
+		if (unique != null) mob = unique; else mob = general;
+		if (mob != null)
+		{
+			Map<String, Object> temp = (Map<String, Object>)mob.get("spawn_rules");
+			if (temp != null)
+			{
+				if (temp.containsKey("spawn")) def = (Boolean)temp.get("spawn");
+				Object ob = temp.get("unless");
+				if (ob != null)
+				{
+					if (ob instanceof ArrayList)
+					{
+						ArrayList<Object> conds = (ArrayList<Object>)ob;
+						if (conds != null && conds.size() > 0)
+						{
+							if (conditions == null) conditions = new ArrayList<Con_group>();
+							for (Object o : conds) conditions.add(new Con_group(((Map<String, Object>)o).get("condition_group")));
+						}
+					}
+					else
+					{
+						if (conditions == null) conditions = new ArrayList<Con_group>();
+						conditions.add(new Con_group(((Map<String, Object>)ob).get("condition_group")));
+					}
+				}
+			}
+		}
+		
+		if (conditions == null || conditions.size() == 0) return def;
+
+		for (Con_group c : conditions) if (c.check(entity, entity.getWorld(), entity.getLocation(), spawn_reason.name(), player, random)) return !def;
+		return def;
+	}
+	
+	static boolean matches_condition(ArrayList<Con_group> conditions, LivingEntity entity, String spawn_reason, Player player, int random)
+	{
+		if (conditions == null || conditions.size() == 0) return true;
+		
+		for (Con_group c : conditions) if (c.check(entity, entity.getWorld(), entity.getLocation(), spawn_reason, player, random)) return true;
+		return false;
+	}
+	
+	static boolean is_empty_mob(Map<String, Object> general, Map<String, Object> unique)
+	{
+		if (unique == null && general.get("general") == null && general.get("spawn_rules") == null 
+				&& general.get("burn_rules") == null && general.get("death_rules") == null) return true;
+		return false;
 	}
 	
 	public static boolean matches_string(ArrayList<String> values, String value)
