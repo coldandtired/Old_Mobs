@@ -18,6 +18,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Slime;
 import org.bukkit.entity.Wolf;
@@ -34,6 +35,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityTameEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
@@ -54,6 +56,7 @@ public class Mobs_listener implements Listener
 	ArrayList<String> tracked_mobs;
 	Random rng = new Random();
 	boolean overrule_damage = false;
+	boolean overrule_heal= false;
 	boolean overrule_burn = false;
 	boolean overrule_spawn = false;
 	boolean overrule_target = false;
@@ -68,7 +71,7 @@ public class Mobs_listener implements Listener
 	boolean overrule_become_powered_creeper = false;
 	boolean overrule_tame = false;
 	boolean overrule_become_pig_zombie = false;
-	Map<UUID, Mob> mobs = new HashMap<UUID, Mob>();
+	public Map<UUID, Mob> mobs = new HashMap<UUID, Mob>();
 	int split_count = 0;
 	
 	@SuppressWarnings("unchecked")
@@ -77,6 +80,7 @@ public class Mobs_listener implements Listener
 		this.plugin = plugin;
 		tracked_mobs = new ArrayList<String>();
 		overrule_damage = Configs.get_bool(null, "overrule.damaging", false);
+		overrule_heal = Configs.get_bool(null, "overrule.healing", false);
 		overrule_burn = Configs.get_bool(null, "overrule.burning", false);
 		overrule_spawn = Configs.get_bool(null, "overrule.spawning", false);
 		overrule_target = Configs.get_bool(null, "overrule.targeting", false);
@@ -292,10 +296,22 @@ public class Mobs_listener implements Listener
 		Entity damager = null;
 		if (event instanceof EntityDamageByEntityEvent) damager = ((EntityDamageByEntityEvent)event).getDamager();
 		
-		if (damager != null && tracked_mobs.contains(Utils.get_mob(damager)))
-		{
-			Mob attacker = mobs.get(damager.getUniqueId());
-			if (attacker != null && attacker.damage > -1) damage = attacker.damage;	
+		if (damager != null)
+		{		
+			if (tracked_mobs.contains(Utils.get_mob(damager)))
+			{
+				Mob attacker = mobs.get(damager.getUniqueId());
+				if (attacker != null && attacker.damage > -1) damage = attacker.damage;	
+			}
+			else if (damager instanceof Projectile)
+			{
+				LivingEntity le = ((Projectile)damager).getShooter();
+				if (le != null && tracked_mobs.contains(Utils.get_mob(le)))
+				{
+					Mob attacker = mobs.get(le.getUniqueId());
+					if (attacker != null && attacker.damage > -1) damage = attacker.damage;	
+				}
+			}
 		}
 		
 		Mob mob = mobs.get(entity.getUniqueId());
@@ -306,6 +322,37 @@ public class Mobs_listener implements Listener
 		} else event.setDamage(damage);
 	}
 		
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onEntityRegainHealth(EntityRegainHealthEvent event)
+	{		
+		if (event.isCancelled())
+		{
+			if (overrule_heal) event.setCancelled(false); else return;
+		}	
+		
+		Entity entity = event.getEntity();
+		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
+		
+		Mob mob = mobs.get(entity.getUniqueId());
+		if (mob != null)
+		{
+			if (!mob.can_heal)
+			{
+				event.setCancelled(true);
+				return;
+			}
+			if (mob.max_hp > -1 || mob.can_overheal)
+			{
+				int i = mob.hp + event.getAmount();
+				if (mob.can_overheal) mob.hp = i;
+				else 
+				{
+					if (i > mob.max_hp) mob.hp = mob.max_hp; else mob.hp = i;
+				}
+			}
+		}
+	}
+	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCombust(EntityCombustEvent event)
 	{		

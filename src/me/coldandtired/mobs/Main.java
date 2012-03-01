@@ -67,6 +67,19 @@ public class Main extends JavaPlugin
 		purger = null;
 	}
 
+	public Mob get_mob(Entity entity)
+	{
+		if (listener == null) return null;
+		if (listener.tracked_mobs == null) return null;
+		if (!listener.tracked_mobs.contains(Utils.get_mob(entity))) return null;
+		if (listener.mobs == null) return null;
+		
+		Mob mob = listener.mobs.get(entity.getUniqueId());
+		if (mob != null) return mob;
+		
+		return null;
+	}
+	
 	private Boolean setup_economy()
     {
         RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
@@ -290,6 +303,7 @@ public class Main extends JavaPlugin
 				fw.write("debug_mode: no\n");
 				fw.write("overrule:\n");
 				fw.write("  damaging: no\n");
+				fw.write("  healing: no\n");
 				fw.write("  burning: no\n");
 				fw.write("  spawning: no\n");
 				fw.write("  targeting: no\n");
