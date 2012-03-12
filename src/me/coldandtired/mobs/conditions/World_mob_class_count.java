@@ -18,7 +18,6 @@ public class World_mob_class_count implements Condition
 		values = Utils.fill_number_condition_array(ob);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random)
 	{

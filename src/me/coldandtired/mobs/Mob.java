@@ -37,7 +37,6 @@ public class Mob
 	public ArrayList<Death_action> death_actions;
 	public int burn_duration;
 	public boolean fire_explosion;
-	//slime split count
 
 	public Mob(Map<String, Object> general, Map<String, Object> unique, String spawn_reason)
 	{

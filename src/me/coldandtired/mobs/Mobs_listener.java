@@ -15,12 +15,14 @@ import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Pig;
 import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Sheep;
 import org.bukkit.entity.Slime;
+import org.bukkit.entity.Villager;
 import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -137,7 +139,7 @@ public class Mobs_listener implements Listener
 
 		LivingEntity le = (LivingEntity)entity;
 		Player p = le.getKiller();
-		 
+
 		Mob mob = mobs.get(entity.getUniqueId());if (mob != null)
 		if (mob != null && mob.death_actions != null)
 		{
@@ -213,66 +215,85 @@ public class Mobs_listener implements Listener
 		{
 			if (overrule_spawn) event.setCancelled(false); else return;
 		}
-		try {
-		Entity temp = event.getEntity();
-		LivingEntity entity;
-		if (temp instanceof LivingEntity) entity = (LivingEntity)temp; else return;
-		
-		String s = Utils.get_mob(entity);
-		if (!tracked_mobs.contains(s)) return;
-		
-		Map<String, Object> general = Configs.get_section(s);
-		
-		if (Utils.is_empty_mob(general, unique)) return;
-		
-		SpawnReason spawn_reason = event.getSpawnReason();
-		
-		Mob mob = new Mob(general, unique, spawn_reason.name());
-		if (!Utils.can_spawn(general, unique, (LivingEntity)entity, spawn_reason, null, mob.random))
-    	{
-    		event.setCancelled(true);
-    		return;
-    	}
-		
-		if (entity instanceof Slime)
+		try 
 		{
-			Slime slime = (Slime)entity;
-			if (split_count <= 0)
+			Entity temp = event.getEntity();
+			LivingEntity entity;
+			if (temp instanceof LivingEntity) entity = (LivingEntity)temp; else return;
+		
+			String s = Utils.get_mob(entity);
+			if (!tracked_mobs.contains(s)) return;
+		
+			Map<String, Object> general = Configs.get_section(s);
+		
+			if (Utils.is_empty_mob(general, unique)) return;
+		
+			SpawnReason spawn_reason = event.getSpawnReason();
+		
+			Mob mob = new Mob(general, unique, spawn_reason.name());
+			if (!Utils.can_spawn(general, unique, (LivingEntity)entity, spawn_reason, null, mob.random))
 			{
-				int size = Utils.set_int_property(-1, general, unique, "size");
-				if (size > -1) slime.setSize(size);
-			} else split_count--;
-			int hp_per_size = Utils.set_int_property(-1, general, unique, "hp_per_size");
-			if (hp_per_size > -1) mob.hp = slime.getSize() * hp_per_size;
-		}
+				event.setCancelled(true);
+				return;
+			}
 		
-		Collection<PotionEffect> pe = Utils.get_potion_effects(general, unique);
-		if (pe != null) entity.addPotionEffects(pe);
+			if (entity instanceof Slime)
+			{
+				Slime slime = (Slime)entity;
+				if (split_count <= 0)
+				{
+					int size = Utils.set_int_property(-1, general, unique, "size");
+					if (size > -1) slime.setSize(size);
+				} else split_count--;
+				int hp_per_size = Utils.set_int_property(-1, general, unique, "hp_per_size");
+				if (hp_per_size > -1) mob.hp = slime.getSize() * hp_per_size;
+			}
+		
+			Collection<PotionEffect> pe = Utils.get_potion_effects(general, unique);
+			if (pe != null) entity.addPotionEffects(pe);
 
-		mobs.put(entity.getUniqueId(), mob);
-		if (entity instanceof Animals)
-		{
-			Animals animal = (Animals)entity;
-			if (Utils.set_boolean_property(animal.isAdult(), general, unique, "adult")) animal.setAdult(); else animal.setBaby();
-		}
-		if (entity instanceof Pig) ((Pig)entity).setSaddle(Utils.set_boolean_property(((Pig)entity).hasSaddle(), general, unique, "saddled"));
-		else if (entity instanceof PigZombie) ((PigZombie)entity).setAngry(Utils.set_boolean_property(((PigZombie)entity).isAngry(), general, unique, "angry"));
-		else if (entity instanceof Wolf)
-		{
-			Wolf wolf = (Wolf)entity;
-			wolf.setAngry(Utils.set_boolean_property(wolf.isAngry(), general, unique, "angry"));
-			wolf.setTamed(Utils.set_boolean_property(wolf.isTamed(), general, unique, "tamed"));
-			if (!mob.can_be_tamed) wolf.setTamed(false);
-		}
-		else if (entity instanceof Sheep)
-		{
-			Sheep sheep = (Sheep)entity;
-			sheep.setSheared(Utils.set_boolean_property(sheep.isSheared(), general, unique, "sheared"));
-			if (!mob.can_grow_wool) sheep.setSheared(true);
-			byte colour = Utils.set_byte_property(general, unique);
-			if (colour > -1) sheep.setColor(DyeColor.getByData(colour));
-		}
-		else if (entity instanceof Creeper) ((Creeper)entity).setPowered(Utils.set_boolean_property(((Creeper)entity).isPowered(), general, unique, "powered"));
+			mobs.put(entity.getUniqueId(), mob);
+			if (entity instanceof Animals)
+			{
+				Animals animal = (Animals)entity;
+				if (Utils.set_boolean_property(animal.isAdult(), general, unique, "adult")) animal.setAdult(); else animal.setBaby();
+			}
+			if (entity instanceof Pig) ((Pig)entity).setSaddle(Utils.set_boolean_property(((Pig)entity).hasSaddle(), general, unique, "saddled"));
+			else if (entity instanceof PigZombie) ((PigZombie)entity).setAngry(Utils.set_boolean_property(((PigZombie)entity).isAngry(), general, unique, "angry"));
+			else if (entity instanceof Wolf)
+			{
+				Wolf wolf = (Wolf)entity;
+				wolf.setAngry(Utils.set_boolean_property(wolf.isAngry(), general, unique, "angry"));
+				wolf.setTamed(Utils.set_boolean_property(wolf.isTamed(), general, unique, "tamed"));
+				if (!mob.can_be_tamed) wolf.setTamed(false);
+			}
+			else if (entity instanceof Sheep)
+			{
+				Sheep sheep = (Sheep)entity;
+				sheep.setSheared(Utils.set_boolean_property(sheep.isSheared(), general, unique, "sheared"));
+				if (!mob.can_grow_wool) sheep.setSheared(true);
+				byte colour = Utils.set_byte_property(general, unique);
+				if (colour > -1) sheep.setColor(DyeColor.getByData(colour));
+			}
+			else if (entity instanceof Ocelot)
+			{
+				Ocelot ocelot = (Ocelot)entity;
+				ocelot.setCatType(Utils.set_cat_type(ocelot.getCatType(), general, unique));
+			}
+			else if (entity instanceof Villager)
+			{
+				Villager.Profession prof = Utils.set_villager_type(general, unique);
+				if (prof != null)
+				{
+					Villager villager = (Villager)entity;
+					villager.setProfession(prof);
+				}				
+			}
+			else if (entity instanceof Creeper) 
+			{
+				Creeper creeper = (Creeper)entity;
+				creeper.setPowered(Utils.set_boolean_property(creeper.isPowered(), general, unique, "powered"));		
+			}
         }
 		catch (Exception e)
 		{
@@ -413,13 +434,15 @@ public class Mobs_listener implements Listener
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityExplode(EntityExplodeEvent event)
-	{try{
+	{
 		if (event.isCancelled())
 		{
 			if (overrule_explode) event.setCancelled(false); else return;
 		}
 		
 		Entity entity = event.getEntity();
+		if (entity == null) return;
+		
 		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
 		
 		Mob mob = mobs.get(entity.getUniqueId());
@@ -428,8 +451,6 @@ public class Mobs_listener implements Listener
 			if (!mob.can_destroy_blocks) event.blockList().clear();
         	if (mob.safe) event.setCancelled(true);
 		}
-	}
-	catch (Exception e) {Utils.log("exploding problem with " + event.getEntity().toString());}
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)

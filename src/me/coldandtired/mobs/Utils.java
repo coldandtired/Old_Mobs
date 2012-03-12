@@ -17,10 +17,12 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.CreatureType;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Villager;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -32,8 +34,8 @@ public class Utils
 	public static Map<String, Matlist> groups;
 	static Random rng = new Random();
 	static List<String> mobs = Arrays.asList("blaze", "cavespider", "chicken", "cow", "creeper", "enderdragon", 
-			"enderman", "ghast", "giant", "magmacube", "mushroom_cow", "pig", "pigzombie", "sheep", "silverfish", 
-			"skeleton", "slime", "snowman", "spider", "squid", "villager", "wolf", "zombie");
+			"enderman", "ghast", "giant", "irongolem", "magmacube", "mushroomcow", "ocelot", "pig", "pigzombie", 
+			"sheep", "silverfish", "skeleton", "slime", "snowman", "spider", "squid", "villager", "wolf", "zombie");
 	static private Logger logger;
 	
 	@SuppressWarnings("unchecked")
@@ -265,20 +267,25 @@ public class Utils
 		if (c > 0) return mob.substring(c).toLowerCase(); else return null;
 	}
 	
-	static CreatureType get_creature_type(String name)
+	static EntityType get_creature_type(String name)
 	{
-		CreatureType creature_type;
-		if (name.equalsIgnoreCase("cavespider")) creature_type = CreatureType.CAVE_SPIDER;
-		else if (name.equalsIgnoreCase("enderdragon")) creature_type = CreatureType.ENDER_DRAGON;
-		else if (name.equalsIgnoreCase("magmacube")) creature_type = CreatureType.MAGMA_CUBE;
-		else if (name.equalsIgnoreCase("mushroomcow")) creature_type = CreatureType.MUSHROOM_COW;
-		else if (name.equalsIgnoreCase("pigzombie")) creature_type = CreatureType.PIG_ZOMBIE;		
-		else creature_type = CreatureType.valueOf(name.toUpperCase());
+		EntityType entity_type;
+		if (name.equalsIgnoreCase("cavespider")) entity_type = EntityType.CAVE_SPIDER;
+		else if (name.equalsIgnoreCase("enderdragon")) entity_type = EntityType.ENDER_DRAGON;
+		else if (name.equalsIgnoreCase("magmacube")) entity_type = EntityType.MAGMA_CUBE;
+		else if (name.equalsIgnoreCase("mushroomcow")) entity_type = EntityType.MUSHROOM_COW;
+		else if (name.equalsIgnoreCase("pigzombie")) entity_type = EntityType.PIG_ZOMBIE;		
+		else entity_type = EntityType.valueOf(name.toUpperCase());
 		
-		return creature_type;
+		return entity_type;
 	}
 	
 	static int get_quantity(ArrayList<Integer> choices)
+	{
+		 return choices.get(rng.nextInt(choices.size()));
+	}
+	
+	static String get_string_value(ArrayList<String> choices)
 	{
 		 return choices.get(rng.nextInt(choices.size()));
 	}
@@ -346,6 +353,12 @@ public class Utils
 	{
 		ArrayList<Integer> ints = Utils.fill_int_array(o);
 		return get_quantity(ints);
+	}
+	
+	static String get_string(Object o)
+	{
+		ArrayList<String> choices = fill_string_array(o);
+		return get_string_value(choices).toUpperCase();
 	}
 	
 	static Location get_safe_block(Block block)
@@ -417,6 +430,26 @@ public class Utils
 		Map<String, Object> temp = unique == null ? general : unique;
 		if (temp.containsKey("burn_rules")) temp = (Map<String, Object>) temp.get("burn_rules");
 		if (temp != null && temp.containsKey("burn")) return get_random(temp.get("burn")); else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static Ocelot.Type set_cat_type(Ocelot.Type def, Map<String, Object> general, Map<String, Object> unique)
+	{
+		if (general == null && unique == null) return def;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("general")) temp = (Map<String, Object>) temp.get("general");
+		if (temp != null && temp.containsKey("ocelot_type")) return Ocelot.Type.valueOf(get_string(temp.get("ocelot_type"))); else return def;
+	}
+	
+	@SuppressWarnings("unchecked")
+	static Villager.Profession set_villager_type(Map<String, Object> general, Map<String, Object> unique)
+	{
+		if (general == null && unique == null) return null;
+		
+		Map<String, Object> temp = unique == null ? general : unique;
+		if (temp.containsKey("general")) temp = (Map<String, Object>) temp.get("general");
+		if (temp != null && temp.containsKey("villager_type")) return Villager.Profession.valueOf(get_string(temp.get("villager_type"))); else return null;
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -45,7 +45,6 @@ public class Area_mob_class_count implements Condition
 		}		
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random)
 	{

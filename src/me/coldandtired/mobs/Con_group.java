@@ -40,6 +40,7 @@ public class Con_group implements Condition
 				if (c.containsKey("mob_standing_on")) conditions.add(new Mob_standing_on(c.get("mob_standing_on")));
 				if (c.containsKey("month_weeks")) conditions.add(new Month_weeks(c.get("month_weeks")));
 				if (c.containsKey("months")) conditions.add(new Months(c.get("months")));
+				if (c.containsKey("ocelot_type")) conditions.add(new Ocelot_type(c.get("ocelot_type")));
 				if (c.containsKey("percent")) conditions.add(new Percent(c.get("percent")));
 				if (c.containsKey("player_holding")) conditions.add(new Player_holding(c.get("player_holding")));
 				if (c.containsKey("player_items")) conditions.add(new Player_items(c.get("player_items")));
@@ -61,6 +62,7 @@ public class Con_group implements Condition
 				if (c.containsKey("spawn_reasons")) conditions.add(new Spawn_reasons(c.get("spawn_reasons")));
 				if (c.containsKey("tamed")) conditions.add(new Tamed(c.get("tamed")));
 				if (c.containsKey("thundering")) conditions.add(new Thundering(c.get("thundering")));
+				if (c.containsKey("villager_type")) conditions.add(new Villager_type(c.get("villager_type")));
 				if (c.containsKey("wool_colours")) conditions.add(new Wool_colours(c.get("wool_colours")));
 				if (c.containsKey("world_mob_count")) conditions.add(new World_mob_count(c.get("world_mob_count")));
 				if (c.containsKey("world_mob_class_count")) conditions.add(new World_mob_class_count(c.get("world_mob_class_count")));
@@ -95,6 +97,7 @@ public class Con_group implements Condition
 			if (c.containsKey("mob_standing_on")) conditions.add(new Mob_standing_on(c.get("mob_standing_on")));
 			if (c.containsKey("month_weeks")) conditions.add(new Month_weeks(c.get("month_weeks")));
 			if (c.containsKey("months")) conditions.add(new Months(c.get("months")));
+			if (c.containsKey("ocelot_type")) conditions.add(new Ocelot_type(c.get("ocelot_type")));
 			if (c.containsKey("percent")) conditions.add(new Percent(c.get("percent")));
 			if (c.containsKey("player_holding")) conditions.add(new Player_holding(c.get("player_holding")));			
 			if (c.containsKey("player_items")) conditions.add(new Player_items(c.get("player_items")));
@@ -116,6 +119,7 @@ public class Con_group implements Condition
 			if (c.containsKey("spawn_reasons")) conditions.add(new Spawn_reasons(c.get("spawn_reasons")));
 			if (c.containsKey("tamed")) conditions.add(new Tamed(c.get("tamed")));
 			if (c.containsKey("thundering")) conditions.add(new Thundering(c.get("thundering")));
+			if (c.containsKey("villager_type")) conditions.add(new Villager_type(c.get("villager_type")));
 			if (c.containsKey("wool_colours")) conditions.add(new Wool_colours(c.get("wool_colours")));
 			if (c.containsKey("world_mob_count")) conditions.add(new World_mob_count(c.get("world_mob_count")));
 			if (c.containsKey("world_mob_class_count")) conditions.add(new World_mob_class_count(c.get("world_mob_class_count")));
