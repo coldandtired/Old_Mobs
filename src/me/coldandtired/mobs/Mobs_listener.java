@@ -1,5 +1,6 @@
 package me.coldandtired.mobs;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ public class Mobs_listener implements Listener
 	Main plugin;
 	Map<String, Object> unique = null;
 	ArrayList<String> tracked_mobs;
+	ArrayList<String> ignored_worlds;
 	Random rng = new Random();
 	boolean overrule_damage = false;
 	boolean overrule_heal= false;
@@ -73,8 +75,10 @@ public class Mobs_listener implements Listener
 	boolean overrule_become_powered_creeper = false;
 	boolean overrule_tame = false;
 	boolean overrule_become_pig_zombie = false;
+	Death_message death_messages;
 	public Map<UUID, Mob> mobs = new HashMap<UUID, Mob>();
 	int split_count = 0;
+	DecimalFormat f = new DecimalFormat("#,###.##");
 	
 	@SuppressWarnings("unchecked")
 	boolean setup(Main plugin)
@@ -98,6 +102,10 @@ public class Mobs_listener implements Listener
 		overrule_become_powered_creeper = Configs.get_bool(null, "overrule.becoming_powered_creeper", false);	
 		overrule_become_pig_zombie = Configs.get_bool(null, "overrule.becoming_pig_zombie", false);
 		Map<String, String> temp = new HashMap<String, String>();
+		
+		Map<String, Object> messages = Configs.get_section("death_messages");
+		if (messages != null) death_messages = new Death_message(messages);
+		
 		for (String s : Utils.mobs)
 		{
 			Map<String, Object> ms = Configs.get_section(s);
@@ -123,6 +131,13 @@ public class Mobs_listener implements Listener
 			}
 		}
 		
+		ignored_worlds = (ArrayList<String>) Main.config.get("ignored_worlds");
+		if (ignored_worlds != null && ignored_worlds.size() > 0)
+		{
+			Utils.log("Ignored worlds:");
+			for (String s : ignored_worlds) Utils.log(s);
+		}
+		
 		if (tracked_mobs.size() > 0)
 		{
 			Utils.log("Tracked mobs:");
@@ -134,13 +149,21 @@ public class Mobs_listener implements Listener
 	@EventHandler
 	public void onEntityDeath(EntityDeathEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		Entity entity = event.getEntity();
-		if (!tracked_mobs.contains(Utils.get_mob(entity))) return;
+
+		if (!tracked_mobs.contains(Utils.get_mob(entity)))
+		{
+			if (death_messages == null || death_messages.tracked_mobs_only)	return;
+		}
 
 		LivingEntity le = (LivingEntity)entity;
 		Player p = le.getKiller();
-
-		Mob mob = mobs.get(entity.getUniqueId());if (mob != null)
+		boolean global_message = true;
+		int new_money = 0;
+		
+		Mob mob = mobs.get(entity.getUniqueId());
 		if (mob != null && mob.death_actions != null)
 		{
 			for (Death_action da : mob.death_actions)
@@ -156,7 +179,9 @@ public class Mobs_listener implements Listener
 					
 					if (da.money != null && Main.economy != null && p != null)
 					{
-						Main.economy.depositPlayer(p.getName(), Utils.get_quantity(da.money));
+						int i = Utils.get_quantity(da.money);
+						Main.economy.depositPlayer(p.getName(), i);
+						new_money += i;
 					}
 					
 					if (da.items != null)
@@ -203,6 +228,89 @@ public class Mobs_listener implements Listener
 							}
 						}
 					}
+					
+					if (da.death_messages != null && p != null)
+					{
+						String s = Utils.get_string_value(da.death_messages.messages);
+						String money = "";
+						String player_money = "";
+						String item_names = "";
+						String item_amounts = "";
+						
+						for (ItemStack is : event.getDrops())
+						{
+							String ss = is.getType().name().toLowerCase();
+							item_names += ", " + ss;
+							item_amounts += ", " + is.getAmount() + " x " + ss;
+						}
+						item_names = item_names.replaceFirst(", ", "");
+						item_amounts = item_amounts.replaceFirst(", ", "");
+						
+						if (Main.economy != null)
+						{
+							money = Integer.toString(new_money);
+							player_money = f.format(Main.economy.getBalance(p.getName()));
+						}
+						
+						s = s.replace("^player^", p.getDisplayName());
+						s = s.replace("^exp^", Integer.toString(event.getDroppedExp()));
+						s = s.replace("^mob^", entity.getType().getName());
+						s = s.replace("^money^", money);
+						s = s.replace("^total_money^", player_money);
+						s = s.replace("^item_names^", item_names);
+						s = s.replace("^item_amounts^", item_amounts);
+						
+						if (da.death_messages.global) p.getServer().broadcastMessage(s);
+						else
+						{
+							p.sendMessage(s);
+							if (da.death_messages.log) Utils.log(s);
+						}
+						global_message = false;
+					}
+				}
+			}
+		}
+		
+		if (p != null && global_message)
+		{		
+			if (death_messages != null && death_messages.messages != null)
+			{
+				String s = Utils.get_string_value(death_messages.messages);
+				
+				String money = "";
+				String player_money = "";
+				String item_names = "";
+				String item_amounts = "";
+				
+				for (ItemStack is : event.getDrops())
+				{
+					String ss = is.getType().name().toLowerCase();
+					item_names += ", " + ss;
+					item_amounts += ", " + is.getAmount() + " x " + ss;
+				}
+				item_names = item_names.replaceFirst(", ", "");
+				item_amounts = item_amounts.replaceFirst(", ", "");
+				
+				if (Main.economy != null)
+				{
+					money = Integer.toString(new_money);
+					player_money = f.format(Main.economy.getBalance(p.getName()));
+				}
+				
+				s = s.replace("^player^", p.getDisplayName());
+				s = s.replace("^exp^", Integer.toString(event.getDroppedExp()));
+				s = s.replace("^mob^", entity.getType().getName());
+				s = s.replace("^money^", money);
+				s = s.replace("^total_money^", player_money);
+				s = s.replace("^item_names^", item_names);
+				s = s.replace("^item_amounts^", item_amounts);
+				
+				if (death_messages.global) p.getServer().broadcastMessage(s);
+				else
+				{
+					p.sendMessage(s);
+					if (death_messages.log) Utils.log(s);
 				}
 			}
 		}
@@ -211,6 +319,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onCreatureSpawn(CreatureSpawnEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_spawn) event.setCancelled(false); else return;
@@ -305,6 +415,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDamage(EntityDamageEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		Entity entity = event.getEntity();
 		if (!(entity instanceof LivingEntity)) return;
 		
@@ -346,6 +458,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityRegainHealth(EntityRegainHealthEvent event)
 	{		
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_heal) event.setCancelled(false); else return;
@@ -376,7 +490,9 @@ public class Mobs_listener implements Listener
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCombust(EntityCombustEvent event)
-	{		
+	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_burn) event.setCancelled(false); else return;
@@ -393,13 +509,15 @@ public class Mobs_listener implements Listener
 			{
 				if (Utils.matches_condition(mob.burn_rules, (LivingEntity)entity, mob.spawn_reason, null, mob.random)) burn = !burn;
 			}
-			if (!burn) event.setCancelled(true);
+			if (!burn) event.setCancelled(true);			
 		}
 	}
 		
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTarget(EntityTargetEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_target) event.setCancelled(false); else return;
@@ -415,6 +533,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onExplosionPrime(ExplosionPrimeEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_explode) event.setCancelled(false); else return;
@@ -435,6 +555,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityExplode(EntityExplodeEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_explode) event.setCancelled(false); else return;
@@ -456,6 +578,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCreatePortal(EntityCreatePortalEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_create_portal) event.setCancelled(false); else return;
@@ -471,6 +595,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSlimeSplit(SlimeSplitEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_split) event.setCancelled(false); else return;
@@ -494,7 +620,9 @@ public class Mobs_listener implements Listener
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSheepRegrowWool(SheepRegrowWoolEvent event)
-	{		
+	{	
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+			
 		if (event.isCancelled())
 		{
 			if (overrule_regrow_wool) event.setCancelled(false); else return;
@@ -510,6 +638,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSheepDyeWool(SheepDyeWoolEvent event)
 	{		
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_dye_wool) event.setCancelled(false); else return;
@@ -525,6 +655,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerShearEntity(PlayerShearEntityEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_shear) event.setCancelled(false); else return;
@@ -540,6 +672,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityChangeBlock(EntityChangeBlockEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_change_block) event.setCancelled(false); else return;
@@ -555,6 +689,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onCreeperPower(CreeperPowerEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_become_powered_creeper) event.setCancelled(false); else return;
@@ -570,6 +706,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTame(EntityTameEvent event)
 	{		
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_tame) event.setCancelled(false); else return;
@@ -589,6 +727,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPigZap(PigZapEvent event)
 	{		
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_become_pig_zombie) event.setCancelled(false); else return;
@@ -604,6 +744,8 @@ public class Mobs_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTeleport(EntityTeleportEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getEntity().getWorld().getName())) return;
+		
 		if (event.isCancelled())
 		{
 			if (overrule_teleport) event.setCancelled(false); else return;
@@ -619,6 +761,8 @@ public class Mobs_listener implements Listener
 	@EventHandler
 	public void onChunkLoad(ChunkLoadEvent event)
 	{
+		if (ignored_worlds != null && ignored_worlds.contains(event.getWorld().getName())) return;
+		
 		for (Entity ee: event.getChunk().getEntities()) 
 		{
 			if (ee instanceof LivingEntity && tracked_mobs.contains(Utils.get_mob(ee)))

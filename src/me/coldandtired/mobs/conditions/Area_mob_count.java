@@ -31,7 +31,6 @@ public class Area_mob_count  implements Condition
 				if (temp.containsKey("region")) loc = new Loc((String)temp.get("region"));
 				else loc = new Loc(temp);
 				values.put(loc, Utils.fill_number_condition_array(temp.get("count")));
-				Utils.log(temp.toString());
 			}
 		}
 		else

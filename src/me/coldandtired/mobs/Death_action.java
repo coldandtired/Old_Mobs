@@ -11,6 +11,7 @@ public class Death_action
 	ArrayList<Integer> money;
 	boolean replace_items = true;
 	boolean replace_exp = true;
+	Death_message death_messages;
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Death_action(Map<String, Object> da, int random) 
@@ -20,8 +21,14 @@ public class Death_action
 		if (da.containsKey("will_give_money") && Main.economy != null) money = Utils.fill_int_array(da.get("will_give_money"));
 		if (da.containsKey("replace_items")) replace_items = (Boolean)da.get("replace_items");
 		if (da.containsKey("replace_exp")) replace_exp = (Boolean)da.get("replace_exp");
-		
-		Object ob = da.get("if");
+		Object ob = da.get("death_messages");
+		if (ob != null)
+		{			
+			Map<String, Object> temp = (Map<String, Object>)ob;
+			death_messages = new Death_message(temp);
+			if (death_messages.messages == null) death_messages = null;
+		}
+		ob = da.get("if");
 
 		if (ob != null)
 		{

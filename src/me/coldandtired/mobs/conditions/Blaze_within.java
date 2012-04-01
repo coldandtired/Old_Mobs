@@ -23,7 +23,7 @@ public class Blaze_within implements Condition
 		for (Map<String, Object> m : (ArrayList<Map<String, Object>>)ob)
 		{
 			values.add(new Mob_within(m.get("range")));
-			Utils.log("blaze");
+			//Utils.log("blaze");
 		}
 	}
 

@@ -16,7 +16,7 @@ public class Mob_spawner implements Runnable
 	}
 	
 	void spawn_mobs(Auto_spawn a, Location loc)
-	{
+	{		
 		if (Main.debug && !a.shortcut.equalsIgnoreCase("")) Utils.log("Auto spawning shortcut" + a.shortcut);
 		int quantity = a.quantities != null ? Utils.get_quantity(a.quantities) : 1;
 		for (int i = 0; i < quantity; i++)

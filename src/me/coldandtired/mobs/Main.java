@@ -144,6 +144,10 @@ public class Main extends JavaPlugin
 			fw.write("# Here are the global settings for the plugin.\n");
 			fw.write("# See http://dev.bukkit.org/server-mods/mobs/pages/tutorial/ for help\n");
 			fw.write("\n");
+			fw.write("# Any worlds in this list get ignored completely by the plugin.\n");
+			fw.write("# Make sure the case is correct!\n");
+			fw.write("ignored_worlds: [vanilla_world, temp_world]\n");
+			fw.write("\n");
 			fw.write("# This is the time in seconds between each spawn_event.\n");
 			fw.write("# Set it big and with large quantities of mobs for wave spawning,\n");
 			fw.write("# or set it small and with small quantities of mobs for steady spawning.\n");
@@ -298,6 +302,7 @@ public class Main extends JavaPlugin
 				if (!getDataFolder().exists()) getDataFolder().mkdir();
 				f.createNewFile();
 				FileWriter fw = new FileWriter(f);
+				fw.write("ignored_worlds: []\n");
 				fw.write("spawn_interval: 600\n");
 				fw.write("auto_spawn_min_player_count: 1\n");
 				fw.write("debug_mode: no\n");
