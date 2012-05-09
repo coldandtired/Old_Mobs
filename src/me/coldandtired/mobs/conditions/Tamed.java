@@ -7,23 +7,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Tamed implements Condition
 {
-	private int value = -1;
-	
-	public Tamed(Object ob)
+	private boolean value;
+
+	public Tamed(boolean b)
 	{
-		value = Utils.fill_boolean(ob);
+		value = b;
 	}
-	
+
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		if (value == -1 || !(entity instanceof Wolf)) return true;
-		boolean cond = ((Wolf)entity).isTamed();
-		if ((cond && value == 1) || (!cond && value == 0)) return true;
-		return false;
+		if (!(entity instanceof Wolf)) return true;
+		return  ((Wolf)entity).isTamed() == value;
 	}
 }

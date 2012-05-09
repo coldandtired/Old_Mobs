@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import me.coldandtired.mobs.Area;
-import me.coldandtired.mobs.Utils;
 
 public class Mob_within 
 {
@@ -16,6 +15,6 @@ public class Mob_within
 	{
 		Map<String, Object> mw = (Map<String, Object>)o;
 		area = new Area(mw.get("radius"));
-		count = Utils.fill_number_condition_array(mw.get("count"));
+		//count = Utils.fill_number_condition_array(mw.get("count"));
 	}
 }

@@ -9,10 +9,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 
 import me.coldandtired.mobs.Condition;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Wool_colours  implements Condition
 {
 	ArrayList<DyeColor> values = new ArrayList<DyeColor>();
+
+	public Wool_colours(String s)
+	{
+		//values = Utils.fill_string_values(s);
+	}
 	
 	@SuppressWarnings("unchecked")
 	public Wool_colours(Object ob) 
@@ -24,7 +30,7 @@ public class Wool_colours  implements Condition
 	}
 
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random)
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
 	{
 		if (!(entity instanceof Sheep)) return false;
 		

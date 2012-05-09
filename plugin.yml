@@ -1,5 +1,5 @@
 name: Mobs
-version: 1.2.4 b3
+version: 1.2.5 b2dev
 author: coldandtired
 main: me.coldandtired.mobs.Main
 description: A fully-featured mob control plugin
@@ -20,10 +20,10 @@ commands:
 permissions:
     mobs.can_reload_mobs:
         description: Allows reloading the configs
-        default: false
+        default: op
     mobs.can_spawn_mobs:
         description: Allows manual spawning
-        default: false
+        default: op
     mobs.can_purge_mobs:
         description: Allows removing any mob older than one hour from the list held in memory
-        default: false
+        default: op

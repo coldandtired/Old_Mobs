@@ -1,73 +1,78 @@
 package me.coldandtired.mobs;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Map;
+import java.util.HashMap;
+
+import me.coldandtired.mobs.data.Damage_value;
+import me.coldandtired.mobs.data.Drops;
+import me.coldandtired.mobs.data.Mob_properties;
 
 public class Mob 
-{
-	
+{	
 	Date spawned_at;
-	public int hp;
-	public int max_hp;
-	public int size;
-	public int split_into;
-	public int tamed_hp;
-	public int damage;
+	public Integer hp;
+	public Integer max_hp;
+	public Integer tamed_hp;
+	public Integer damage;
+	public Integer split_into;
 	public String spawn_reason;
-	public int random = Utils.rng.nextInt(100) + 1;
-	public boolean can_be_dyed;
-	public boolean can_be_sheared;
-	public boolean can_be_tamed;
-	public boolean can_become_pig_zombie;
-	public boolean can_become_powered = true;
-	public boolean can_burn;
-	public boolean can_heal;
-	public boolean can_overheal;
-	public boolean can_create_portal;
-	public boolean can_destroy_blocks = true;
-	public boolean can_move_blocks;
-	public boolean can_grow_wool;
-	public boolean can_remove_grass;
-	public boolean can_split;
-	public boolean can_teleport;
-	public boolean safe;
-	public ArrayList<Con_group> burn_rules;
-	public ArrayList<Death_action> death_actions;
-	public int burn_duration;
-	public boolean fire_explosion;
-
-	public Mob(Map<String, Object> general, Map<String, Object> unique, String spawn_reason)
+	public int random;
+	public Boolean can_be_dyed;
+	public Boolean can_be_sheared;
+	public Boolean can_be_tamed;
+	public Boolean can_become_pig_zombie;
+	public Boolean can_become_powered_creeper;
+	public Boolean can_burn;
+	public Boolean can_heal;
+	public Boolean can_overheal;
+	public Boolean can_create_portal;
+	public Boolean can_destroy_blocks;
+	public Boolean can_move_blocks;
+	public Boolean can_grow_wool;
+	public Boolean can_graze;
+	public Boolean can_teleport;
+	public Boolean safe;
+	public Integer burn_duration;
+	public Boolean fiery_explosion;
+	public HashMap<String, Damage_value> damage_properties = null;
+	public Drops drops = null;
+	
+	public Mob(Mob_properties props, Drops drops, HashMap<String, Damage_value> damage_properties, String spawn_reason, int random)
 	{
+		if (props != null)
+		{
+			if (props.hp != null)
+			{
+				hp = L.return_int_from_array(props.hp);
+				max_hp = hp;
+			}
+			if (props.tamed_hp != null) tamed_hp = L.return_int_from_array(props.tamed_hp);
+			if (props.damage != null) damage = L.return_int_from_array(props.damage);
+			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);
+			if (props.burn_duration != null) burn_duration = L.return_int_from_array(props.burn_duration);
+			
+			if (props.can_be_dyed != null) can_be_dyed = L.return_bool_from_string(props.can_be_dyed);
+			if (props.can_be_sheared != null) can_be_sheared = L.return_bool_from_string(props.can_be_sheared);
+			if (props.can_be_tamed != null) can_be_tamed = L.return_bool_from_string(props.can_be_tamed);
+			if (props.can_become_pig_zombie != null) can_become_pig_zombie = L.return_bool_from_string(props.can_become_pig_zombie);
+			if (props.can_become_powered_creeper != null) can_become_powered_creeper = L.return_bool_from_string(props.can_become_powered_creeper);
+			if (props.can_burn != null) can_burn = L.return_bool_from_string(props.can_burn);
+			if (props.can_heal != null) can_heal = L.return_bool_from_string(props.can_heal);
+			if (props.can_overheal != null) can_overheal = L.return_bool_from_string(props.can_overheal);
+			if (props.can_create_portal != null) can_create_portal = L.return_bool_from_string(props.can_create_portal);
+			if (props.can_destroy_blocks != null) can_destroy_blocks = L.return_bool_from_string(props.can_destroy_blocks);
+			if (props.can_move_blocks != null) can_move_blocks = L.return_bool_from_string(props.can_move_blocks);
+			if (props.can_grow_wool != null) can_grow_wool = L.return_bool_from_string(props.can_grow_wool);
+			if (props.can_graze != null) can_graze = L.return_bool_from_string(props.can_graze);
+			if (props.can_teleport != null) can_teleport = L.return_bool_from_string(props.can_teleport);
+			if (props.safe != null) safe = L.return_bool_from_string(props.safe);
+			if (props.fiery_explosion != null) fiery_explosion = L.return_bool_from_string(props.fiery_explosion);
+		}
+		this.drops = drops;
+		this.damage_properties = damage_properties;
 		this.spawn_reason = spawn_reason;
+		this.random = random;
 		spawned_at = Calendar.getInstance().getTime();
-		
-		hp = Utils.set_int_property(-1, general, unique, "hp");
-		max_hp = hp;
-		size = Utils.set_int_property(-1, general, unique, "size");
-		split_into = Utils.set_int_property(-1, general, unique, "split_into");
-		tamed_hp = Utils.set_int_property(-1, general, unique, "tamed_hp");		
-		damage = Utils.set_int_property(-1, general, unique, "damages");
-		safe = Utils.set_boolean_property(false, general, unique, "safe");
-		can_be_dyed = Utils.set_boolean_property(true, general, unique, "can_be_dyed");
-		can_be_sheared = Utils.set_boolean_property(true, general, unique, "can_be_sheared");
-		can_be_tamed = Utils.set_boolean_property(true, general, unique, "can_be_tamed");
-		can_become_pig_zombie = Utils.set_boolean_property(true, general, unique, "can_become_pig_zombie");
-		can_become_powered = Utils.set_boolean_property(true, general, unique, "can_become_powered");
-		can_heal = Utils.set_boolean_property(true, general, unique, "can_heal");
-		can_overheal = Utils.set_boolean_property(false, general, unique, "can_overheal");
-		can_burn = Utils.set_burn_property(true, general, unique);
-		can_create_portal = Utils.set_boolean_property(true, general, unique, "can_create_portal");
-		can_destroy_blocks = Utils.set_boolean_property(true, general, unique, "can_destroy_blocks");
-		can_move_blocks = Utils.set_boolean_property(true, general, unique, "can_move_blocks");	
-		can_grow_wool = Utils.set_boolean_property(true, general, unique, "can_grow_wool");		
-		can_remove_grass = Utils.set_boolean_property(true, general, unique, "can_remove_grass");		
-		can_split = Utils.set_boolean_property(true, general, unique, "can_split");	
-		can_teleport = Utils.set_boolean_property(true, general, unique, "can_teleport");	
-		fire_explosion = Utils.set_boolean_property(false, general, unique, "fire_explosion");		
-		death_actions = Utils.set_death_actions(general, unique, random);
-		burn_rules = Utils.set_burn_rules(general, unique, random);
-		burn_duration = Utils.set_burn_ticks(8, general, unique);		
 	}
 }

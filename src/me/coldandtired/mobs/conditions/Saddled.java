@@ -7,23 +7,21 @@ import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Saddled implements Condition
 {
-	private int value = -1;
-	
-	public Saddled(Object ob)
+	private boolean value;
+
+	public Saddled(boolean b)
 	{
-		value = Utils.fill_boolean(ob);
+		value = b;
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		if (value == -1 || !(entity instanceof Pig)) return true;
-		boolean cond = ((Pig)entity).hasSaddle();
-		if ((cond && value == 1) || (!cond && value == 0)) return true;
-		return false;
+		if (!(entity instanceof Pig)) return true;
+		return ((Pig)entity).hasSaddle() == value;
 	}
 }

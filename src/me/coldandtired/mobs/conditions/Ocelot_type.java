@@ -1,9 +1,10 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
+import me.coldandtired.mobs.L;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -13,19 +14,19 @@ import org.bukkit.entity.Player;
 
 public class Ocelot_type  implements Condition
 {
-	private ArrayList<String> values;
-	
-	public Ocelot_type(Object ob)
+	private List<String> values;
+
+	public Ocelot_type(String s)
 	{
-		values = Utils.fill_string_array(ob);
+		values = L.fill_string_values(s);
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		if (!(entity instanceof Ocelot)) return true;
 		
 		Ocelot ocelot = (Ocelot)entity;
-		return Utils.matches_string(values, ocelot.getCatType().name());
+		return L.matches_string(values, ocelot.getCatType().name());
 	}
 }

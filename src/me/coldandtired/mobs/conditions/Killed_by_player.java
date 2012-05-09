@@ -6,22 +6,21 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Killed_by_player implements Condition
 {
-	private int value = -1;
-	
-	public Killed_by_player(Object ob)
+	private boolean value;
+
+	public Killed_by_player(boolean b)
 	{
-		value = Utils.fill_boolean(ob);
+		value = b;
 	}
+
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		boolean temp = entity.getKiller() instanceof Player ? true : false;
-		if ((temp && value == 1) || (!temp && value == 0)) return true;
-		return false;
+		return entity.getKiller() instanceof Player == value;
 	}
 }

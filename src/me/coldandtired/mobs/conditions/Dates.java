@@ -1,29 +1,29 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.L;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Dates implements Condition
 {
-	private ArrayList<Number_condition> values;
+	private List<Number_condition> values;
 	
-	public Dates(Object ob)
+	public Dates(String s)
 	{
-		values = Utils.fill_number_condition_array(ob);
+		values = L.fill_number_values(s);
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		Calendar cal = Calendar.getInstance();
-		return Utils.matches_number_condition(values, cal.get(Calendar.DATE));
+		return L.matches_number_condition(values, cal.get(Calendar.DATE));
 	}	
 }

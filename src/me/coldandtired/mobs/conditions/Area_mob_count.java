@@ -6,23 +6,20 @@ import java.util.Map;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Loc;
-import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Area_mob_count  implements Condition
 {
 	Map<Loc, ArrayList<Number_condition>> values = new HashMap<Loc, ArrayList<Number_condition>>();
 	
-	@SuppressWarnings("unchecked")
 	public Area_mob_count(Object ob) 
 	{
-		if (ob instanceof ArrayList)
+		/*if (ob instanceof ArrayList)
 		{
 			for (Map<String, Object> a : (ArrayList<Map<String, Object>>)ob)
 			{
@@ -41,13 +38,13 @@ public class Area_mob_count  implements Condition
 			if (temp.containsKey("region")) loc = new Loc((String)temp.get("region"));
 			else loc = new Loc(temp);
 			values.put(loc, Utils.fill_number_condition_array(temp.get("count")));
-		}	
+		}	*/
 	}
 
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		for (Loc l : values.keySet())
+		/*for (Loc l : values.keySet())
 		{
 			int i = 0;
 			Loc temp = null;
@@ -58,7 +55,7 @@ public class Area_mob_count  implements Condition
 				if (Utils.check_region(world.getName(), l.region_name)) temp = new Loc(world, l.region_name);
 				else
 				{
-					Utils.warn("The world called " + world.getName() + " has no region called " + l.region_name + "!");
+					L.warn("The world called " + world.getName() + " has no region called " + l.region_name + "!");
 					return true;
 				}
 			}
@@ -74,8 +71,8 @@ public class Area_mob_count  implements Condition
 							&& ll.getBlockZ() >= (temp.base.z - temp.range.z) && ll.getBlockZ() <= (temp.base.z + temp.range.z)) i++;
 				}
 			}
-			return Utils.matches_number_condition(values.get(l), i);
-		}
+			return L.matches_number_condition(values.get(l), i);
+		}*/
 		return false;
 	}
 }

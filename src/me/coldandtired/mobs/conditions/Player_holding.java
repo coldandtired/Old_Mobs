@@ -1,42 +1,31 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.ArrayList;
-import java.util.Map;
-
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Item;
-import me.coldandtired.mobs.Matlist;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Player_holding implements Condition 
-{
-	ArrayList<Item> values = new ArrayList<Item>();
-	
-	@SuppressWarnings("unchecked")
+{	
 	public Player_holding(Object ob) 
 	{
-		for (Map<String, Object> w : (ArrayList<Map<String, Object>>)ob)
+		/*for (Map<String, Object> w : (ArrayList<Map<String, Object>>)ob)
 		{
 			Matlist groups = Utils.groups.get((String)w.get("name"));
-			if (groups == null) for (String s : ((String)w.get("name")).split(","))	values.add(new Item(w, s));
-			else for (String s : groups.names) values.add(new Item(w, s));
-		}
+			if (groups == null) for (String s : ((String)w.get("name")).split(","))	values.add(new Old_item(w, s));
+			else for (String s : groups.names) values.add(new Old_item(w, s));
+		}*/
 	}
 
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random)
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
 	{
-		boolean validholding = false;
+		/*boolean validholding = false;
 		ItemStack is = player.getItemInHand();
 		int amount = is.getAmount();
-		for (Item w : values)
+		for (Old_item w : values)
 		{
 			Material material = Material.matchMaterial(w.name);
 			boolean matches = false;
@@ -77,6 +66,7 @@ public class Player_holding implements Condition
 				else return true;
 			}	
 		}
-		return validholding;
+		return validholding;*/
+		return true;
 	}
 }

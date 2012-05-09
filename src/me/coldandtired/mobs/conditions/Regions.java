@@ -1,6 +1,6 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
@@ -10,19 +10,20 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
+import me.coldandtired.mobs.L;
 
 public class Regions implements Condition
 {
-	private ArrayList<String> values;
-	
-	public Regions(Object ob)
+	private List<String> values;
+
+	public Regions(String s)
 	{
-		values = Utils.fill_string_array(ob);
+		values = L.fill_string_values(s);
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		if (Main.world_guard == null) return true;
 

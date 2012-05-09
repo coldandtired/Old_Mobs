@@ -1,26 +1,28 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
+import me.coldandtired.mobs.L;
 
 public class Game_times implements Condition
 {
-	private ArrayList<Number_condition> values;
+	private List<Number_condition> values;
 	
-	public Game_times(Object ob)
+	public Game_times(String s)
 	{
-		values = Utils.fill_number_condition_array(ob);
+		values = L.fill_number_values(s);
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return Utils.matches_number_condition(values, (int)world.getTime());
+		return L.matches_number_condition(values, (int)world.getTime());
 	}	
 }

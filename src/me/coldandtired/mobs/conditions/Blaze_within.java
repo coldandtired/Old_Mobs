@@ -11,7 +11,8 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
+import me.coldandtired.mobs.L;
 
 public class Blaze_within implements Condition
 {
@@ -28,13 +29,13 @@ public class Blaze_within implements Condition
 	}
 
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		for (Mob_within mw : values)
 		{
 			int i = 0;
 			for (Entity e : entity.getNearbyEntities(mw.area.x, mw.area.y, mw.area.z)) if (e instanceof Blaze) i++;
-			if (Utils.matches_number_condition(mw.count, i)) return true;
+			if (L.matches_number_condition(mw.count, i)) return true;
 		}
 		return false;
 	}

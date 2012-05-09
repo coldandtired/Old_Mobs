@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Area;
 import me.coldandtired.mobs.Condition;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Player_within implements Condition
 {
@@ -22,7 +23,7 @@ public class Player_within implements Condition
 	}
 
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random)
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
 	{
 		for (Entity e : entity.getNearbyEntities(value.x, value.y, value.z))
 		{

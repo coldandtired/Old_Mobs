@@ -17,10 +17,10 @@ public class Loc
 {
 	public Area base;
 	public Area range;
-	World world;
-	boolean all_world = false;
-	Random rng = new Random();
-	ArrayList<String> players;
+	public World world;
+	public boolean all_world = false;
+	public Random rng = new Random();
+	public ArrayList<String> players;
 	public String region_name = "";
 	
 	public Loc(String region_name)
@@ -43,7 +43,7 @@ public class Loc
 	}
 	
 	@SuppressWarnings("unchecked")
-	Loc(World world, Map<String, Object> loc)
+	public Loc(World world, Map<String, Object> loc)
 	{
 		this.world = world;
 		if (loc.containsKey("base")) base = new Area((Map<String, Integer>)loc.get("base"));
@@ -53,8 +53,7 @@ public class Loc
 	}
 	
 	@SuppressWarnings("unchecked")
-	public
-	Loc(Map<String, Object> loc)
+	public Loc(Map<String, Object> loc)
 	{
 		if (loc.containsKey("base")) base = new Area((Map<String, Integer>)loc.get("base"));
 		else base = new Area(0, 120, 0);
@@ -63,7 +62,7 @@ public class Loc
 	}
 	
 	@SuppressWarnings("unchecked")
-	Loc(World world, Map<String, Object> loc, String s)
+	public Loc(World world, Map<String, Object> loc, String s)
 	{
 		if (players == null) players = new ArrayList<String>();
 		players.add(s);
@@ -72,13 +71,13 @@ public class Loc
 		else range = new Area(5, 5, 5);
 	}
 	
-	Loc(World world)
+	public Loc(World world)
 	{
 		this.world = world;
 		all_world = true;
 	}
 	
-	Location get_location()
+	public Location get_location()
 	{
 		int x = 0;
 		int y = 0;
@@ -104,10 +103,11 @@ public class Loc
 			//Bukkit.getLogger().info("x = " + x);
 			//Bukkit.getLogger().info("z = " + z);
 		}
-		return Utils.get_safe_block(world.getBlockAt(x, y, z));		
+		//return Utils.get_safe_block(world.getBlockAt(x, y, z));	
+		return null;
 	}
 	
-	Location get_player_location(String name)
+	public Location get_player_location(String name)
 	{
 		Player p = Bukkit.getPlayer(name);
 		if (p == null) return null;

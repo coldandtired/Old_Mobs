@@ -8,33 +8,25 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Wolf;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
 
 public class Angry implements Condition
 {
-	private int value = -1;
+	private boolean value;
 	
-	public Angry(Object ob)
+	public Angry(boolean b)
 	{
-		value = Utils.fill_boolean(ob);
+		value = b;
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random)
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
 	{
-		if (value == -1) return true;
 		if (!(entity instanceof Wolf || entity instanceof PigZombie)) return false;
 		
-		if (entity instanceof Wolf)
-		{
-			boolean cond = ((Wolf)entity).isAngry();
-			if ((cond && value == 1) || (!cond && value == 0)) return true;
-		}
-		else if (entity instanceof PigZombie)
-		{
-			boolean cond = ((PigZombie)entity).isAngry();
-			if ((cond && value == 1) || (!cond && value == 0)) return true;
-		}
+		if (entity instanceof Wolf) return ((Wolf)entity).isAngry() == value;
+		else if (entity instanceof PigZombie) return ((PigZombie)entity).isAngry() == value;
+
 		return false;
 	}
 }

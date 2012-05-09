@@ -1,6 +1,6 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Calendar;
 
 import org.bukkit.Location;
@@ -9,21 +9,23 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.Utils;
+import me.coldandtired.mobs.data.Autospawn;
+import me.coldandtired.mobs.L;
 
 public class Years implements Condition
 {
-	private ArrayList<Number_condition> values;
-	
-	public Years(Object ob)
+	private List<Number_condition> values;
+
+	public Years(String s)
 	{
-		values = Utils.fill_number_condition_array(ob);
+		values = L.fill_number_values(s);
 	}
+
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		Calendar cal = Calendar.getInstance();
-		return Utils.matches_number_condition(values, cal.get(Calendar.YEAR));
+		return L.matches_number_condition(values, cal.get(Calendar.YEAR));
 	}	
 }
