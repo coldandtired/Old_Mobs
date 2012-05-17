@@ -4,9 +4,9 @@ import org.w3c.dom.Element;
 
 public class Death_message 
 {
-	boolean log_messages;
-	boolean announce_messages;                                                                  
-	String message;
+	public boolean log_messages;
+	public boolean announce_messages;                                                                  
+	public String message;
 	
 	Death_message(Element el)
 	{

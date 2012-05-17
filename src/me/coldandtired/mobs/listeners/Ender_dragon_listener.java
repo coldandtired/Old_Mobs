@@ -1,12 +1,7 @@
 package me.coldandtired.mobs.listeners;
 
-import me.coldandtired.mobs.L;
-import me.coldandtired.mobs.Main;
 import me.coldandtired.mobs.Mob;
 import me.coldandtired.mobs.data.Config;
-import me.coldandtired.mobs.data.Creature_data;
-
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -17,7 +12,7 @@ public class Ender_dragon_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCreatePortal(EntityCreatePortalEvent event)
 	{
-		if (L.ignore_world(event.getEntity().getWorld())) return;
+		if (!event.getEntity().hasMetadata("mobs_data")) return;
 
 		if (event.isCancelled())
 		{
@@ -25,14 +20,8 @@ public class Ender_dragon_listener implements Listener
 			else return;
 		}
 
-		LivingEntity le = L.return_le(event.getEntity());
-		if (le == null) return;		
-		
-		Creature_data cd = Main.tracked_mobs.get(le.getType().name());	
-		if (cd == null) return; // not tracked
-		
-		Mob mob = Main.mobs.get(le.getUniqueId());
-		if (mob == null) return;
+		Object o = event.getEntity().getMetadata("mobs_data").get(0).value();
+		Mob mob = (Mob)o;
 		
 		// end setup
 		

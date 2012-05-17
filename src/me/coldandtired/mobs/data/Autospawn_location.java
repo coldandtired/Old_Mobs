@@ -24,6 +24,9 @@ public class Autospawn_location
 	public Integer xrange;
 	public Integer yrange;
 	public Integer zrange;
+	public int min_xrange;
+	public int min_yrange;
+	public int min_zrange;
 	public int autospawn_placement;
 	public String location_type = "";	
 	
@@ -31,6 +34,7 @@ public class Autospawn_location
 	{
 		String s = "";
 		location_type = el.getAttributeNode("location_type").getValue();
+		all_values = Boolean.parseBoolean(el.getAttributeNode("all_values").getValue());
 		
 		s = el.getAttributeNode("worlds").getValue();
 		if (!s.equalsIgnoreCase(""))
@@ -83,6 +87,15 @@ public class Autospawn_location
 	
 			s = el.getAttributeNode("zrange").getValue();
 			zrange = !s.equalsIgnoreCase("") ? Integer.parseInt(s) : null;
+
+			s = el.getAttributeNode("min_xrange").getValue();
+			min_xrange = !s.equalsIgnoreCase("") ? Integer.parseInt(s) : 0;
+			
+			s = el.getAttributeNode("min_yrange").getValue();
+			min_yrange = !s.equalsIgnoreCase("") ? Integer.parseInt(s) : 0;
+	
+			s = el.getAttributeNode("min_zrange").getValue();
+			min_zrange = !s.equalsIgnoreCase("") ? Integer.parseInt(s) : 0;
 		}
 	}
 }

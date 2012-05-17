@@ -14,6 +14,7 @@ public class Mob_properties
 	public String[] villager_types = null;
 	public String[] ocelot_types = null;
 	public List<Integer> burn_duration = null;
+	public List<Integer> max_lifetime = null;
 	
 	public String can_burn = null;
 	public String safe = null;
@@ -74,6 +75,7 @@ public class Mob_properties
 			if (!value.equalsIgnoreCase(""))
 			{
 				if (s.equalsIgnoreCase("hp")) hp = L.fill_int_properties(value);
+				if (s.equalsIgnoreCase("max_lifetime")) max_lifetime = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("size")) size = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("hp_per_size")) hp_per_size = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("split_into")) split_into = L.fill_int_properties(value);
@@ -83,7 +85,7 @@ public class Mob_properties
 				if (s.equalsIgnoreCase("villager_types")) villager_types = value.split(",");
 				if (s.equalsIgnoreCase("ocelot_types")) ocelot_types = value.split(",");
 			}
-			if (!bool_value.equalsIgnoreCase(""))
+			if (!bool_value.equalsIgnoreCase("default"))
 			{
 				if (s.equalsIgnoreCase("can_heal")) can_heal = bool_value;
 				if (s.equalsIgnoreCase("can_overheal")) can_overheal = bool_value;

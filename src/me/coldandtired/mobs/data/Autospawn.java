@@ -17,7 +17,7 @@ public class Autospawn
 	public String mob_name;
 	
 	public Autospawn(Element el, NodeList locations, String mob_name, Element as_settings)
-	{			
+	{	
 		this.mob_name = mob_name;
 		if (as_settings != null)
 		{

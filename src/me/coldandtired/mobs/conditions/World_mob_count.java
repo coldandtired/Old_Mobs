@@ -3,6 +3,7 @@ package me.coldandtired.mobs.conditions;
 import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
@@ -22,6 +23,9 @@ public class World_mob_count implements Condition
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return L.matches_number_condition(values, world.getEntities().size());
+		int i = 0;
+		for (Entity e : world.getEntities()) if (e instanceof LivingEntity) i++;
+				
+		return L.matches_number_condition(values, i);
 	}	
 }

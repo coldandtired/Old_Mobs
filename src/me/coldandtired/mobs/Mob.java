@@ -47,6 +47,7 @@ public class Mob
 				hp = L.return_int_from_array(props.hp);
 				max_hp = hp;
 			}
+			
 			if (props.tamed_hp != null) tamed_hp = L.return_int_from_array(props.tamed_hp);
 			if (props.damage != null) damage = L.return_int_from_array(props.damage);
 			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);

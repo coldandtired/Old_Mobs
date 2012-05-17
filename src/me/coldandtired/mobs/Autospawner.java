@@ -19,6 +19,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
+import com.khorn.terraincontrol.bukkit.BukkitWorld;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
@@ -38,11 +39,26 @@ public class Autospawner implements Runnable
 	
 	public static void add_chunk(Chunk chunk)
 	{
+		Block b = chunk.getBlock(7, 0, 7);
+		
 		String world_name = chunk.getWorld().getName();
 		Biome_data bd = chunks.get(world_name);
 		if (bd == null) bd = new Biome_data();
 		
-		String biome = chunk.getBlock(7, 0, 7).getBiome().name();
+		String biome = null;
+		
+		if (Main.tc != null)
+		{
+			BukkitWorld bw = Main.tc.worlds.get(chunk.getWorld().getUID());
+			if (bw != null)
+			{
+				int id = bw.getBiome(b.getX(), b.getZ());
+				biome = bw.getBiomeById(id).getName().toUpperCase();
+			}
+		}
+		
+		if (biome == null) biome = b.getBiome().name();
+		
 		Integer[] loc = { chunk.getX(), chunk.getZ() };
 		List<Integer[]> locs = bd.chunks.get(biome);
 		
@@ -52,23 +68,24 @@ public class Autospawner implements Runnable
 			locs.add(loc);
 			bd.chunks.put(biome, locs);
 			chunks.put(world_name, bd);
-			if (Config.log_level > 1) L.log("added new " + biome + " to " + world_name);
+			if (Config.log_level > 1) L.log("added new biome " + biome + " to " + world_name);
 		}
 		else if (!locs.contains(loc)) 
 		{
 			locs.add(loc);
 			bd.chunks.put(biome, locs);
 			chunks.put(world_name, bd);
+
+			if (biome.equalsIgnoreCase("gold")) L.log(loc[0] * 16 + loc[1] * 16);
 		}
 	}	
 	
 	void spawn_mobs(Autospawn as, Autospawn_location sl, World w, boolean from_command)
-	{		
-		if (Config.ignored_worlds != null && !Config.ignored_worlds.contains(w.getName())) return;
-		if (as.spawn_time != null && as.spawn_time.has_real_time && (!from_command || (from_command && as.command_time_check)))
+	{
+		if (as.spawn_time != null && as.spawn_time.has_mc_time && (!from_command || (from_command && as.command_time_check)))
 		{
 			long mc_time = w.getTime();
-			if (mc_time < as.spawn_time.mc_start || mc_time > as.spawn_time.mc_end) return;
+			if (mc_time < as.spawn_time.mc_start && mc_time > as.spawn_time.mc_end) return;
 		}
 		
 		List<String> safe_blocks = new ArrayList<String>();
@@ -157,13 +174,13 @@ public class Autospawner implements Runnable
 						}
 						if (safe_blocks.size() > 0)
 						{			
-							int amount  = as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size()));
+							int amount = as.spawn_time != null ? as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size())) : 1;
 							for (int i = 0; i < amount; i++)
 							{
 								String[] temp = safe_blocks.get(L.get_random_choice(safe_blocks.size())).split(",");
 
 								Main_listener.autospawn = as;
-								w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.fromName(as.mob_name));
+								w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.valueOf(as.mob_name));
 								if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);
 							}
 						}
@@ -186,11 +203,11 @@ public class Autospawner implements Runnable
 						int cz = L.get_random_choice(16);
 						if (above_ground)
 						{			
-							int amount  = as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size()));
+							int amount = as.spawn_time != null ? as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size())) : 1;
 							for (int i = 0; i < amount; i++)
 							{								
 								Main_listener.autospawn = as;
-								w.spawnCreature(c.getBlock(cx, w.getHighestBlockYAt(cx, cz), cz).getLocation(), EntityType.fromName(as.mob_name));
+								w.spawnCreature(c.getBlock(cx, w.getHighestBlockYAt(cx, cz), cz).getLocation(), EntityType.valueOf(as.mob_name));
 								if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);								
 							}
 						}
@@ -210,13 +227,13 @@ public class Autospawner implements Runnable
 							}
 							if (safe_blocks.size() > 0)
 							{						
-								int amount  = as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size()));				
+								int amount = as.spawn_time != null ? as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size())) : 1;				
 								for (int i = 0; i < amount; i++)
 								{
 									String[] temp = safe_blocks.get(L.get_random_choice(safe_blocks.size())).split(",");
 
 									Main_listener.autospawn = as;
-									w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.fromName(as.mob_name));
+									w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.valueOf(as.mob_name));
 									if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);									
 								}
 							}
@@ -249,16 +266,17 @@ public class Autospawner implements Runnable
 						L.check_below_ground_block((int)loc.getX(), (int)loc.getY(), (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
 					}
 				}
-				else L.check_above_ground_block(sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
+				else L.check_below_ground_block(sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
 			}
 			if (safe_blocks.size() > 0)
-			{							
-				for (int i = 0; i < as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size())); i++)
+			{				
+				int amount = as.spawn_time != null ? as.spawn_time.amount.get(L.get_random_choice(as.spawn_time.amount.size())) : 1;
+				for (int i = 0; i < amount; i++)
 				{
 					String[] temp = safe_blocks.get(L.get_random_choice(safe_blocks.size())).split(",");
 
 					Main_listener.autospawn = as;
-					w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.fromName(as.mob_name));
+					w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.valueOf(as.mob_name));
 					if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);					
 				}
 			}
@@ -283,12 +301,12 @@ public class Autospawner implements Runnable
 		{
 			if (sl.all_values) for (World w : sl.worlds)
 			{
-				if (!L.ignore_world(w)) spawn_mobs(as, sl, w, from_command);
+				if (!L.ignore_world(w) || (from_command && !as.command_time_check)) spawn_mobs(as, sl, w, from_command);
 			}
 			else
 			{
 				World w = sl.worlds.get(L.get_random_choice(sl.worlds.size()));
-				if (!L.ignore_world(w)) spawn_mobs(as, sl, w, from_command);						
+				if (!L.ignore_world(w) || (from_command && !as.command_time_check)) spawn_mobs(as, sl, w, from_command);						
 			}
 		}		
 	}
@@ -311,52 +329,3 @@ public class Autospawner implements Runnable
 		}
 	}
 }
-
-/*if (Main.debug && !a.shortcut.equalsIgnoreCase("")) Utils.log("Auto spawning shortcut" + a.shortcut);
-int quantity = a.quantities != null ? L.get_quantity(a.quantities) : 1;
-for (int i = 0; i < quantity; i++)
-{
-	for (Loc l : a.locations)
-	{
-		if (l.players == null || l.players.size() == 0)
-		{
-			loc = l.get_location();
-			if (loc.getY() > loc.getWorld().getMaxHeight()) loc.setY(loc.getWorld().getMaxHeight() - 2);
-			if (!loc.getChunk().isLoaded()) return;
-			if (loc != null)
-			{
-				plugin.old_listener.unique = a.source;
-				loc.getWorld().spawnCreature(loc, Utils.get_creature_type(a.name));
-			}
-		}				
-		else
-		{
-			if (l.players.contains("all_players")) 
-			{
-				for (Player p : l.world.getPlayers())
-				{							
-					loc = l.get_player_location(p.getName());
-					if (loc != null)
-					{
-						plugin.old_listener.unique = a.source;
-						loc.getWorld().spawnCreature(loc, Utils.get_creature_type(a.name));
-					}
-				}
-			}
-			else
-			{
-				for (String s : l.players)
-				{
-					plugin.old_listener.unique = a.source;
-					loc = l.get_player_location(s);
-					if (loc != null)
-					{
-						plugin.old_listener.unique = a.source;
-						loc.getWorld().spawnCreature(loc, Utils.get_creature_type(a.name));
-					}
-				}
-			}
-		}
-	}
-	if (Main.debug && !a.shortcut.equalsIgnoreCase(""))Utils.log("Spawned shortcut" + a.shortcut);
-}*/

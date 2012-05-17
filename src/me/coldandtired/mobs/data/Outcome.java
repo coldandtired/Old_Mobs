@@ -27,7 +27,7 @@ public class Outcome
     	if (element == null) return;
     	
     	try
-    	{    	
+    	{  	
     		all_potion_effects = Boolean.parseBoolean(element.getAttributeNode("all_potion_effects").getValue());	    	
 	    	spawn =  Boolean.parseBoolean(element.getAttributeNode("spawn").getValue());
     		affected_mobs = Integer.parseInt(element.getAttributeNode("affected_mobs").getValue());	  		

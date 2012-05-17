@@ -1,6 +1,7 @@
 package me.coldandtired.mobs;
 
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,8 +17,11 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Villager;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+
+import com.khorn.terraincontrol.bukkit.BukkitWorld;
 
 import me.coldandtired.mobs.conditions.Number_condition;
 import me.coldandtired.mobs.data.Autospawn;
@@ -25,6 +29,7 @@ import me.coldandtired.mobs.data.Autospawn_location;
 import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
 import me.coldandtired.mobs.data.Damage_value;
+import me.coldandtired.mobs.data.Death_message;
 import me.coldandtired.mobs.data.Drops;
 import me.coldandtired.mobs.data.Mob_properties;
 import me.coldandtired.mobs.data.New_condition;
@@ -33,7 +38,8 @@ import me.coldandtired.mobs.data.Potion_effect;
 
 public class L 
 {
-	public static Random rng = new Random();	
+	public static Random rng = new Random();
+	static DecimalFormat f = new DecimalFormat("#,###.##");
 	
 	// general helpers
 	
@@ -49,7 +55,7 @@ public class L
 	
 	public static boolean ignore_world(World world)
 	{
-		return Config.ignored_worlds != null && Config.ignored_worlds.contains(world.getName());
+		return Config.ignored_worlds != null && Config.ignored_worlds.contains(world.getName().toUpperCase());
 	}
 	
 	public static LivingEntity return_le(Entity entity)
@@ -120,8 +126,9 @@ public class L
 		return values.get(get_random_choice(values.size()));
 	}
 	
-	public static boolean return_bool_from_string(String s)
+	public static Boolean return_bool_from_string(String s)
 	{
+		if (s.equalsIgnoreCase("default")) return null;
 		if (s.equalsIgnoreCase("yes")) return true;
 		if (s.equalsIgnoreCase("no")) return false;
 		if (s.equalsIgnoreCase("random")) return rng.nextBoolean();
@@ -192,42 +199,46 @@ public class L
 		}
 		else
 		{
-			if (fallthrough == 2 && use_outcome(cd.default_outcome, as))
+			if (fallthrough == 2 && use_outcome(cd.default_outcome, as) && cd.default_outcome.mob_properties != null)
 			{
-				if (o.mob_properties.hp == null) o.mob_properties.hp = cd.default_outcome.mob_properties.hp;
-				if (o.mob_properties.damage == null) o.mob_properties.damage = cd.default_outcome.mob_properties.damage;
-				if (o.mob_properties.villager_types == null) o.mob_properties.villager_types = cd.default_outcome.mob_properties.villager_types;
-				if (o.mob_properties.ocelot_types == null) o.mob_properties.ocelot_types = cd.default_outcome.mob_properties.ocelot_types;
-				if (o.mob_properties.burn_duration == null) o.mob_properties.burn_duration = cd.default_outcome.mob_properties.burn_duration;
-				if (o.mob_properties.can_burn == null) o.mob_properties.can_burn = cd.default_outcome.mob_properties.can_burn;
-				if (o.mob_properties.safe == null) o.mob_properties.safe = cd.default_outcome.mob_properties.safe;
-				if (o.mob_properties.adult == null) o.mob_properties.adult = cd.default_outcome.mob_properties.adult;
-				if (o.mob_properties.can_breed == null) o.mob_properties.can_breed = cd.default_outcome.mob_properties.can_breed;
-				if (o.mob_properties.can_heal == null) o.mob_properties.can_heal = cd.default_outcome.mob_properties.can_heal;
-				if (o.mob_properties.can_overheal == null) o.mob_properties.can_overheal = cd.default_outcome.mob_properties.can_overheal;
-				if (o.mob_properties.size == null) o.mob_properties.size = cd.default_outcome.mob_properties.size;
-				if (o.mob_properties.hp_per_size == null) o.mob_properties.hp_per_size = cd.default_outcome.mob_properties.hp_per_size;
-				if (o.mob_properties.split_into == null) o.mob_properties.split_into = cd.default_outcome.mob_properties.split_into;
-				if (o.mob_properties.wool_colours == null) o.mob_properties.wool_colours = cd.default_outcome.mob_properties.wool_colours;
-				if (o.mob_properties.can_be_dyed == null) o.mob_properties.can_be_dyed = cd.default_outcome.mob_properties.can_be_dyed;
-				if (o.mob_properties.sheared == null) o.mob_properties.sheared = cd.default_outcome.mob_properties.sheared;
-				if (o.mob_properties.can_grow_wool == null) o.mob_properties.can_grow_wool = cd.default_outcome.mob_properties.can_grow_wool;
-				if (o.mob_properties.can_graze == null) o.mob_properties.can_graze = cd.default_outcome.mob_properties.can_graze;
-				if (o.mob_properties.can_be_sheared == null) o.mob_properties.can_be_sheared = cd.default_outcome.mob_properties.can_be_sheared;
-				if (o.mob_properties.tamed == null) o.mob_properties.tamed = cd.default_outcome.mob_properties.tamed;
-				if (o.mob_properties.angry == null) o.mob_properties.angry = cd.default_outcome.mob_properties.angry;
-				if (o.mob_properties.tamed_hp == null) o.mob_properties.tamed_hp = cd.default_outcome.mob_properties.tamed_hp;
-				if (o.mob_properties.can_be_tamed == null) o.mob_properties.can_be_tamed = cd.default_outcome.mob_properties.can_be_tamed;
-				if (o.mob_properties.saddled == null) o.mob_properties.saddled = cd.default_outcome.mob_properties.saddled;
-				if (o.mob_properties.can_be_saddled == null) o.mob_properties.can_be_saddled = cd.default_outcome.mob_properties.can_be_saddled;
-				if (o.mob_properties.can_become_pig_zombie == null) o.mob_properties.can_become_pig_zombie = cd.default_outcome.mob_properties.can_become_pig_zombie;
-				if (o.mob_properties.powered == null) o.mob_properties.powered = cd.default_outcome.mob_properties.powered;
-				if (o.mob_properties.can_become_powered_creeper == null) o.mob_properties.can_become_powered_creeper = cd.default_outcome.mob_properties.can_become_powered_creeper;
-				if (o.mob_properties.fiery_explosion == null) o.mob_properties.fiery_explosion = cd.default_outcome.mob_properties.fiery_explosion;
-				if (o.mob_properties.can_move_blocks == null) o.mob_properties.can_move_blocks = cd.default_outcome.mob_properties.can_move_blocks;
-				if (o.mob_properties.can_teleport == null) o.mob_properties.can_teleport = cd.default_outcome.mob_properties.can_teleport;
-				if (o.mob_properties.can_create_portal == null) o.mob_properties.can_create_portal = cd.default_outcome.mob_properties.can_create_portal;
-				if (o.mob_properties.can_destroy_blocks == null) o.mob_properties.can_destroy_blocks = cd.default_outcome.mob_properties.can_destroy_blocks;
+				if (o.mob_properties != null)
+				{
+					if (o.mob_properties.hp == null) o.mob_properties.hp = cd.default_outcome.mob_properties.hp;
+					if (o.mob_properties.damage == null) o.mob_properties.damage = cd.default_outcome.mob_properties.damage;
+					if (o.mob_properties.villager_types == null) o.mob_properties.villager_types = cd.default_outcome.mob_properties.villager_types;
+					if (o.mob_properties.ocelot_types == null) o.mob_properties.ocelot_types = cd.default_outcome.mob_properties.ocelot_types;
+					if (o.mob_properties.burn_duration == null) o.mob_properties.burn_duration = cd.default_outcome.mob_properties.burn_duration;
+					if (o.mob_properties.can_burn == null) o.mob_properties.can_burn = cd.default_outcome.mob_properties.can_burn;
+					if (o.mob_properties.safe == null) o.mob_properties.safe = cd.default_outcome.mob_properties.safe;
+					if (o.mob_properties.adult == null) o.mob_properties.adult = cd.default_outcome.mob_properties.adult;
+					if (o.mob_properties.can_breed == null) o.mob_properties.can_breed = cd.default_outcome.mob_properties.can_breed;
+					if (o.mob_properties.can_heal == null) o.mob_properties.can_heal = cd.default_outcome.mob_properties.can_heal;
+					if (o.mob_properties.can_overheal == null) o.mob_properties.can_overheal = cd.default_outcome.mob_properties.can_overheal;
+					if (o.mob_properties.size == null) o.mob_properties.size = cd.default_outcome.mob_properties.size;
+					if (o.mob_properties.hp_per_size == null) o.mob_properties.hp_per_size = cd.default_outcome.mob_properties.hp_per_size;
+					if (o.mob_properties.split_into == null) o.mob_properties.split_into = cd.default_outcome.mob_properties.split_into;
+					if (o.mob_properties.wool_colours == null) o.mob_properties.wool_colours = cd.default_outcome.mob_properties.wool_colours;
+					if (o.mob_properties.can_be_dyed == null) o.mob_properties.can_be_dyed = cd.default_outcome.mob_properties.can_be_dyed;
+					if (o.mob_properties.sheared == null) o.mob_properties.sheared = cd.default_outcome.mob_properties.sheared;
+					if (o.mob_properties.can_grow_wool == null) o.mob_properties.can_grow_wool = cd.default_outcome.mob_properties.can_grow_wool;
+					if (o.mob_properties.can_graze == null) o.mob_properties.can_graze = cd.default_outcome.mob_properties.can_graze;
+					if (o.mob_properties.can_be_sheared == null) o.mob_properties.can_be_sheared = cd.default_outcome.mob_properties.can_be_sheared;
+					if (o.mob_properties.tamed == null) o.mob_properties.tamed = cd.default_outcome.mob_properties.tamed;
+					if (o.mob_properties.angry == null) o.mob_properties.angry = cd.default_outcome.mob_properties.angry;
+					if (o.mob_properties.tamed_hp == null) o.mob_properties.tamed_hp = cd.default_outcome.mob_properties.tamed_hp;
+					if (o.mob_properties.can_be_tamed == null) o.mob_properties.can_be_tamed = cd.default_outcome.mob_properties.can_be_tamed;
+					if (o.mob_properties.saddled == null) o.mob_properties.saddled = cd.default_outcome.mob_properties.saddled;
+					if (o.mob_properties.can_be_saddled == null) o.mob_properties.can_be_saddled = cd.default_outcome.mob_properties.can_be_saddled;
+					if (o.mob_properties.can_become_pig_zombie == null) o.mob_properties.can_become_pig_zombie = cd.default_outcome.mob_properties.can_become_pig_zombie;
+					if (o.mob_properties.powered == null) o.mob_properties.powered = cd.default_outcome.mob_properties.powered;
+					if (o.mob_properties.can_become_powered_creeper == null) o.mob_properties.can_become_powered_creeper = cd.default_outcome.mob_properties.can_become_powered_creeper;
+					if (o.mob_properties.fiery_explosion == null) o.mob_properties.fiery_explosion = cd.default_outcome.mob_properties.fiery_explosion;
+					if (o.mob_properties.can_move_blocks == null) o.mob_properties.can_move_blocks = cd.default_outcome.mob_properties.can_move_blocks;
+					if (o.mob_properties.can_teleport == null) o.mob_properties.can_teleport = cd.default_outcome.mob_properties.can_teleport;
+					if (o.mob_properties.can_create_portal == null) o.mob_properties.can_create_portal = cd.default_outcome.mob_properties.can_create_portal;
+					if (o.mob_properties.can_destroy_blocks == null) o.mob_properties.can_destroy_blocks = cd.default_outcome.mob_properties.can_destroy_blocks;
+				}
+				else o.mob_properties = cd.default_outcome.mob_properties;
 				
 				return o.mob_properties;
 			}
@@ -296,11 +307,15 @@ public class L
 		}
 		else
 		{
-			if (fallthrough == 2 && use_outcome(cd.default_outcome, as))
+			if (fallthrough == 2 && use_outcome(cd.default_outcome, as) && cd.default_outcome.drops != null)
 			{
-				if (o.drops.items == null) o.drops.items = cd.default_outcome.drops.items;
-				if (o.drops.exps == null) o.drops.exps = cd.default_outcome.drops.exps;
-				if (o.drops.bounties == null) o.drops.bounties = cd.default_outcome.drops.bounties;
+				if (o.drops != null)
+				{
+					if (o.drops.items == null) o.drops.items = cd.default_outcome.drops.items;
+					if (o.drops.exps == null) o.drops.exps = cd.default_outcome.drops.exps;
+					if (o.drops.bounties == null) o.drops.bounties = cd.default_outcome.drops.bounties;
+				}
+				else o.drops = cd.default_outcome.drops;
 				return o.drops;
 			}
 			else return o.drops;
@@ -338,104 +353,108 @@ public class L
 		}
 		else
 		{
-			if (fallthrough == 2 && use_outcome(cd.default_outcome, as))
+			if (fallthrough == 2 && use_outcome(cd.default_outcome, as) && cd.default_outcome.damage_properties != null)
 			{
-				Damage_value dv;
-				if (o.damage_properties.get("BLOCK_EXPLOSION") == null)
+				if (o.damage_properties != null)
 				{
-					dv = cd.default_outcome.damage_properties.get("BLOCK_EXPLOSION");
-					if (dv != null) o.damage_properties.put("BLOCK_EXPLOSION", dv);
+					Damage_value dv;
+					if (o.damage_properties.get("BLOCK_EXPLOSION") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("BLOCK_EXPLOSION");
+						if (dv != null) o.damage_properties.put("BLOCK_EXPLOSION", dv);
+					}
+					if (o.damage_properties.get("CONTACT") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("CONTACT");
+						if (dv != null) o.damage_properties.put("CONTACT", dv);
+					}
+					if (o.damage_properties.get("CUSTOM") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("CUSTOM");
+						if (dv != null) o.damage_properties.put("CUSTOM", dv);
+					}
+					if (o.damage_properties.get("DROWNING") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("DROWNING");
+						if (dv != null) o.damage_properties.put("DROWNING", dv);
+					}
+					if (o.damage_properties.get("ENTITY_ATTACK") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("ENTITY_ATTACK");
+						if (dv != null) o.damage_properties.put("ENTITY_ATTACK", dv);
+					}
+					if (o.damage_properties.get("ENTITY_EXPLOSION") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("ENTITY_EXPLOSION");
+						if (dv != null) o.damage_properties.put("ENTITY_EXPLOSION", dv);
+					}
+					if (o.damage_properties.get("FALL") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("FALL");
+						if (dv != null) o.damage_properties.put("FALL", dv);
+					}
+					if (o.damage_properties.get("FIRE") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("FIRE");
+						if (dv != null) o.damage_properties.put("FIRE", dv);
+					}
+					if (o.damage_properties.get("FIRE_TICK") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("FIRE_TICK");
+						if (dv != null) o.damage_properties.put("FIRE_TICK", dv);
+					}
+					if (o.damage_properties.get("LAVA") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("LAVA");
+						if (dv != null) o.damage_properties.put("LAVA", dv);
+					}
+					if (o.damage_properties.get("LIGHTNING") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("LIGHTNING");
+						if (dv != null) o.damage_properties.put("LIGHTNING", dv);
+					}
+					if (o.damage_properties.get("MAGIC") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("MAGIC");
+						if (dv != null) o.damage_properties.put("MAGIC", dv);
+					}
+					if (o.damage_properties.get("MELTING") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("MELTING");
+						if (dv != null) o.damage_properties.put("MELTING", dv);
+					}
+					if (o.damage_properties.get("POISON") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("POISON");
+						if (dv != null) o.damage_properties.put("POISON", dv);
+					}
+					if (o.damage_properties.get("PROJECTILE") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("PROJECTILE");
+						if (dv != null) o.damage_properties.put("PROJECTILE", dv);
+					}
+					if (o.damage_properties.get("STARVATION") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("STARVATION");
+						if (dv != null) o.damage_properties.put("STARVATION", dv);
+					}
+					if (o.damage_properties.get("SUFFOCATION") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("SUFFOCATION");
+						if (dv != null) o.damage_properties.put("SUFFOCATION", dv);
+					}
+					if (o.damage_properties.get("SUICIDE") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("SUICIDE");
+						if (dv != null) o.damage_properties.put("SUICIDE", dv);
+					}
+					if (o.damage_properties.get("VOID") == null)
+					{
+						dv = cd.default_outcome.damage_properties.get("VOID");
+						if (dv != null) o.damage_properties.put("VOID", dv);
+					}
 				}
-				if (o.damage_properties.get("CONTACT") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("CONTACT");
-					if (dv != null) o.damage_properties.put("CONTACT", dv);
-				}
-				if (o.damage_properties.get("CUSTOM") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("CUSTOM");
-					if (dv != null) o.damage_properties.put("CUSTOM", dv);
-				}
-				if (o.damage_properties.get("DROWNING") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("DROWNING");
-					if (dv != null) o.damage_properties.put("DROWNING", dv);
-				}
-				if (o.damage_properties.get("ENTITY_ATTACK") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("ENTITY_ATTACK");
-					if (dv != null) o.damage_properties.put("ENTITY_ATTACK", dv);
-				}
-				if (o.damage_properties.get("ENTITY_EXPLOSION") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("ENTITY_EXPLOSION");
-					if (dv != null) o.damage_properties.put("ENTITY_EXPLOSION", dv);
-				}
-				if (o.damage_properties.get("FALL") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("FALL");
-					if (dv != null) o.damage_properties.put("FALL", dv);
-				}
-				if (o.damage_properties.get("FIRE") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("FIRE");
-					if (dv != null) o.damage_properties.put("FIRE", dv);
-				}
-				if (o.damage_properties.get("FIRE_TICK") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("FIRE_TICK");
-					if (dv != null) o.damage_properties.put("FIRE_TICK", dv);
-				}
-				if (o.damage_properties.get("LAVA") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("LAVA");
-					if (dv != null) o.damage_properties.put("LAVA", dv);
-				}
-				if (o.damage_properties.get("LIGHTNING") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("LIGHTNING");
-					if (dv != null) o.damage_properties.put("LIGHTNING", dv);
-				}
-				if (o.damage_properties.get("MAGIC") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("MAGIC");
-					if (dv != null) o.damage_properties.put("MAGIC", dv);
-				}
-				if (o.damage_properties.get("MELTING") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("MELTING");
-					if (dv != null) o.damage_properties.put("MELTING", dv);
-				}
-				if (o.damage_properties.get("POISON") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("POISON");
-					if (dv != null) o.damage_properties.put("POISON", dv);
-				}
-				if (o.damage_properties.get("PROJECTILE") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("PROJECTILE");
-					if (dv != null) o.damage_properties.put("PROJECTILE", dv);
-				}
-				if (o.damage_properties.get("STARVATION") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("STARVATION");
-					if (dv != null) o.damage_properties.put("STARVATION", dv);
-				}
-				if (o.damage_properties.get("SUFFOCATION") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("SUFFOCATION");
-					if (dv != null) o.damage_properties.put("SUFFOCATION", dv);
-				}
-				if (o.damage_properties.get("SUICIDE") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("SUICIDE");
-					if (dv != null) o.damage_properties.put("SUICIDE", dv);
-				}
-				if (o.damage_properties.get("VOID") == null)
-				{
-					dv = cd.default_outcome.damage_properties.get("VOID");
-					if (dv != null) o.damage_properties.put("VOID", dv);
-				}
+				else o.damage_properties = cd.default_outcome.damage_properties;
 				
 				return o.damage_properties;
 			}
@@ -518,20 +537,71 @@ public class L
 	
 	// end creature spawn helpers
 	
+	// creature death helpers
+	
+	public static void send_death_message(Death_message dm, String mob_name, int exp, Player p, List<ItemStack> drops, int given_bounty)
+	{
+		String s = dm.message;					
+
+		s = s.replace("^mob^", mob_name);
+		s = s.replace("^exp^", Integer.toString(exp));
+		
+		if (s.contains("^player^") && p != null) s = s.replace("^player^", p.getDisplayName());
+		
+		if ((s.contains("^money^") || s.contains("^total_money^")) && Main.economy != null && p != null)
+		{
+			s = s.replace("^total_money^", f.format(Main.economy.getBalance(p.getName())));
+			s = s.replace("^money^", Integer.toString(given_bounty));
+		}
+		
+		if (s.contains("^item_names^") || s.contains("^item_amounts^"))
+		{
+			String item_names = "";
+			String item_amounts = "";
+			
+			for (ItemStack is : drops)
+			{
+				String ss = is.getType().name().toLowerCase();
+				item_names += ", " + ss;
+				item_amounts += ", " + is.getAmount() + " x " + ss;
+			}
+			s = s.replace("^item_names^", item_names);
+			s = s.replace("^item_amounts^", item_amounts);
+		}
+		
+		if (p != null)
+		{
+			if (dm.announce_messages) p.getServer().broadcastMessage(s);
+			else
+			{
+				p.sendMessage(s);
+				if (dm.log_messages) L.log(s);
+			}
+		}
+	}
+	
+	// end creature death helpers
+	
 	// autospawner helpers
 	
 	public static void check_above_ground_block(int xb, int yb, int zb, World w, Autospawn_location sl, List<String> temp_biomes, List<String> temp_regions, List<String> safe_blocks)
 	{
-		for (int x = xb - sl.xrange; x < xb + sl.xrange; x++)
+		for (int x = xb - sl.xrange; x <= xb + sl.xrange; x++)
 		{
-			for (int z = zb - sl.zrange; z < zb + sl.zrange; z++)
+			if (x <= xb - sl.min_xrange || x >= xb + sl.min_xrange)
 			{
-				for (int y = yb - sl.yrange; y < yb + sl.yrange; y++)
+				for (int z = zb - sl.zrange; z <= zb + sl.zrange; z++)
 				{
-					if (y < w.getMaxHeight())
+					if (z <= zb - sl.min_zrange || z >= zb + sl.min_zrange)
 					{
-						if (is_safe_above_ground_block(w.getBlockAt(x, y, z), sl.loaded_chunks_only,
-								temp_biomes, temp_regions, w)) safe_blocks.add(x + "," + y + "," + z);
+						for (int y = yb - sl.yrange; y <= yb + sl.yrange; y++)
+						{
+							if ((y <= yb - sl.min_yrange || y >= yb + sl.min_yrange) && y < w.getMaxHeight())
+							{
+								if (is_safe_above_ground_block(w.getBlockAt(x, y, z), sl.loaded_chunks_only,
+										temp_biomes, temp_regions, w)) safe_blocks.add(x + "," + y + "," + z);
+							}
+						}
 					}
 				}
 			}
@@ -540,31 +610,48 @@ public class L
 	
 	public static void check_below_ground_block(int xb, int yb, int zb, World w, Autospawn_location sl, List<String> temp_biomes, List<String> temp_regions, List<String> safe_blocks)
 	{
-		for (int x = xb - sl.xrange; x < xb + sl.xrange; x++)
+		for (int x = xb - sl.xrange; x <= xb + sl.xrange; x++)
 		{
-			for (int z = zb - sl.zrange; z < zb + sl.zrange; z++)
+			if (x <= xb - sl.min_xrange || x >= xb + sl.min_xrange)
 			{
-				for (int y = yb - sl.yrange; y < yb + sl.yrange; y++)
+				for (int z = zb - sl.zrange; z <= zb + sl.zrange; z++)
 				{
-					if (y < w.getMaxHeight())
+					if (z <= zb - sl.min_zrange || z >= zb + sl.min_zrange)
 					{
-						if (is_safe_below_ground_block(w.getBlockAt(x, y, z), sl.loaded_chunks_only,
-								temp_biomes, temp_regions, w)) safe_blocks.add(x + "," + y + "," + z);
+						for (int y = yb - sl.yrange; y <= yb + sl.yrange; y++)
+						{
+							if ((y <= yb - sl.min_yrange || y >= yb + sl.min_yrange) && y < w.getMaxHeight())
+							{
+								if (is_safe_below_ground_block(w.getBlockAt(x, y, z), sl.loaded_chunks_only,
+										temp_biomes, temp_regions, w)) safe_blocks.add(x + "," + y + "," + z);
+							}
+						}
 					}
 				}
 			}
 		}
 	}
 	
-	public static void is_in_biome(String s, List<String> biomes, List<String> safe_blocks)
-	{
-		
-
-	}
-	
 	public static boolean is_safe_above_ground_block(Block b, boolean loaded_chunks_only, List<String> biomes, List<String> regions, World w)
 	{
-		if (biomes != null && !biomes.contains(b.getBiome().name())) return false;
+		if (biomes != null)
+		{
+			String biome = null;
+			if (Main.tc != null)
+			{
+				BukkitWorld bw = Main.tc.worlds.get(w.getUID());
+				if (bw != null)
+				{
+					int id = bw.getBiome(b.getX(), b.getZ());
+					biome = bw.getBiomeById(id).getName().toUpperCase();
+				}
+			}
+		
+			if (biome == null) biome = b.getBiome().name();
+		
+			if (!biomes.contains(biome)) return false;
+		}
+		
 		if (regions != null && Main.world_guard != null)
 		{
 			for (String s : regions)
@@ -572,6 +659,7 @@ public class L
 				if (Main.world_guard.getRegionManager(w).getRegions().get(s) == null) return false;
 			}
 		}
+	
 		if (b.getLightFromSky() > 13 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR
 				&& b.getRelative(BlockFace.DOWN).getType() != Material.AIR)
 		{
@@ -584,9 +672,27 @@ public class L
 		return false;
 	}
 	
+	
 	public static boolean is_safe_below_ground_block(Block b, boolean chunk_loaded_only, List<String> biomes, List<String> regions, World w)
 	{
-		if (biomes != null && !biomes.contains(b.getBiome().name())) return false;
+		if (biomes != null)
+		{
+			String biome = null;
+			if (Main.tc != null)
+			{
+				BukkitWorld bw = Main.tc.worlds.get(w.getUID());
+				if (bw != null)
+				{
+					int id = bw.getBiome(b.getX(), b.getZ());
+					biome = bw.getBiomeById(id).getName().toUpperCase();
+				}
+			}
+		
+			if (biome == null) biome = b.getBiome().name();
+		
+			if (!biomes.contains(biome)) return false;
+		}
+		
 		if (Main.world_guard != null && regions != null)
 		{
 			for (String s : regions)

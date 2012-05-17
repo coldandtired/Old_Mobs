@@ -6,7 +6,10 @@ import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
+import com.khorn.terraincontrol.bukkit.BukkitWorld;
+
 import me.coldandtired.mobs.Condition;
+import me.coldandtired.mobs.Main;
 import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
@@ -22,6 +25,19 @@ public class Biomes implements Condition
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return L.matches_string(values, world.getBiome(loc.getBlockX(), loc.getBlockZ()).name());
+		String biome = null;
+		if (Main.tc != null)
+		{
+			BukkitWorld bw = Main.tc.worlds.get(world.getUID());
+			if (bw != null)
+			{
+				int id = bw.getBiome(loc.getBlockX(), loc.getBlockZ());
+				biome = bw.getBiomeById(id).getName().toUpperCase();
+			}
+		}
+	
+		if (biome == null) biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()).name();
+		
+		return L.matches_string(values, biome);
 	}
 }
