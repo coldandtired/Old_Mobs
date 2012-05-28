@@ -13,9 +13,9 @@ public class Powered implements Condition
 {
 	private boolean value;
 
-	public Powered(boolean b)
+	public Powered(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 		
 	@Override

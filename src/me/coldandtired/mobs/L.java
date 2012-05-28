@@ -3,20 +3,30 @@ package me.coldandtired.mobs;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+
+import org.bukkit.Chunk;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Animals;
+import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Ocelot;
+import org.bukkit.entity.Pig;
+import org.bukkit.entity.PigZombie;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Sheep;
+import org.bukkit.entity.Slime;
 import org.bukkit.entity.Villager;
+import org.bukkit.entity.Wolf;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -32,9 +42,9 @@ import me.coldandtired.mobs.data.Damage_value;
 import me.coldandtired.mobs.data.Death_message;
 import me.coldandtired.mobs.data.Drops;
 import me.coldandtired.mobs.data.Mob_properties;
-import me.coldandtired.mobs.data.New_condition;
 import me.coldandtired.mobs.data.Outcome;
 import me.coldandtired.mobs.data.Potion_effect;
+import me.coldandtired.mobs.data.Selected_outcomes;
 
 public class L 
 {
@@ -153,9 +163,178 @@ public class L
 		return false;
 	}
 	
+	public static void setup_mob(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn autospawn, Selected_outcomes previous)
+	{
+		Selected_outcomes so = new Selected_outcomes();
+		if (previous != null)
+		{
+			spawn_reason = previous.spawn_reason;
+			random = previous.random;
+		}
+		
+		Outcome o = previous != null ? get_previous_outcome(cd, previous.properties) : get_mob_properties_outcome(cd, le, spawn_reason, random, autospawn);
+		Mob_properties props = merge_mob_properties(o, cd, autospawn);
+		if (o != null) so.properties = o.outcome_id;
+		
+		o = previous != null ? get_previous_outcome(cd, previous.potions) : get_potion_effects_outcome(cd, le, spawn_reason, random, autospawn);
+		Collection<PotionEffect> potion_effects = merge_potion_effects(o, cd, autospawn);
+		if (o != null) so.potions = o.outcome_id;
+		
+		Drops drops = null;
+		HashMap<String, Damage_value> damage_properties = null;		
+				
+		if ((cd.gen_drops_check_type != 1 && autospawn == null) || cd.as_drops_check_type != 1 && autospawn != null)
+		{
+			o = previous != null ? get_previous_outcome(cd, previous.drops) : get_drops_outcome(cd, le, spawn_reason, null, random, autospawn);			
+			drops = merge_drops(o, cd, autospawn);
+			if (o != null) so.drops = o.outcome_id;
+		}
+		
+		if ((cd.gen_damages_check_type != 1 && autospawn == null) || cd.as_damages_check_type != 1 && autospawn != null)
+		{
+			o = previous != null ? get_previous_outcome(cd, previous.damages) : get_damages_outcome(cd, le, spawn_reason, null, random, autospawn);
+			damage_properties = merge_damage_properties(o, cd, autospawn);
+			if (o != null) so.damages = o.outcome_id;
+		}
+		
+		if (props == null && potion_effects == null && drops == null && damage_properties == null) 
+		{
+			if (Config.log_level > 1) log("No default outcome for " + le.getType().name() + "  - vanilla mob spawned!");
+			Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so);
+			Main.all_mobs.put(le, mob);
+			autospawn = null;
+			return;
+		}
+
+		Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so);
+		
+		if (potion_effects != null) le.addPotionEffects(potion_effects);		
+		
+		Main.all_mobs.put(le, mob);
+		
+		if (props == null) return;
+		
+		if (props.max_lifetime != null)
+		{
+			int i = return_int_from_array(props.max_lifetime);
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.SECOND, i);
+			Main.mobs_with_lifetimes.put(le, cal);
+		}
+		
+		if (le instanceof Slime)
+		{
+			Slime slime = (Slime)le;
+			if (spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && props.size != null) slime.setSize(return_int_from_array(props.size));
+			if (props.hp_per_size != null) mob.hp = slime.getSize() * return_int_from_array(props.hp_per_size);
+		}	
+			
+		if (le instanceof Animals && props.adult != null)
+		{
+			Animals animal = (Animals)le;
+			boolean b = return_bool_from_string(props.adult);
+		
+			if (b == true) animal.setAdult(); else animal.setBaby();
+		}
+			
+		if (le instanceof Pig && props.saddled != null)
+		{
+			((Pig)le).setSaddle(return_bool_from_string(props.saddled));
+		}
+		else if (le instanceof PigZombie && props.angry != null)
+		{
+			((PigZombie)le).setAngry(return_bool_from_string(props.angry));
+		}
+		else if (le instanceof Wolf)
+		{
+			Wolf wolf = (Wolf)le;			
+			if (props.angry != null) wolf.setAngry(return_bool_from_string(props.angry));
+			if (!wolf.isAngry())
+			{
+				if (props.tamed != null) wolf.setTamed(return_bool_from_string(props.tamed));
+				if (props.can_be_tamed != null && !return_bool_from_string(props.can_be_tamed)) wolf.setTamed(false);
+				if (wolf.isTamed() && props.tamed_hp != null) mob.hp = return_int_from_array(props.tamed_hp);
+			}
+			else wolf.damage(0, get_nearby_player(wolf));
+		}
+		else if (le instanceof Sheep)
+		{
+			Sheep sheep = (Sheep)le;
+			if (props.sheared != null) sheep.setSheared(return_bool_from_string(props.sheared));
+			if (props.can_grow_wool != null && !return_bool_from_string(props.can_grow_wool)) sheep.setSheared(false);
+			
+			DyeColor dc = set_wool_colour(props.wool_colours);
+			if (dc != null) sheep.setColor(dc);
+		}
+		else if (le instanceof Ocelot && props.ocelot_types != null)
+		{
+			Ocelot.Type ot = set_ocelot_type(props.ocelot_types);
+			if (ot != null) ((Ocelot)le).setCatType(ot);
+		}
+		else if (le instanceof Villager && props.villager_types != null)
+		{
+			Villager.Profession prof = set_villager_type(props.villager_types);
+			if (prof != null) ((Villager)le).setProfession(prof);			
+		}
+		else if (le instanceof Creeper && props.powered != null) 
+		{
+			((Creeper)le).setPowered(return_bool_from_string(props.powered));		
+		}
+	}
+	
+	public static void convert_chunk(Chunk c)
+	{
+		for (Entity e : c.getEntities())
+		{
+			if (e instanceof LivingEntity)
+			{				
+				Creature_data cd = Main.tracked_mobs.get(e.getType().name());
+				if (cd == null || cd.reload_behaviour == 2) continue;
+				// not tracked or admin wants vanilla
+				
+				LivingEntity le = (LivingEntity)e;
+				
+				if (Main.all_mobs.get(le) != null) continue;
+				// already tracked
+				
+				if (cd.reload_behaviour == 0) // remove the mob
+				{					
+					le.remove();
+					continue;
+				}
+				else if (cd.reload_behaviour == 1) // kill the mob
+				{					
+					le.damage(1000);
+					continue;
+				}
+				else if (cd.reload_behaviour == 3) // find the previous outcomes used
+				{
+					Selected_outcomes so = Main.previous_mobs.get(le.getUniqueId());
+					if (so == null) continue;
+					setup_mob(cd, le, so.spawn_reason, so.random, null, so);
+					
+				}
+				else if (cd.reload_behaviour == 4) // recalculate conditions using current values
+				{
+					int random = rng.nextInt(100) + 1;						
+					setup_mob(cd, le, "NATURAL", random, null, null);
+				}
+			}
+		}
+	}
+	
 	// end general helpers
 	
 	// creature spawn helpers
+	
+	public static Outcome get_previous_outcome(Creature_data cd, int outcome_id)
+	{
+		if (cd.outcomes != null && outcome_id != -1)
+		{
+			for (Outcome o : cd.outcomes) if (o.outcome_id == outcome_id) return o;
+		}
+		return null;
+	}
 	
 	public static boolean merge_spawning(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
 	{
@@ -176,20 +355,16 @@ public class L
 			{
 				if (!o.spawn && use_outcome(o, as))
 				{
-					for (New_condition nc : o.conditions)
-					{
-						for (Condition c : nc.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o.spawn;
-					}
+					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o.spawn;
 				}
 			}
 		}
 		return null;
 	}
 
-	public static Mob_properties merge_mob_properties(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
+	public static Mob_properties merge_mob_properties(Outcome o, Creature_data cd, Autospawn as)
 	{
 		int fallthrough = as != null ? cd.as_fallthrough_type : cd.gen_fallthrough_type;
-		Outcome o = get_mob_properties_outcome(cd, le, spawn_reason, random, as);
 		
 		if (o == null)
 		{
@@ -246,7 +421,7 @@ public class L
 		}
 	}
 
-	static Outcome get_mob_properties_outcome(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
+	public static Outcome get_mob_properties_outcome(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
 	{
 		if (cd.outcomes != null)
 		{
@@ -254,20 +429,16 @@ public class L
 			{
 				if (o.conditions != null && o.mob_properties != null && use_outcome(o, as))
 				{
-					for (New_condition nc : o.conditions)
-					{
-						for (Condition c : nc.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o;
-					}
+					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o;
 				}
 			}
 		}
 		return null;
 	}
 	
-	public static Collection<PotionEffect> merge_potion_effects(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
+	public static Collection<PotionEffect> merge_potion_effects(Outcome o, Creature_data cd, Autospawn as)
 	{
 		int fallthrough = as != null ? cd.as_fallthrough_type : cd.gen_fallthrough_type;
-		Outcome o = get_potion_effects_outcome(cd, le, spawn_reason, random, as);
 		
 		if (o != null) return set_potion_effects(o.potion_effects, o.all_potion_effects);
 		
@@ -276,7 +447,7 @@ public class L
 		return null;
 	}
 	
-	static Outcome get_potion_effects_outcome(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
+	public static Outcome get_potion_effects_outcome(Creature_data cd, LivingEntity le, String spawn_reason, int random, Autospawn as)
 	{
 		if (cd.outcomes != null)
 		{
@@ -284,20 +455,16 @@ public class L
 			{
 				if (o.conditions != null && o.potion_effects != null && use_outcome(o, as))
 				{
-					for (New_condition nc : o.conditions)
-					{
-						for (Condition c : nc.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o;
-					}
+					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o;
 				}
 			}
 		}
 		return null;
 	}
 	
-	public static Drops merge_drops(Creature_data cd, LivingEntity le, String spawn_reason, Player p, int random, Autospawn as)
+	public static Drops merge_drops(Outcome o, Creature_data cd, Autospawn as)
 	{
 		int fallthrough = as != null ? cd.as_fallthrough_type : cd.gen_fallthrough_type;
-		Outcome o = get_drops_outcome(cd, le, spawn_reason, p, random, as);
 		
 		if (o == null)
 		{
@@ -322,7 +489,7 @@ public class L
 		}
 	}
 	
-	static Outcome get_drops_outcome(Creature_data cd, LivingEntity le, String spawn_reason, Player p, int random, Autospawn as)
+	public static Outcome get_drops_outcome(Creature_data cd, LivingEntity le, String spawn_reason, Player p, int random, Autospawn as)
 	{
 		if (cd.outcomes != null)
 		{
@@ -330,20 +497,16 @@ public class L
 			{
 				if (o.conditions != null && o.drops != null && use_outcome(o, as))
 				{
-					for (New_condition nc : o.conditions)
-					{
-						for (Condition c : nc.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) return o;
-					}
+					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) return o;
 				}
 			}
 		}
 		return null;
 	}
 	
-	public static HashMap<String, Damage_value> merge_damage_properties(Creature_data cd, LivingEntity le, String spawn_reason, Player p, int random, Autospawn as)
+	public static HashMap<String, Damage_value> merge_damage_properties(Outcome o, Creature_data cd, Autospawn as)
 	{
 		int fallthrough = as != null ? cd.as_fallthrough_type : cd.gen_fallthrough_type;
-		Outcome o = get_drops_outcome(cd, le, spawn_reason, p, random, as);
 		
 		if (o == null)
 		{
@@ -462,7 +625,7 @@ public class L
 		}
 	}
 	
-	static Outcome get_damages_outcome(Creature_data cd, LivingEntity le, String spawn_reason, Player p, int random, Autospawn as)
+	public static Outcome get_damages_outcome(Creature_data cd, LivingEntity le, String spawn_reason, Player p, int random, Autospawn as)
 	{
 		if (cd.outcomes != null)
 		{
@@ -470,10 +633,7 @@ public class L
 			{
 				if (o.conditions != null && o.damage_properties != null && use_outcome(o, as))
 				{
-					for (New_condition nc : o.conditions)
-					{
-						for (Condition c : nc.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) return o;
-					}
+					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) return o;
 				}
 			}
 		}
@@ -529,7 +689,7 @@ public class L
 	public static LivingEntity get_nearby_player(Entity entity)
 	{
 		List<Entity> temp = new ArrayList<Entity>();
-		for (Entity e : entity.getNearbyEntities(10, 10, 10)) if (e instanceof Player) temp.add(e);
+		for (Entity e : entity.getNearbyEntities(20, 20, 20)) if (e instanceof Player) temp.add(e);
 		
 		if (temp.size() > 0) return (LivingEntity)temp.get(get_random_choice(temp.size()));
 		return null;
@@ -575,7 +735,7 @@ public class L
 			else
 			{
 				p.sendMessage(s);
-				if (dm.log_messages) L.log(s);
+				if (dm.log_messages) log(s);
 			}
 		}
 	}
@@ -671,8 +831,7 @@ public class L
 		}
 		return false;
 	}
-	
-	
+		
 	public static boolean is_safe_below_ground_block(Block b, boolean chunk_loaded_only, List<String> biomes, List<String> regions, World w)
 	{
 		if (biomes != null)

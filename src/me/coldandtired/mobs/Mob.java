@@ -1,20 +1,19 @@
 package me.coldandtired.mobs;
 
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 
 import me.coldandtired.mobs.data.Damage_value;
 import me.coldandtired.mobs.data.Drops;
 import me.coldandtired.mobs.data.Mob_properties;
+import me.coldandtired.mobs.data.Selected_outcomes;
 
-public class Mob 
+public class Mob
 {	
-	Date spawned_at;
 	public Integer hp;
 	public Integer max_hp;
 	public Integer tamed_hp;
 	public Integer damage;
+	public Integer explosion_size;
 	public Integer split_into;
 	public String spawn_reason;
 	public int random;
@@ -37,9 +36,14 @@ public class Mob
 	public Boolean fiery_explosion;
 	public HashMap<String, Damage_value> damage_properties = null;
 	public Drops drops = null;
+	public Selected_outcomes selected_outcomes = null;
 	
-	public Mob(Mob_properties props, Drops drops, HashMap<String, Damage_value> damage_properties, String spawn_reason, int random)
+	public Mob(Mob_properties props, Drops drops, HashMap<String, Damage_value> damage_properties, String spawn_reason, int random, Selected_outcomes so)
 	{
+		selected_outcomes = so;
+		so.spawn_reason = spawn_reason;
+		so.random = random;
+		
 		if (props != null)
 		{
 			if (props.hp != null)
@@ -50,6 +54,7 @@ public class Mob
 			
 			if (props.tamed_hp != null) tamed_hp = L.return_int_from_array(props.tamed_hp);
 			if (props.damage != null) damage = L.return_int_from_array(props.damage);
+			if (props.explosion_size != null) explosion_size = L.return_int_from_array(props.explosion_size);
 			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);
 			if (props.burn_duration != null) burn_duration = L.return_int_from_array(props.burn_duration);
 			
@@ -74,6 +79,5 @@ public class Mob
 		this.damage_properties = damage_properties;
 		this.spawn_reason = spawn_reason;
 		this.random = random;
-		spawned_at = Calendar.getInstance().getTime();
 	}
 }

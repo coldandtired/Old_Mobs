@@ -13,9 +13,9 @@ public class Tamed implements Condition
 {
 	private boolean value;
 
-	public Tamed(boolean b)
+	public Tamed(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 
 	@Override

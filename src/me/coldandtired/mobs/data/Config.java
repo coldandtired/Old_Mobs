@@ -13,8 +13,6 @@ import org.w3c.dom.NodeList;
 public class Config 
 {
 	public static ArrayList<String> ignored_worlds;
-	public static int check_interval;
-	public static int min_player_count;
 	public static int log_level;
 	public static boolean overrule_damaging;
 	public static boolean overrule_burning;
@@ -56,8 +54,6 @@ public class Config
 			catch (XPathExpressionException e) {e.printStackTrace();}
 		}
 		
-		check_interval = Integer.parseInt(element.getAttributeNode("check_interval").getValue()) * 20;
-		min_player_count = Integer.parseInt(element.getAttributeNode("min_player_count").getValue());
 		tracked_mobs_only = Boolean.parseBoolean(element.getAttributeNode("tracked_mobs_only").getValue());
 		log_level = Integer.parseInt(element.getAttributeNode("log_level").getValue());
 		overrule_damaging = Boolean.parseBoolean(element.getAttributeNode("damaging").getValue());

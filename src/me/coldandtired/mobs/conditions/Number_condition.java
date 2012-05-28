@@ -1,7 +1,10 @@
 package me.coldandtired.mobs.conditions;
 
-public class Number_condition 
+import java.io.Serializable;
+
+public class Number_condition implements Serializable
 {
+	private static final long serialVersionUID = 1L;
 	String type = "";
 	int low;
 	int high;

@@ -1,6 +1,7 @@
 package me.coldandtired.mobs.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -9,12 +10,12 @@ import me.coldandtired.mobs.Main;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-public class Drops 
-{
-	public ArrayList<Exp> exps = null;
-	public ArrayList<Bounty> bounties = null;
-	public ArrayList<Item> items = null;
-	public ArrayList<Death_message> messages = null;
+public class Drops
+{	
+	public List<Exp> exps = null;
+	public List<Bounty> bounties = null;
+	public List<Item> items = null;
+	public List<Death_message> messages = null;
 	
 	Drops(Element element)
 	{

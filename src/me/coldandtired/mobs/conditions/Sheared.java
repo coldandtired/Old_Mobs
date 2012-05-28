@@ -13,9 +13,9 @@ public class Sheared implements Condition
 {
 	private boolean value;
 
-	public Sheared(boolean b)
+	public Sheared(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override

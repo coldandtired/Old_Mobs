@@ -13,9 +13,9 @@ public class Can_breed implements Condition
 {
 	private boolean value;
 	
-	public Can_breed(boolean b)
+	public Can_breed(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override

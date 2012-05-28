@@ -19,6 +19,7 @@ public class Creature_data
     public int as_drops_check_type;
     public int gen_fallthrough_type;
     public int as_fallthrough_type;
+    public int reload_behaviour;
     
 	public Creature_data(Element element)
 	{
@@ -30,6 +31,7 @@ public class Creature_data
 			as_drops_check_type = Integer.parseInt(element.getAttributeNode("as_drops_check_type").getValue());
 			gen_fallthrough_type = Integer.parseInt(element.getAttributeNode("gen_fallthrough_type").getValue());
 			as_fallthrough_type = Integer.parseInt(element.getAttributeNode("as_fallthrough_type").getValue());
+			reload_behaviour = Integer.parseInt(element.getAttributeNode("reload_behaviour").getValue());			
 			
 			if (Boolean.parseBoolean(element.getAttributeNode("has_outcomes").getValue()))
 			{

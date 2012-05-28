@@ -13,9 +13,9 @@ public class Saddled implements Condition
 {
 	private boolean value;
 
-	public Saddled(boolean b)
+	public Saddled(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override

@@ -51,6 +51,7 @@ public class Mob_properties
 	public String powered = null;
 	public String can_become_powered_creeper = null;
 	public String fiery_explosion = null;
+	public List<Integer> explosion_size = null;
 	
 	// enderman properties
 	public String can_move_blocks = null;
@@ -81,6 +82,7 @@ public class Mob_properties
 				if (s.equalsIgnoreCase("split_into")) split_into = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("tamed_hp")) tamed_hp = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("damage")) damage = L.fill_int_properties(value);
+				if (s.equalsIgnoreCase("explosion_size")) explosion_size = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("wool_colours")) wool_colours = value.split(",");
 				if (s.equalsIgnoreCase("villager_types")) villager_types = value.split(",");
 				if (s.equalsIgnoreCase("ocelot_types")) ocelot_types = value.split(",");

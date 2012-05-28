@@ -1,7 +1,6 @@
 package me.coldandtired.mobs.conditions;
 
 import java.util.List;
-import java.util.Calendar;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -12,19 +11,23 @@ import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
-public class Seconds implements Condition
+public class Coordinate implements Condition
 {
 	private List<Number_condition> values;
-
-	public Seconds(String s)
+	private String subvalue;
+	
+	public Coordinate(String s, String sub)
 	{
 		values = L.fill_number_values(s);
+		subvalue = sub;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		Calendar cal = Calendar.getInstance();
-		return L.matches_number_condition(values, cal.get(Calendar.SECOND));
+		if (subvalue.equals("x")) return L.matches_number_condition(values, loc.getBlockX());
+		else if (subvalue.equals("y")) return L.matches_number_condition(values, loc.getBlockY());
+		else if (subvalue.equals("z")) return L.matches_number_condition(values, loc.getBlockZ());
+		return false;
 	}	
 }

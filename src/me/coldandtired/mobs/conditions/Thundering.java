@@ -12,9 +12,9 @@ public class Thundering implements Condition
 {
 	private boolean value;
 
-	public Thundering(boolean b)
+	public Thundering(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override

@@ -14,9 +14,9 @@ public class Angry implements Condition
 {
 	private boolean value;
 	
-	public Angry(boolean b)
+	public Angry(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override

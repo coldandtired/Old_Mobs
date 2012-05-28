@@ -4,7 +4,7 @@ import java.util.List;
 
 import me.coldandtired.mobs.L;
 
-public class Damage_value 
+public class Damage_value
 {
 	public List<Integer> amount;
 	public boolean use_percent;

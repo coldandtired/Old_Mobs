@@ -1,6 +1,5 @@
 package me.coldandtired.mobs.data;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -23,19 +22,11 @@ public class Autospawn_time
 	{
 		String s = "";
 		s = el.getAttributeNode("interval").getValue();
-		if (!s.equalsIgnoreCase(""))
-		{
-			interval = Integer.parseInt(s) * 20;
-			if (!Boolean.parseBoolean(el.getAttributeNode("use_seconds").getValue())) interval = interval * 60;
-		} else interval = Config.check_interval * 20;
+		interval = Integer.parseInt(s) * 20;
+		if (!Boolean.parseBoolean(el.getAttributeNode("use_seconds").getValue())) interval = interval * 60;
 		
 		s = el.getAttributeNode("amount").getValue();
 		if (!s.equalsIgnoreCase("")) amount = L.fill_int_properties(s);
-		else
-		{
-			amount = new ArrayList<Integer>();
-			amount.add(1);
-		}
 		
 		has_mc_time = Boolean.parseBoolean(el.getAttributeNode("has_mc_time").getValue());
 		

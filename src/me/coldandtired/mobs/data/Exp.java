@@ -2,7 +2,7 @@ package me.coldandtired.mobs.data;
 
 import org.w3c.dom.Element;
 
-public class Exp extends Bounty 
+public class Exp extends Bounty
 {
 	public boolean replace;
 	

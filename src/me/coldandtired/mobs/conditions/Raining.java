@@ -12,9 +12,9 @@ public class Raining implements Condition
 {
 	private boolean value;
 	
-	public Raining(boolean b)
+	public Raining(String s)
 	{
-		value = b;
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override

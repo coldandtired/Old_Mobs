@@ -12,7 +12,7 @@ import me.coldandtired.mobs.conditions.Number_condition;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-public class Item 
+public class Item
 {
 	public List<Integer> quantity;
 	public int id;

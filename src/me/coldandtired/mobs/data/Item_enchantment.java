@@ -5,7 +5,7 @@ import java.util.List;
 import me.coldandtired.mobs.L;
 import org.w3c.dom.Element;
 
-public class Item_enchantment 
+public class Item_enchantment
 {
 	public List<Integer> level;
 	public String name;
