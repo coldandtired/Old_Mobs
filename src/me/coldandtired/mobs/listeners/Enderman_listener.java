@@ -13,7 +13,6 @@ public class Enderman_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTeleport(EntityTeleportEvent event)
 	{
-		//if (!event.getEntity().hasMetadata("mobs_data")) return;
 		if (!Main.all_mobs.containsKey(event.getEntity())) return;
 
 		if (event.isCancelled())
@@ -21,9 +20,7 @@ public class Enderman_listener implements Listener
 			if (Config.overrule_teleporting) event.setCancelled(false);
 			else return;
 		}
-
-		//Object o = event.getEntity().getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
+		
 		Mob mob = Main.all_mobs.get(event.getEntity());
 		
 		// end setup

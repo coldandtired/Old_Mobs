@@ -8,12 +8,12 @@ import org.w3c.dom.Element;
 
 public class Bounty
 {
-	public List<Integer> amount;
+	public List<Double> amount;
 	public List<Number_condition> chances;
 	
 	public Bounty (Element el)
 	{
-		amount = L.fill_int_properties(el.getAttributeNode("amount").getValue());
+		amount = L.fill_double_properties(el.getAttributeNode("amount").getValue());
 		chances = L.fill_number_values(el.getAttributeNode("chance").getValue());
 	}
 }

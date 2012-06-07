@@ -15,11 +15,13 @@ public class Chunk_mob_count implements Condition
 {
 	private List<Number_condition> values;
 	private String subvalue;
+	private boolean reversed = false;
 
-	public Chunk_mob_count(String s, String sub)
+	public Chunk_mob_count(String s, String sub, boolean reversed)
 	{
 		values = L.fill_number_values(s);
 		subvalue = sub;
+		this.reversed = reversed;
 	}
 	
 	@Override
@@ -28,7 +30,7 @@ public class Chunk_mob_count implements Condition
 		int i = 0;
 		if (subvalue.equalsIgnoreCase("all"))
 		{
-			for (Entity e : loc.getChunk().getEntities()) if (e instanceof LivingEntity) i++;
+			for (Entity e : loc.getChunk().getEntities()) if (e instanceof LivingEntity && !(e instanceof Player)) i++;
 		}
 		else
 		{
@@ -36,6 +38,7 @@ public class Chunk_mob_count implements Condition
 			for (Entity e : loc.getChunk().getEntities()) if (e.getType().name().equals(subvalue)) i++;
 		}
 				
-		return L.matches_number_condition(values, i);
+		boolean b = L.matches_number_condition(values, i);
+		if (reversed) return !b; else return b; 
 	}	
 }

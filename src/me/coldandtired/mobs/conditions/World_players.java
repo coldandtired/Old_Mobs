@@ -13,16 +13,19 @@ import me.coldandtired.mobs.L;
 public class World_players implements Condition
 {
 	private List<String> values;
+	private boolean reversed = false;
 
-	public World_players(String s)
+	public World_players(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		for (Player p : world.getPlayers()) if (values.contains(p.getName().toUpperCase())) return true;
-		return false;
+		boolean b = false;
+		for (Player p : world.getPlayers()) if (values.contains(p.getName().toUpperCase())) b = true;
+		if (reversed) return !b; else return b; 
 	}
 }

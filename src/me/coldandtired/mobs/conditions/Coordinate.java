@@ -15,19 +15,22 @@ public class Coordinate implements Condition
 {
 	private List<Number_condition> values;
 	private String subvalue;
+	private boolean reversed = false;
 	
-	public Coordinate(String s, String sub)
+	public Coordinate(String s, String sub, boolean reversed)
 	{
 		values = L.fill_number_values(s);
 		subvalue = sub;
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		if (subvalue.equals("x")) return L.matches_number_condition(values, loc.getBlockX());
-		else if (subvalue.equals("y")) return L.matches_number_condition(values, loc.getBlockY());
-		else if (subvalue.equals("z")) return L.matches_number_condition(values, loc.getBlockZ());
-		return false;
+		boolean b = false;
+		if (subvalue.equals("x")) b = L.matches_number_condition(values, loc.getBlockX());
+		else if (subvalue.equals("y")) b = L.matches_number_condition(values, loc.getBlockY());
+		else if (subvalue.equals("z")) b = L.matches_number_condition(values, loc.getBlockZ());
+		if (reversed) return !b; else return b; 
 	}	
 }

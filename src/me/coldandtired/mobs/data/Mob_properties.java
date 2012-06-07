@@ -16,6 +16,7 @@ public class Mob_properties
 	public List<Integer> burn_duration = null;
 	public List<Integer> max_lifetime = null;
 	
+	public String boss_mob = null;
 	public String can_burn = null;
 	public String safe = null;
 	public String adult = null;
@@ -89,6 +90,7 @@ public class Mob_properties
 			}
 			if (!bool_value.equalsIgnoreCase("default"))
 			{
+				if (s.equalsIgnoreCase("boss_mob")) boss_mob = bool_value;
 				if (s.equalsIgnoreCase("can_heal")) can_heal = bool_value;
 				if (s.equalsIgnoreCase("can_overheal")) can_overheal = bool_value;
 				if (s.equalsIgnoreCase("safe")) safe = bool_value;

@@ -1,27 +1,30 @@
 package me.coldandtired.mobs.conditions;
 
-import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
+import me.coldandtired.mobs.Main;
+import me.coldandtired.mobs.Mob;
 import me.coldandtired.mobs.data.Autospawn;
-import me.coldandtired.mobs.L;
 
-public class Server_player_count implements Condition
+public class Is_boss_mob implements Condition
 {
-	private List<Number_condition> values;
-
-	public Server_player_count(String s)
+private boolean value;
+	
+	public Is_boss_mob(String s)
 	{
-		values = L.fill_number_values(s);
+		value = s.equalsIgnoreCase("yes") ? true : false;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return L.matches_number_condition(values, entity.getServer().getOnlinePlayers().length);
-	}	
+		Mob m = Main.all_mobs.get(entity);
+		if (m == null) return true;
+		
+		return m.boss_mob == value;
+	}
 }

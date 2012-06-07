@@ -406,7 +406,7 @@ public class Main extends JavaPlugin
 							{
 								for (int z = min.getBlockZ(); z < max.getBlockZ(); z++)
 								{
-									for (int y = min.getBlockZ(); y < max.getBlockY(); y++)
+									for (int y = min.getBlockY(); y < max.getBlockY(); y++)
 									{
 										if (y < w.getMaxHeight())
 										{
@@ -423,7 +423,7 @@ public class Main extends JavaPlugin
 							{
 								for (int z = min.getBlockZ(); z <= max.getBlockZ(); z++)
 								{
-									for (int y = min.getBlockZ(); y <= max.getBlockY(); y++)
+									for (int y = min.getBlockY(); y <= max.getBlockY(); y++)
 									{
 										if (y < w.getMaxHeight())
 										{
@@ -450,7 +450,7 @@ public class Main extends JavaPlugin
 							}
 						}
 					}
-					else L.log("No region called " + s + " in world " + " world!");
+					else L.log("No region called " + s + " in world " + w.getName() + "!");
 				}
 			}
 			else if (temp_biomes != null)
@@ -524,7 +524,7 @@ public class Main extends JavaPlugin
 						if (p.isOnline())
 						{
 							Location loc = p.getLocation();						
-							L.check_above_ground_block((int)loc.getX(), (int)loc.getY(), (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
+							L.check_above_ground_block((int)loc.getX(), (int)loc.getY() + 1, (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
 						}
 					}
 				}
@@ -594,6 +594,8 @@ public class Main extends JavaPlugin
 	
 	private void save_mobs()
 	{
+		if (all_mobs == null) return;
+		
 		File f = new File(getDataFolder(), "mobs_list");
 		if (f.exists())
 		try
@@ -643,10 +645,16 @@ public class Main extends JavaPlugin
 		
 	private void check_lifetimes()
 	{
+		if (mobs_with_lifetimes == null || mobs_with_lifetimes.size() == 0) return;
+		
 		Calendar cal = Calendar.getInstance();
-		for (LivingEntity e : mobs_with_lifetimes.keySet())
+		Map<LivingEntity, Calendar> temp = new HashMap<LivingEntity, Calendar>();
+		
+		for (LivingEntity e : mobs_with_lifetimes.keySet()) temp.put(e, mobs_with_lifetimes.get(e));
+		
+		for (LivingEntity e : temp.keySet())
 		{
-			if (e == null || e.isDead() || cal.after(mobs_with_lifetimes.get(e)))
+			if (e == null || e.isDead() || cal.after(temp.get(e)))
 			{
 				mobs_with_lifetimes.remove(e);
 				if (e != null && !e.isDead()) e.damage(10000);
@@ -690,7 +698,7 @@ public class Main extends JavaPlugin
 		previous_mobs = get_mobs();
 		for (World world : getServer().getWorlds())
 		{ 		
-			for (Chunk c : world.getLoadedChunks()) L.convert_chunk(c);
+			if (!L.ignore_world(world))	for (Chunk c : world.getLoadedChunks()) L.convert_chunk(c);
 		}	
 	}
 	

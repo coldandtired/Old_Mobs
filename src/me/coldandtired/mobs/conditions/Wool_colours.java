@@ -1,7 +1,8 @@
 package me.coldandtired.mobs.conditions;
 
 import java.util.ArrayList;
-import org.bukkit.DyeColor;
+import java.util.List;
+
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
@@ -9,32 +10,26 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 
 import me.coldandtired.mobs.Condition;
+import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.data.Autospawn;
 
 public class Wool_colours  implements Condition
 {
-	ArrayList<DyeColor> values = new ArrayList<DyeColor>();
+	List<String> values = new ArrayList<String>();
+	private boolean reversed = false;
 
-	public Wool_colours(String s)
+	public Wool_colours(String s, boolean reversed)
 	{
-		//values = Utils.fill_string_values(s);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public Wool_colours(Object ob) 
-	{
-		for (String s : (ArrayList<String>)ob)
-		{
-			values.add(DyeColor.valueOf(s.toUpperCase()));
-		}
+		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
 	{
 		if (!(entity instanceof Sheep)) return false;
-		
-		if (values.contains(((Sheep)entity).getColor())) return true;
-		return false;
+		boolean b = false;
+		if (values.contains(Byte.toString(((Sheep)entity).getColor().getData()))) b = true;
+		if (reversed) return !b; else return b;
 	}
 }

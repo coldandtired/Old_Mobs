@@ -32,6 +32,7 @@ public class Mob
 	public Boolean can_graze;
 	public Boolean can_teleport;
 	public Boolean safe;
+	public Boolean boss_mob;
 	public Integer burn_duration;
 	public Boolean fiery_explosion;
 	public HashMap<String, Damage_value> damage_properties = null;
@@ -58,6 +59,7 @@ public class Mob
 			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);
 			if (props.burn_duration != null) burn_duration = L.return_int_from_array(props.burn_duration);
 			
+			if (props.boss_mob != null) boss_mob = L.return_bool_from_string(props.boss_mob);
 			if (props.can_be_dyed != null) can_be_dyed = L.return_bool_from_string(props.can_be_dyed);
 			if (props.can_be_sheared != null) can_be_sheared = L.return_bool_from_string(props.can_be_sheared);
 			if (props.can_be_tamed != null) can_be_tamed = L.return_bool_from_string(props.can_be_tamed);

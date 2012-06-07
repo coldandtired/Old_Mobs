@@ -13,16 +13,19 @@ import me.coldandtired.mobs.L;
 public class Death_causes implements Condition
 {
 	private List<String> values;
+	private boolean reversed = false;
 
-	public Death_causes(String s)
+	public Death_causes(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		if (entity.getLastDamageCause()== null) return false;
-		return L.matches_string(values, entity.getLastDamageCause().getCause().name());
+		boolean b = L.matches_string(values, entity.getLastDamageCause().getCause().name());
+		if (reversed) return !b; else return b; 
 	}
 }

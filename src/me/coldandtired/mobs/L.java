@@ -11,6 +11,7 @@ import java.util.Random;
 
 import org.bukkit.Chunk;
 import org.bukkit.DyeColor;
+import org.bukkit.Effect;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -84,6 +85,11 @@ public class L
 		 return choices.get(get_random_choice(choices.size()));
 	}
 	
+	public static double get_bounty(List<Double> choices)
+	{
+		 return choices.get(get_random_choice(choices.size()));
+	}
+	
 	public static int get_random_choice(int size)
 	{
 		return rng.nextInt(size);
@@ -113,11 +119,33 @@ public class L
 		return temp;
 	}
 	
+	public static List<Double> fill_double_properties(String property)
+	{
+		if (property.equalsIgnoreCase("")) return null;
+		
+		property = property.replaceAll(" ", "").toLowerCase();
+		
+		List<Double> temp = new ArrayList<Double>();
+		String[] temp1 = property.split(",");
+		for (String s : temp1)
+		{
+			if (s.contains("to"))
+			{
+				String[] temp2 = s.split("to");
+				double low = Math.min(Double.parseDouble(temp2[0]), Double.parseDouble(temp2[1]));
+				double high = Math.max(Double.parseDouble(temp2[0]), Double.parseDouble(temp2[1]));
+				for (double i = low; i <= high; i++) temp.add(i);
+			}
+			else temp.add(Double.parseDouble(s));
+		}			
+		return temp;
+	}
+	
 	// turns "above 5" into a number condition array
 	public static List<Number_condition> fill_number_values(String number_condition)
 	{
 		List<Number_condition> values = new ArrayList<Number_condition>();
-		String[] temp = number_condition.split("\\|");
+		String[] temp = number_condition.split(",");
 		for (String s : temp) values.add(new Number_condition(s));
 		return values;
 	}
@@ -210,9 +238,11 @@ public class L
 		
 		if (potion_effects != null) le.addPotionEffects(potion_effects);		
 		
-		Main.all_mobs.put(le, mob);
+		Main.all_mobs.put(le, mob);	
 		
-		if (props == null) return;
+		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);
+		
+		if (props == null) return;			
 		
 		if (props.max_lifetime != null)
 		{
@@ -225,7 +255,7 @@ public class L
 		if (le instanceof Slime)
 		{
 			Slime slime = (Slime)le;
-			if (spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && props.size != null) slime.setSize(return_int_from_array(props.size));
+			if (!spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && props.size != null) slime.setSize(return_int_from_array(props.size));
 			if (props.hp_per_size != null) mob.hp = slime.getSize() * return_int_from_array(props.hp_per_size);
 		}	
 			
@@ -294,7 +324,7 @@ public class L
 				
 				LivingEntity le = (LivingEntity)e;
 				
-				if (Main.all_mobs.get(le) != null) continue;
+				if (Main.all_mobs.containsKey(le)) continue;
 				// already tracked
 				
 				if (cd.reload_behaviour == 0) // remove the mob
@@ -819,7 +849,7 @@ public class L
 				if (Main.world_guard.getRegionManager(w).getRegions().get(s) == null) return false;
 			}
 		}
-	
+		
 		if (b.getLightFromSky() > 13 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR
 				&& b.getRelative(BlockFace.DOWN).getType() != Material.AIR)
 		{

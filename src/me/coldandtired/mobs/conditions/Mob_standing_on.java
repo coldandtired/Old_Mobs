@@ -14,20 +14,20 @@ import me.coldandtired.mobs.L;
 
 public class Mob_standing_on implements Condition
 {
-	private List<String> values;
+	private List<Number_condition> values;
+	private boolean reversed = false;
 
-	public Mob_standing_on(String s)
+	public Mob_standing_on(String s, boolean reversed)
 	{
-		values = L.fill_string_values(s);
+		values = L.fill_number_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
 		Block block = loc.getBlock().getRelative(BlockFace.DOWN);
-		if (values.contains(block.getType().name())) return true;
-		
-		
-		return false;
+		boolean b = L.matches_number_condition(values, block.getType().getId());
+		if (reversed) return !b; else return b; 
 	}
 }

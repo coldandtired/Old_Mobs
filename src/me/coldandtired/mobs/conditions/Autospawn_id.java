@@ -14,10 +14,12 @@ import me.coldandtired.mobs.data.Autospawn;
 public class Autospawn_id implements Condition
 {
 	private List<String> values;
+	private boolean reversed = false;
 	
-	public Autospawn_id(String s)
+	public Autospawn_id(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
@@ -25,7 +27,7 @@ public class Autospawn_id implements Condition
 	{
 		if (as == null) return false;
 		
-		return L.matches_string(values, as.id);
+		boolean b = L.matches_string(values, as.id);
+		if (reversed) return !b; else return b; 
 	}
-
 }

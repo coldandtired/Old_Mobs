@@ -16,10 +16,12 @@ import me.coldandtired.mobs.L;
 public class Biomes implements Condition
 {
 	private List<String> values;
+	private boolean reversed = false;
 	
-	public Biomes(String s)
+	public Biomes(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
@@ -38,6 +40,7 @@ public class Biomes implements Condition
 	
 		if (biome == null) biome = world.getBiome(loc.getBlockX(), loc.getBlockZ()).name();
 		
-		return L.matches_string(values, biome);
+		boolean b = L.matches_string(values, biome);
+		if (reversed) return !b; else return b; 
 	}
 }

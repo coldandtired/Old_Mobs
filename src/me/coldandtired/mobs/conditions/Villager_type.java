@@ -15,10 +15,12 @@ import me.coldandtired.mobs.L;
 public class Villager_type implements Condition
 {
 	private List<String> values;
+	private boolean reversed = false;
 
-	public Villager_type(String s)
+	public Villager_type(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
@@ -27,6 +29,7 @@ public class Villager_type implements Condition
 		if (!(entity instanceof Villager)) return true;
 		
 		Villager villager = (Villager)entity;
-		return L.matches_string(values, villager.getProfession().name());
+		boolean b = L.matches_string(values, villager.getProfession().name());
+		if (reversed) return !b; else return b; 
 	}
 }

@@ -13,15 +13,18 @@ import me.coldandtired.mobs.L;
 public class Light_levels implements Condition
 {
 	private List<Number_condition> values;
+	private boolean reversed = false;
 	
-	public Light_levels(String s)
+	public Light_levels(String s, boolean reversed)
 	{
 		values = L.fill_number_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return L.matches_number_condition(values, loc.getBlock().getLightLevel());
+		boolean b = L.matches_number_condition(values, loc.getBlock().getLightLevel());
+		if (reversed) return !b; else return b; 
 	}	
 }

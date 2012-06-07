@@ -13,15 +13,18 @@ import me.coldandtired.mobs.L;
 public class Player_names implements Condition
 {
 	private List<String> values;
+	private boolean reversed = false;
 
-	public Player_names(String s)
+	public Player_names(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return L.matches_string(values, player.getName());
+		boolean b = L.matches_string(values, player.getName());
+		if (reversed) return !b; else return b; 
 	}
 }

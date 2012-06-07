@@ -13,7 +13,6 @@ public class Ender_dragon_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCreatePortal(EntityCreatePortalEvent event)
 	{
-		//if (!event.getEntity().hasMetadata("mobs_data")) return;
 		if (!Main.all_mobs.containsKey(event.getEntity())) return;
 
 		if (event.isCancelled())
@@ -22,8 +21,6 @@ public class Ender_dragon_listener implements Listener
 			else return;
 		}
 
-		//Object o = event.getEntity().getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
 		Mob mob = Main.all_mobs.get(event.getEntity());
 		
 		// end setup

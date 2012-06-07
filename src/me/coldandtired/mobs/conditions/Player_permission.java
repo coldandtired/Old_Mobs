@@ -1,21 +1,22 @@
 package me.coldandtired.mobs.conditions;
 
 import java.util.List;
+
+import me.coldandtired.mobs.Condition;
+import me.coldandtired.mobs.L;
+import me.coldandtired.mobs.data.Autospawn;
+
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
-import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.data.Autospawn;
-import me.coldandtired.mobs.L;
-
-public class Server_players implements Condition
+public class Player_permission  implements Condition
 {
 	private List<String> values;
 	private boolean reversed = false;
 
-	public Server_players(String s, boolean reversed)
+	public Player_permission(String s, boolean reversed)
 	{
 		values = L.fill_string_values(s);
 		this.reversed = reversed;
@@ -24,8 +25,10 @@ public class Server_players implements Condition
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
+		if (player == null) return true;
+		
 		boolean b = false;
-		for (Player p : entity.getServer().getOnlinePlayers()) if (values.contains(p.getName().toUpperCase())) b = true;
-		if (reversed) return !b; else return b;
+		for (String s : values) if (player.hasPermission(s)) b = true;
+		if (reversed) return !b; else return b; 
 	}
 }

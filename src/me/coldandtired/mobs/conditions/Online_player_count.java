@@ -15,15 +15,18 @@ import me.coldandtired.mobs.L;
 public class Online_player_count implements Condition
 {
 	private List<Number_condition> values;
+	private boolean reversed = false;
 
-	public Online_player_count(String s)
+	public Online_player_count(String s, boolean reversed)
 	{
 		values = L.fill_number_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return L.matches_number_condition(values, Bukkit.getOnlinePlayers().length);
+		boolean b = L.matches_number_condition(values, Bukkit.getOnlinePlayers().length);
+		if (reversed) return !b; else return b; 
 	}	
 }

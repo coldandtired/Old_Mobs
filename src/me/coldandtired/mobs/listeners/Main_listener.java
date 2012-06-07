@@ -17,6 +17,8 @@ import me.coldandtired.mobs.data.Exp;
 import me.coldandtired.mobs.data.Item;
 import me.coldandtired.mobs.data.Item_enchantment;
 import me.coldandtired.mobs.data.Outcome;
+
+import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
@@ -90,8 +92,7 @@ public class Main_listener implements Listener
 		
 		L.setup_mob(cd, le, spawn_reason, random, autospawn, null);		
 		
-		autospawn = null;
-			
+		autospawn = null;			
 	}	
 
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -172,7 +173,7 @@ public class Main_listener implements Listener
 				{
 					if (L.matches_number_condition(b.chances, mob.random))
 					{
-						int amount = L.get_quantity(b.amount);
+						double amount = L.get_bounty(b.amount);
 						given_bounty += amount;
 						Main.economy.depositPlayer(p.getName(), amount);
 					}
@@ -215,13 +216,23 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDamage(EntityDamageEvent event)
 	{
+		if (!(event.getEntity() instanceof LivingEntity)) return;
+		
 		if (event.isCancelled())
 		{
 			if (Config.overrule_damaging) event.setCancelled(false);
 			else return;
 		}			
-
-		int damage = event.getDamage();
+		
+		LivingEntity le = (LivingEntity)event.getEntity();
+		
+		if((float)le.getNoDamageTicks() > 5)
+		{
+			event.setDamage(0);
+			return;
+		}
+		
+		int damage = event.getDamage();		
 		
 		Entity damager = null;
 		if (event instanceof EntityDamageByEntityEvent) damager = ((EntityDamageByEntityEvent)event).getDamager();
@@ -245,11 +256,11 @@ public class Main_listener implements Listener
 			event.setDamage(damage);
 		}				
 		
-		if (!Main.all_mobs.containsKey(event.getEntity())) return;
+		if (!Main.all_mobs.containsKey(event.getEntity())) return;		
 		
-		LivingEntity le = (LivingEntity)event.getEntity();
+		Mob mob = Main.all_mobs.get(event.getEntity());		
 		
-		Mob mob = Main.all_mobs.get(event.getEntity());
+		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);
 		
 		Creature_data cd = Main.tracked_mobs.get(le.getType().name());	
 		if (cd == null) return; // not tracked
@@ -379,11 +390,8 @@ public class Main_listener implements Listener
 		Entity entity = event.getEntity();
 		if (entity instanceof Fireball) entity = ((Fireball)entity).getShooter();
 		if (!Main.all_mobs.containsKey(entity)) return;
-		//if (!entity.hasMetadata("mobs_data")) return;
-	
-		//Object o = entity.getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
-		Mob mob = Main.all_mobs.get(event.getEntity());
+
+		Mob mob = Main.all_mobs.get(entity);
 		// end setup
 		
 		if(mob.fiery_explosion != null) event.setFire(mob.fiery_explosion);
@@ -454,6 +462,8 @@ public class Main_listener implements Listener
 	@EventHandler
 	public void onChunkLoad(ChunkLoadEvent event)
 	{
+		if (L.ignore_world(event.getWorld())) return;
+		
 		L.convert_chunk(event.getChunk());
 	}
 }

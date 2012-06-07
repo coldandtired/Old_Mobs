@@ -14,10 +14,12 @@ import me.coldandtired.mobs.L;
 public class Player_money implements Condition
 {
 	private List<Number_condition> values;
+	private boolean reversed = false;
 
-	public Player_money(String s)
+	public Player_money(String s, boolean reversed)
 	{
 		values = L.fill_number_values(s);
+		this.reversed = reversed;
 	}
 	
 	@Override
@@ -25,11 +27,8 @@ public class Player_money implements Condition
 	{
 		if (Main.economy == null) return true;
 		
-		double d = Main.economy.getBalance(player.getName());		
-		for (Number_condition nc : values)
-		{
-			if (nc.matches_number((int) Math.round(d))) return true;
-		}
-		return false;
+		double d = Main.economy.getBalance(player.getName());
+		boolean b = L.matches_number_condition(values, (int) Math.round(d));
+		if (reversed) return !b; else return b;
 	}	
 }

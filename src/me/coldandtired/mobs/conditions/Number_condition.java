@@ -9,17 +9,9 @@ public class Number_condition implements Serializable
 	int low;
 	int high;
 	
-	public Number_condition(Object o)
-	{
-		if (o instanceof Integer)
-		{
-			low = (Integer)o;
-			type = "equals";
-			return;
-		}
-		
-		String number;
-		number = ((String)o).replaceAll(" ", "").toLowerCase();
+	public Number_condition(String number)
+	{		
+		number = (number).replaceAll(" ", "").toLowerCase();
 		
 		if (number.contains("below"))
 		{
@@ -39,6 +31,11 @@ public class Number_condition implements Serializable
 			low = Integer.parseInt(numbers[0]);
 			high = Integer.parseInt(numbers[1]);
 			type = "between";
+		}
+		else
+		{
+			low = Integer.parseInt(number);
+			type = "equals";
 		}
 	}
 	
