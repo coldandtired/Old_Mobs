@@ -97,9 +97,8 @@ public class Main_listener implements Listener
 
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDeath(EntityDeathEvent event)
-	{			
+	{	
 		LivingEntity le = (LivingEntity)event.getEntity();
-		
 		String mob_name = le.getType().name();
 		
 		Creature_data cd = Main.tracked_mobs.get(mob_name);	
@@ -226,9 +225,9 @@ public class Main_listener implements Listener
 		
 		LivingEntity le = (LivingEntity)event.getEntity();
 		
-		if((float)le.getNoDamageTicks() > 5)
+		if(le.getNoDamageTicks() > 10)
 		{
-			event.setDamage(0);
+			event.setCancelled(true);
 			return;
 		}
 		
@@ -306,7 +305,6 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityRegainHealth(EntityRegainHealthEvent event)
 	{
-		//if (!event.getEntity().hasMetadata("mobs_data")) return;
 		if (!Main.all_mobs.containsKey(event.getEntity())) return;
 		if (event.isCancelled())
 		{
@@ -314,25 +312,20 @@ public class Main_listener implements Listener
 			else return;
 		}
 		
-		//Object o = event.getEntity().getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
 		Mob mob = Main.all_mobs.get(event.getEntity());
 		// end setup
 		
-		if (!mob.can_heal)
+		if (mob.can_heal != null && !mob.can_heal)
 		{
 			event.setCancelled(true);
 			return;
 		}
-		if (mob.max_hp > -1 || mob.can_overheal)
-		{
-			int i = mob.hp + event.getAmount();
-			if (mob.can_overheal) mob.hp = i;
-			else 
-			{
-				if (i > mob.max_hp) mob.hp = mob.max_hp; else mob.hp = i;
-			}
-		}
+
+		if (mob.hp == null) return;
+		
+		int i = mob.hp + event.getAmount();
+		if (mob.can_overheal) mob.hp = i;
+		else mob.hp = i > mob.max_hp ? mob.max_hp : i;
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -400,14 +393,13 @@ public class Main_listener implements Listener
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityExplode(EntityExplodeEvent event)
-	{	
+	{
 		Entity entity = event.getEntity();
 		
 		if (entity == null) return;
 		
 		if (entity instanceof Fireball) entity = ((Fireball)entity).getShooter();
 		if (!Main.all_mobs.containsKey(entity)) return;
-		//if (!entity.hasMetadata("mobs_data")) return;
 		
 		if (event.isCancelled())
 		{
@@ -415,8 +407,6 @@ public class Main_listener implements Listener
 			else return;
 		}
 		
-		//Object o = entity.getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
 		Mob mob = Main.all_mobs.get(entity);
 		// end setup
 

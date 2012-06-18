@@ -20,6 +20,6 @@ public class Raining implements Condition
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
 	{
-		return entity.getWorld().hasStorm() == value;
+		return world.hasStorm() == value;
 	}
 }

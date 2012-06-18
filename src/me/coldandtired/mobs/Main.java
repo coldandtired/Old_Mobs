@@ -619,7 +619,7 @@ public class Main extends JavaPlugin
 	
 	public Mob get_mob(Entity entity)
 	{
-		return all_mobs.get((LivingEntity)entity);
+		return all_mobs != null ? all_mobs.get((LivingEntity)entity) : null;
 	}
 	
 	private Boolean setup_economy()

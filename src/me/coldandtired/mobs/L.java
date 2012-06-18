@@ -385,7 +385,9 @@ public class L
 			{
 				if (!o.spawn && use_outcome(o, as))
 				{
-					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o.spawn;
+					boolean found = true;
+					for (Condition c : o.conditions) if (!c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) found = false;
+					if (found) return o.spawn;
 				}
 			}
 		}
@@ -459,7 +461,9 @@ public class L
 			{
 				if (o.conditions != null && o.mob_properties != null && use_outcome(o, as))
 				{
-					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o;
+					boolean found = true;
+					for (Condition c : o.conditions) if (!c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) found = false;
+					if (found) return o;
 				}
 			}
 		}
@@ -485,7 +489,9 @@ public class L
 			{
 				if (o.conditions != null && o.potion_effects != null && use_outcome(o, as))
 				{
-					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) return o;
+					boolean found = true;
+					for (Condition c : o.conditions) if (!c.check(le, le.getWorld(), le.getLocation(), spawn_reason, null, random, as)) found = false;
+					if (found) return o;
 				}
 			}
 		}
@@ -527,7 +533,9 @@ public class L
 			{
 				if (o.conditions != null && o.drops != null && use_outcome(o, as))
 				{
-					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) return o;
+					boolean found = true;
+					for (Condition c : o.conditions) if (!c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) found = false;
+					if (found) return o;
 				}
 			}
 		}
@@ -663,7 +671,9 @@ public class L
 			{
 				if (o.conditions != null && o.damage_properties != null && use_outcome(o, as))
 				{
-					for (Condition c : o.conditions) if (c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) return o;
+					boolean found = true;
+					for (Condition c : o.conditions) if (!c.check(le, le.getWorld(), le.getLocation(), spawn_reason, p, random, as)) found = false;
+					if (found) return o;
 				}
 			}
 		}
