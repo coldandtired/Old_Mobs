@@ -7,7 +7,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
 public class World_types implements Condition
@@ -22,7 +21,7 @@ public class World_types implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		boolean b = L.matches_string(values, world.getEnvironment().name());
 		if (reversed) return !b; else return b; 

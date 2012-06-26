@@ -38,8 +38,9 @@ public class Mob
 	public HashMap<String, Damage_value> damage_properties = null;
 	public Drops drops = null;
 	public Selected_outcomes selected_outcomes = null;
+	public String autospawn_id = null;
 	
-	public Mob(Mob_properties props, Drops drops, HashMap<String, Damage_value> damage_properties, String spawn_reason, int random, Selected_outcomes so)
+	public Mob(Mob_properties props, Drops drops, HashMap<String, Damage_value> damage_properties, String spawn_reason, int random, Selected_outcomes so, String autospawn_id)
 	{
 		selected_outcomes = so;
 		so.spawn_reason = spawn_reason;
@@ -80,6 +81,7 @@ public class Mob
 		this.drops = drops;
 		this.damage_properties = damage_properties;
 		this.spawn_reason = spawn_reason;
+		this.autospawn_id = autospawn_id;
 		this.random = random;
 	}
 }

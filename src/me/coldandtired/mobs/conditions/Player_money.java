@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
 public class Player_money implements Condition
@@ -23,7 +22,7 @@ public class Player_money implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		if (Main.economy == null) return true;
 		

@@ -17,7 +17,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.logging.Logger;
 
 import javax.xml.xpath.XPath;
@@ -56,6 +55,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
+import com.herocraftonline.heroes.Heroes;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
 import com.khorn.terraincontrol.bukkit.TCPlugin;
 import com.sk89q.worldedit.BlockVector;
@@ -64,16 +64,17 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class Main extends JavaPlugin
 {
-	public static Map<LivingEntity, Mob> all_mobs = null;
+	public static Map<String, Mob> all_mobs = null;
 	public static WorldGuardPlugin world_guard = null;
 	public static Economy economy = null;
+	public static Heroes heroes = null;
 	public static TCPlugin tc = null;
 	public static XPath xpath;
 	public static Map<LivingEntity, Calendar> mobs_with_lifetimes = null;
 	public static Map<String, Creature_data> tracked_mobs = null;
 	public static Logger logger;	
 	public static Main plugin;
-	public static Map<UUID, Selected_outcomes> previous_mobs = null; 
+	public static Map<String, Selected_outcomes> previous_mobs = null; 
 	public static HashMap<String, Biome_data> chunks = null;
 	List<Autospawn> autospawns = null;
 	
@@ -91,6 +92,7 @@ public class Main extends JavaPlugin
 			PluginManager pm = getServer().getPluginManager();
 			world_guard = get_world_guard();
 			tc = get_tc();
+			heroes = get_heroes();
 			setup_economy();
 			BukkitScheduler scheduler = getServer().getScheduler();
 			
@@ -161,7 +163,7 @@ public class Main extends JavaPlugin
 			}
 			
 			tracked_mobs = new HashMap<String, Creature_data>();
-			all_mobs = new HashMap<LivingEntity, Mob>();
+			all_mobs = new HashMap<String, Mob>();
 			List<String> mob_names = new ArrayList<String>();
 			
 			if (Config.log_level > 0)
@@ -288,12 +290,12 @@ public class Main extends JavaPlugin
 		
 		if (biome == null) biome = b.getBiome().name();
 		
-		Integer[] loc = { chunk.getX(), chunk.getZ() };
-		List<Integer[]> locs = bd.chunks.get(biome);
+		int[] loc = { chunk.getX(), chunk.getZ() };
+		List<int[]> locs = bd.chunks.get(biome);
 		
 		if (locs == null)
 		{
-			locs = new ArrayList<Integer[]>();
+			locs = new ArrayList<int[]>();
 			locs.add(loc);
 			bd.chunks.put(biome, locs);
 			chunks.put(world_name, bd);
@@ -343,7 +345,7 @@ public class Main extends JavaPlugin
 		for (Player p : w.getPlayers()) if (p.isOnline()) count++;
 				
 		if (count < as.min_player_count && (!from_command || (from_command && as.command_time_check))) return;
-		
+			
 		if (as.spawn_time != null && as.spawn_time.has_mc_time && (!from_command || (from_command && as.command_time_check)))
 		{
 			long mc_time = w.getTime();
@@ -410,7 +412,7 @@ public class Main extends JavaPlugin
 									{
 										if (y < w.getMaxHeight())
 										{
-											if (L.is_safe_above_ground_block(w.getBlockAt(x, y, z), sl.loaded_chunks_only,
+											if (L.is_safe_above_ground_block(as.mob_name, w.getBlockAt(x, y, z), sl.loaded_chunks_only,
 													temp_biomes, null, w)) safe_blocks.add(x + "," + y + "," + z);
 										}
 									}
@@ -427,7 +429,7 @@ public class Main extends JavaPlugin
 									{
 										if (y < w.getMaxHeight())
 										{
-											if (L.is_safe_below_ground_block(w.getBlockAt(x, y, z), sl.loaded_chunks_only,
+											if (L.is_safe_below_ground_block(as.mob_name, w.getBlockAt(x, y, z), sl.loaded_chunks_only,
 													temp_biomes, null, w)) safe_blocks.add(x + "," + y + "," + z);
 										}
 									}
@@ -458,9 +460,9 @@ public class Main extends JavaPlugin
 				Biome_data bd = Main.chunks.get(w.getName());
 				for (String s : temp_biomes)
 				{
-					List<Integer[]> locs = bd.chunks.get(s);
+					List<int[]> locs = bd.chunks.get(s);
 					if (locs == null) continue;
-					for (Integer[] ints : locs)
+					for (int[] ints : locs)
 					{
 						Chunk c = w.getChunkAt(ints[0], ints[1]);
 						if (sl.loaded_chunks_only && !c.isLoaded()) continue;
@@ -514,7 +516,7 @@ public class Main extends JavaPlugin
 			}			
 		}		
 		else if (sl.location_type.equalsIgnoreCase("near_players") || sl.location_type.equalsIgnoreCase("range"))
-		{	
+		{
 			if (above_ground)
 			{
 				if (sl.location_type.equalsIgnoreCase("near_players"))
@@ -524,11 +526,11 @@ public class Main extends JavaPlugin
 						if (p.isOnline())
 						{
 							Location loc = p.getLocation();						
-							L.check_above_ground_block((int)loc.getX(), (int)loc.getY() + 1, (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
+							L.check_above_ground_block(as.mob_name, (int)loc.getX(), (int)loc.getY() + 1, (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
 						}
 					}
 				}
-				else L.check_above_ground_block(sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
+				else L.check_above_ground_block(as.mob_name, sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
 			}
 			else
 			{
@@ -539,11 +541,11 @@ public class Main extends JavaPlugin
 						if (p.isOnline())
 						{
 							Location loc = p.getLocation();
-							L.check_below_ground_block((int)loc.getX(), (int)loc.getY(), (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
+							L.check_below_ground_block(as.mob_name, (int)loc.getX(), (int)loc.getY(), (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
 						}
 					}
 				}
-				else L.check_below_ground_block(sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
+				else L.check_below_ground_block(as.mob_name, sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
 			}
 			if (safe_blocks.size() > 0)
 			{				
@@ -564,7 +566,7 @@ public class Main extends JavaPlugin
 	}	
 	
 	@SuppressWarnings("unchecked")
-	public Map<UUID, Selected_outcomes> get_mobs()
+	public Map<String, Selected_outcomes> get_mobs()
 	{
 		File f = new File(getDataFolder(), "mobs_list");
 		if (f.exists())
@@ -575,8 +577,7 @@ public class Main extends JavaPlugin
 		    ObjectInput input = new ObjectInputStream (buffer);
 		    try
 		    {
-		    	Map<UUID, Selected_outcomes> temp_mobs = (HashMap<UUID, Selected_outcomes>)input.readObject();
-		    	return temp_mobs;
+		    	return (HashMap<String, Selected_outcomes>)input.readObject();
 		    }
 		    finally {input.close();}
 		}
@@ -605,11 +606,18 @@ public class Main extends JavaPlugin
 		    ObjectOutput output = new ObjectOutputStream(buffer);
 		    try
 		    {
-		    	Map<UUID, Selected_outcomes> temp_mobs = new HashMap<UUID, Selected_outcomes>();
-		    	for (LivingEntity le : all_mobs.keySet())
+		    	Map<String, Selected_outcomes> temp_mobs = new HashMap<String, Selected_outcomes>();
+		    	for (World w : getServer().getWorlds())
 		    	{
-		    		if (le != null && !le.isDead()) temp_mobs.put(le.getUniqueId(), all_mobs.get(le).selected_outcomes);
+		    		if (L.ignore_world(w)) continue;
+		    		
+		    		for (LivingEntity le : w.getLivingEntities())
+		    		{
+		    			String s = le.getUniqueId().toString();
+		    			if (all_mobs.containsKey(s)) temp_mobs.put(s, all_mobs.get(s).selected_outcomes);	    		
+		    		}
 		    	}
+		    	
 		        output.writeObject(temp_mobs);
 		    }
 		    finally {output.close();}
@@ -671,6 +679,17 @@ public class Main extends JavaPlugin
 	    }
 	 
 	    return (TCPlugin) plugin;
+	}
+	
+	private Heroes get_heroes() 
+	{
+	    Plugin plugin = getServer().getPluginManager().getPlugin("Heroes");
+	    if (plugin == null || !(plugin instanceof Heroes)) 
+	    {
+	        return null;
+	    }
+	 
+	    return (Heroes) plugin;
 	}
 	
 	public void onEnable() 

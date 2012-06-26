@@ -4,8 +4,6 @@ import java.util.List;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.L;
-import me.coldandtired.mobs.data.Autospawn;
-
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
@@ -23,7 +21,7 @@ public class Player_permission  implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		if (player == null) return true;
 		

@@ -13,7 +13,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.data.Autospawn;
 
 public class Region_mob_count implements Condition 
 {
@@ -31,7 +30,7 @@ public class Region_mob_count implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		if (Main.world_guard == null) return true;
 		boolean b = false;

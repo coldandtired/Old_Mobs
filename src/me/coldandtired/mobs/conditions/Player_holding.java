@@ -5,7 +5,6 @@ import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.data.Autospawn;
 
 public class Player_holding implements Condition 
 {	
@@ -20,7 +19,7 @@ public class Player_holding implements Condition
 	}
 
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id)
 	{
 		/*boolean validholding = false;
 		ItemStack is = player.getItemInHand();

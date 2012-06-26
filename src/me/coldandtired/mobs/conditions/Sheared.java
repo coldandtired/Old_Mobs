@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.data.Autospawn;
 
 public class Sheared implements Condition
 {
@@ -19,7 +18,7 @@ public class Sheared implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		if (!(entity instanceof Sheep)) return true;
 		return ((Sheep)entity).isSheared() == value;

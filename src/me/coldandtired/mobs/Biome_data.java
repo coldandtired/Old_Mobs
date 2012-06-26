@@ -1,10 +1,10 @@
 package me.coldandtired.mobs;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Biome_data 
 {
-	public Map<String, List<Integer[]>> chunks = new ConcurrentHashMap<String, List<Integer[]>>();
+	public ConcurrentMap<String, List<int[]>> chunks = new ConcurrentHashMap<String, List<int[]>>();
 }

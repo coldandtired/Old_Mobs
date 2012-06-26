@@ -7,7 +7,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
 public class Killed_player_names implements Condition
@@ -22,7 +21,7 @@ public class Killed_player_names implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		boolean b = false;
 		if (values.contains(player.getName().toUpperCase())) b = true;

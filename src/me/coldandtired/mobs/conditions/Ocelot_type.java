@@ -3,7 +3,6 @@ package me.coldandtired.mobs.conditions;
 import java.util.List;
 
 import me.coldandtired.mobs.Condition;
-import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
 import org.bukkit.Location;
@@ -24,7 +23,7 @@ public class Ocelot_type  implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		if (!(entity instanceof Ocelot)) return true;
 		

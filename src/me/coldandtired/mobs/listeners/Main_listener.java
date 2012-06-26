@@ -42,6 +42,9 @@ import org.bukkit.event.entity.ExplosionPrimeEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.ItemStack;
 
+import com.herocraftonline.heroes.characters.Hero;
+import com.herocraftonline.heroes.characters.classes.HeroClass;
+
 public class Main_listener implements Listener 
 {		
 	public static Autospawn autospawn = null;
@@ -77,10 +80,11 @@ public class Main_listener implements Listener
 		
 		// end intro
 		
-		String spawn_reason = autospawn != null? "autospawned" : event.getSpawnReason().name();		
+		String spawn_reason = autospawn != null? "autospawned" : event.getSpawnReason().name();
+		String autospawn_id = autospawn != null ? autospawn.id : null;
 		int random = L.rng.nextInt(100) + 1;
 		
-		Boolean can_spawn = L.merge_spawning(cd, le, spawn_reason, random, autospawn);
+		Boolean can_spawn = L.merge_spawning(cd, le, spawn_reason, random, autospawn_id);
 
 		if (can_spawn != null && !can_spawn)
 		{
@@ -90,7 +94,7 @@ public class Main_listener implements Listener
 			return;
 		}
 		
-		L.setup_mob(cd, le, spawn_reason, random, autospawn, null);		
+		L.setup_mob(cd, le, spawn_reason, random, autospawn_id, null);		
 		
 		autospawn = null;			
 	}	
@@ -111,8 +115,9 @@ public class Main_listener implements Listener
 			else return; // not tracked
 		}
 		
-		if (!Main.all_mobs.containsKey(le)) return;
-		Mob mob = Main.all_mobs.get(le);
+		Mob mob = Main.all_mobs.get(le.getUniqueId().toString());
+		if (mob == null) return;
+		
 		mob_name = mob_name.toLowerCase();
 		
 		if (Config.log_level > 1) L.log("Tracked mob " + mob_name + " died");
@@ -125,8 +130,8 @@ public class Main_listener implements Listener
 		if ((cd.gen_drops_check_type > 0 && autospawn == null) || (cd.as_drops_check_type > 0 && autospawn != null))
 		{
 			if (Config.log_level > 1) L.log("Checking conditions for drops");
-			Outcome o = L.get_drops_outcome(cd, le, mob.spawn_reason, p, mob.random, autospawn);
-			drops = L.merge_drops(o, cd, autospawn);
+			Outcome o = L.get_drops_outcome(cd, le, mob.spawn_reason, p, mob.random, mob.autospawn_id);
+			drops = L.merge_drops(o, cd, mob.spawn_reason);
 		} 
 		else
 		{
@@ -197,6 +202,13 @@ public class Main_listener implements Listener
 					}
 				}
 				event.setDroppedExp(xp);
+
+				if (p != null && Main.heroes != null)
+				{
+					Hero hero = Main.heroes.getCharacterManager().getHero(p);
+					hero.gainExp(Double.parseDouble(Integer.toString(xp)) , HeroClass.ExperienceType.KILLING);
+					event.setDroppedExp(0);
+				}
 			}
 			
 			if (drops.messages != null)
@@ -209,7 +221,7 @@ public class Main_listener implements Listener
 			}
 		}
 		
-		Main.all_mobs.remove(le);
+		Main.all_mobs.remove(le.getUniqueId().toString());
 	}
 
 	@EventHandler(priority = EventPriority.HIGHEST)
@@ -238,26 +250,25 @@ public class Main_listener implements Listener
 		
 		if (damager != null)
 		{
-			if (Main.tracked_mobs.get(damager.getType().name()) != null && Main.all_mobs.containsKey(damager))
+			Mob attacker = Main.all_mobs.get(damager.getUniqueId().toString());
+			if (attacker != null)
 			{
-				Mob attacker = Main.all_mobs.get(damager); 
 				if (attacker.damage != null) damage = attacker.damage;
 			}
 			else if (damager instanceof Projectile)
 			{
 				LivingEntity le2 = ((Projectile)damager).getShooter();
-				if (le2 != null && Main.tracked_mobs.get(le2.getType().name()) != null && Main.all_mobs.containsKey(le2))
+				if (le2 != null)
 				{
-					Mob attacker = Main.all_mobs.get(damager); 
+					attacker = Main.all_mobs.get(le2.getUniqueId().toString());
 					if (attacker != null && attacker.damage != null) damage = attacker.damage;	
 				}
 			}
 			event.setDamage(damage);
 		}				
 		
-		if (!Main.all_mobs.containsKey(event.getEntity())) return;		
-		
-		Mob mob = Main.all_mobs.get(event.getEntity());		
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		if (mob == null) return;	
 		
 		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);
 		
@@ -275,8 +286,8 @@ public class Main_listener implements Listener
 		if ((cd.gen_damages_check_type > 0 && autospawn == null) || (cd.as_damages_check_type > 0 && autospawn != null))
 		{
 			if (Config.log_level > 1) L.log("Checking conditions for damages");
-			Outcome o = L.get_damages_outcome(cd, le, mob.spawn_reason, p, mob.random, autospawn);
-			damage_values = L.merge_damage_properties(o, cd, autospawn);
+			Outcome o = L.get_damages_outcome(cd, le, mob.spawn_reason, p, mob.random, mob.autospawn_id);
+			damage_values = L.merge_damage_properties(o, cd, mob.spawn_reason);
 		} 
 		else 
 		{
@@ -289,9 +300,13 @@ public class Main_listener implements Listener
 			Damage_value dv = damage_values.get(event.getCause().name());
 			if (dv != null)
 			{
-				int hurt = L.get_quantity(dv.amount);
-				if (dv.use_percent) hurt = hurt / 100;
-				damage = damage * hurt;
+				double hurt = L.get_quantity(dv.amount);
+				if (dv.use_percent)
+				{
+					hurt = hurt / 100;
+					damage = (int) Math.ceil(damage * hurt);
+				}
+				else damage = (int) hurt;
 			}	
 		}
 		
@@ -305,14 +320,15 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityRegainHealth(EntityRegainHealthEvent event)
 	{
-		if (!Main.all_mobs.containsKey(event.getEntity())) return;
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		if (mob == null) return;
+		
 		if (event.isCancelled())
 		{
 			if (Config.overrule_healing) event.setCancelled(false);
 			else return;
-		}
+		}		
 		
-		Mob mob = Main.all_mobs.get(event.getEntity());
 		// end setup
 		
 		if (mob.can_heal != null && !mob.can_heal)
@@ -331,15 +347,14 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCombust(EntityCombustEvent event)
 	{
-		if (!Main.all_mobs.containsKey(event.getEntity())) return;
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		if (mob == null) return;
 	
 		if (event.isCancelled())
 		{
 			if (Config.overrule_burning) event.setCancelled(false);
 			else return;
 		}
-		
-		Mob mob = Main.all_mobs.get(event.getEntity());
 		
 		if (mob.can_burn != null && !mob.can_burn)
 		{
@@ -353,19 +368,15 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTarget(EntityTargetLivingEntityEvent event)
 	{
-		//if (!event.getEntity().hasMetadata("mobs_data")) return;
-		if (!Main.all_mobs.containsKey(event.getEntity())) return;
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		if (mob == null) return;
 		
 		if (event.isCancelled())
 		{
 			if (Config.overrule_targeting) event.setCancelled(false);
 			else return;
 		}
-		
-		//Object o = event.getEntity().getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
-		
-		Mob mob = Main.all_mobs.get(event.getEntity());
+
 		// end setup
 		
 		if (mob.safe != null) event.setCancelled(mob.safe);
@@ -382,9 +393,10 @@ public class Main_listener implements Listener
 
 		Entity entity = event.getEntity();
 		if (entity instanceof Fireball) entity = ((Fireball)entity).getShooter();
-		if (!Main.all_mobs.containsKey(entity)) return;
-
-		Mob mob = Main.all_mobs.get(entity);
+		
+		Mob mob = Main.all_mobs.get(entity.getUniqueId().toString());
+		if (mob == null) return;
+		
 		// end setup
 		
 		if(mob.fiery_explosion != null) event.setFire(mob.fiery_explosion);
@@ -399,7 +411,9 @@ public class Main_listener implements Listener
 		if (entity == null) return;
 		
 		if (entity instanceof Fireball) entity = ((Fireball)entity).getShooter();
-		if (!Main.all_mobs.containsKey(entity)) return;
+		
+		Mob mob = Main.all_mobs.get(entity.getUniqueId().toString());
+		if (mob == null) return;
 		
 		if (event.isCancelled())
 		{
@@ -407,7 +421,6 @@ public class Main_listener implements Listener
 			else return;
 		}
 		
-		Mob mob = Main.all_mobs.get(entity);
 		// end setup
 
 		if (mob.safe != null && mob.safe) event.setCancelled(true);
@@ -432,17 +445,15 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityChangeBlock(EntityChangeBlockEvent event)
 	{
-		//if (!event.getEntity().hasMetadata("mobs_data")) return;
-		if (!Main.all_mobs.containsKey(event.getEntity())) return;
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		if (mob == null) return;
+		
 		if (event.isCancelled())
 		{
 			if (Config.overrule_changing_block) event.setCancelled(false);
 			else return;
 		}
 		
-		//Object o = event.getEntity().getMetadata("mobs_data").get(0).value();
-		//Mob mob = (Mob)o;
-		Mob mob = Main.all_mobs.get(event.getEntity());
 		// end setup
 		
 		if ((mob.can_move_blocks != null && !mob.can_move_blocks) 

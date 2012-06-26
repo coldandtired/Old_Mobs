@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.L;
-import me.coldandtired.mobs.data.Autospawn;
 
 public class Autospawn_id implements Condition
 {
@@ -23,11 +22,11 @@ public class Autospawn_id implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as)
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id)
 	{
-		if (as == null) return false;
+		if (autospawn_id == null) return false;
 		
-		boolean b = L.matches_string(values, as.id);
+		boolean b = L.matches_string(values, autospawn_id);
 		if (reversed) return !b; else return b; 
 	}
 }

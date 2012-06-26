@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
 public class Remaining_lifetime implements Condition
@@ -24,7 +23,7 @@ public class Remaining_lifetime implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		if (Main.mobs_with_lifetimes == null) return false;
 		boolean b = false;

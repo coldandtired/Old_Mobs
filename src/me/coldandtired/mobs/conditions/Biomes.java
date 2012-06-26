@@ -10,7 +10,6 @@ import com.khorn.terraincontrol.bukkit.BukkitWorld;
 
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.L;
 
 public class Biomes implements Condition
@@ -25,7 +24,7 @@ public class Biomes implements Condition
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		String biome = null;
 		if (Main.tc != null)

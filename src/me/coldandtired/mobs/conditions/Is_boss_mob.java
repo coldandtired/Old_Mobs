@@ -8,7 +8,6 @@ import org.bukkit.entity.Player;
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Main;
 import me.coldandtired.mobs.Mob;
-import me.coldandtired.mobs.data.Autospawn;
 
 public class Is_boss_mob implements Condition
 {
@@ -20,7 +19,7 @@ private boolean value;
 	}
 	
 	@Override
-	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, Autospawn as) 
+	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
 		Mob m = Main.all_mobs.get(entity);
 		if (m == null) return true;

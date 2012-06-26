@@ -1,9 +1,9 @@
 name: Mobs
-version: 1.2.5 b21
+version: 1.2.5 b24
 author: coldandtired
 main: me.coldandtired.mobs.Main
 description: A fully-featured mob control plugin
-softdepend: [Vault, WorldGuard, TerrainControl]
+softdepend: [Vault, WorldGuard, TerrainControl, Heroes]
 commands:
     spawn_mobs:
         description: Manually spawn some or all of the autospawns
