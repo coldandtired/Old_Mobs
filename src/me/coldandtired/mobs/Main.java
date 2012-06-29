@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
@@ -51,10 +53,12 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-
 import com.herocraftonline.heroes.Heroes;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
 import com.khorn.terraincontrol.bukkit.TCPlugin;
@@ -78,6 +82,20 @@ public class Main extends JavaPlugin
 	public static HashMap<String, Biome_data> chunks = null;
 	List<Autospawn> autospawns = null;
 	
+	boolean is_latest_version()
+	{
+		DocumentBuilder dbf;
+		xpath = XPathFactory.newInstance().newXPath();
+		try 
+		{
+			dbf = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			Document doc = dbf.parse("http://dev.bukkit.org/server-mods/mobs/files.rss");
+			String s = ((Element) xpath.evaluate("//item[1]/title", doc, XPathConstants.NODE)).getTextContent();
+			return (s.equalsIgnoreCase(getDescription().getVersion()));
+		} 
+		catch (Exception e) {return true;}		
+	}
+	
 	boolean load_xml_config()
 	{
 		File f = new File(getDataFolder(), "data.mobs");
@@ -85,7 +103,6 @@ public class Main extends JavaPlugin
 		try
 		{	
 			InputSource input = new InputSource(f.getPath());
-			xpath = XPathFactory.newInstance().newXPath();
 			
 			Element config = (Element)xpath.evaluate("Mobs/config", input, XPathConstants.NODE);
 			Config.setup_config(config);
@@ -688,19 +705,23 @@ public class Main extends JavaPlugin
 	    {
 	        return null;
 	    }
-	 
+	    getServer().getPluginManager().registerEvents(new Heroes_listener(), this);
 	    return (Heroes) plugin;
 	}
 	
 	public void onEnable() 
 	{		
 		logger = getLogger();
+		if (!is_latest_version()) logger.info("There's a new version of Mobs available!");
+    	
 		if (!load_xml_config())
 		{
 			L.warn("There was no data file found!  Stopping");
 			setEnabled(false);
+			return;
 		}
-		plugin = this;
+		plugin = this;		
+		
 		try 
 		{
 		    Metrics metrics = new Metrics(plugin);
@@ -723,6 +744,18 @@ public class Main extends JavaPlugin
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
 	{		
+		if (cmd.getName().equalsIgnoreCase("mobstest"))
+    	{
+    		if (sender.isOp())
+    		{
+    			getLogger().info(Ansi.ansi().fg(Ansi.Color.GREEN).bold().toString() + "Test 1"
+    					+ Ansi.ansi().fg(Ansi.Color.WHITE).bold().toString());
+    			AnsiConsole.out.println(Ansi.ansi().fg(Ansi.Color.YELLOW).bold().toString() +"test 2"
+    					+ Ansi.ansi().fg(Ansi.Color.WHITE).bold().toString());
+    		}
+    		return true;
+    	}
+		
 		if (cmd.getName().equalsIgnoreCase("spawn_mobs") && args.length < 2)
 		{
 			if (sender instanceof Player && !sender.hasPermission("mobs.can_spawn_mobs"))

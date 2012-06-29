@@ -32,6 +32,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import com.herocraftonline.heroes.characters.Monster;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
 
 import me.coldandtired.mobs.conditions.Number_condition;
@@ -50,7 +51,7 @@ public class L
 {
 	public static Random rng = new Random();
 	static DecimalFormat f = new DecimalFormat("#,###.##");
-	
+    
 	// general helpers
 	
 	public static int get_fallthrough(Creature_data cd, String spawn_reason)
@@ -240,6 +241,13 @@ public class L
 		}
 
 		Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so, autospawn_id);
+		
+		if (Main.heroes != null)
+		{
+			Monster monster = Main.heroes.getCharacterManager().getMonster(le);
+			if (mob.hp != null)	monster.setMaxHealth(mob.hp);
+			if (mob.damage != null) monster.setDamage(mob.damage);
+		}
 		
 		if (potion_effects != null) le.addPotionEffects(potion_effects);		
 		

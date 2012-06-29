@@ -1,5 +1,5 @@
 name: Mobs
-version: 1.2.5 b24
+version: 1.2.5 b25
 author: coldandtired
 main: me.coldandtired.mobs.Main
 description: A fully-featured mob control plugin
@@ -9,6 +9,8 @@ commands:
         description: Manually spawn some or all of the autospawns
         aliases: sm
         usage: "Usage: /spawn_mob (shortcut)"
+    mobstest:
+        description: testing
 permissions:
     mobs.can_spawn_mobs:
         description: Allows manual spawning

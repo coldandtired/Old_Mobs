@@ -78,7 +78,7 @@ public class Main_listener implements Listener
 			return; 
 		} // not tracked		
 		
-		// end intro
+		// end intro		
 		
 		String spawn_reason = autospawn != null? "autospawned" : event.getSpawnReason().name();
 		String autospawn_id = autospawn != null ? autospawn.id : null;
@@ -117,7 +117,7 @@ public class Main_listener implements Listener
 		
 		Mob mob = Main.all_mobs.get(le.getUniqueId().toString());
 		if (mob == null) return;
-		
+	
 		mob_name = mob_name.toLowerCase();
 		
 		if (Config.log_level > 1) L.log("Tracked mob " + mob_name + " died");
@@ -127,7 +127,7 @@ public class Main_listener implements Listener
 		Drops drops = null;		
 
 		// check drops == death or both
-		if ((cd.gen_drops_check_type > 0 && autospawn == null) || (cd.as_drops_check_type > 0 && autospawn != null))
+		if ((cd.gen_drops_check_type > 0 && !mob.spawn_reason.equalsIgnoreCase("autospawned")) || (cd.as_drops_check_type > 0 && mob.spawn_reason.equalsIgnoreCase("autospawned")))
 		{
 			if (Config.log_level > 1) L.log("Checking conditions for drops");
 			Outcome o = L.get_drops_outcome(cd, le, mob.spawn_reason, p, mob.random, mob.autospawn_id);
@@ -224,10 +224,17 @@ public class Main_listener implements Listener
 		Main.all_mobs.remove(le.getUniqueId().toString());
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.HIGH)
 	public void onEntityDamage(EntityDamageEvent event)
 	{
+		//Monster monster = Main.heroes.getCharacterManager().getMonster((LivingEntity)event.getEntity());
+		
+		//L.log(11);
+		//CharacterDamageEvent other_damage = new CharacterDamageEvent(event.getEntity(), event.getCause(), event.getDamage());
+	    //  Main.plugin.getServer().getPluginManager().callEvent(other_damage);
 		if (!(event.getEntity() instanceof LivingEntity)) return;
+		
+		if (Main.heroes != null) return;
 		
 		if (event.isCancelled())
 		{
@@ -244,7 +251,7 @@ public class Main_listener implements Listener
 		}
 		
 		int damage = event.getDamage();		
-		
+	
 		Entity damager = null;
 		if (event instanceof EntityDamageByEntityEvent) damager = ((EntityDamageByEntityEvent)event).getDamager();
 		
@@ -283,7 +290,7 @@ public class Main_listener implements Listener
 		HashMap<String, Damage_value> damage_values = null;	
 		
 		// check damages == damage or both
-		if ((cd.gen_damages_check_type > 0 && autospawn == null) || (cd.as_damages_check_type > 0 && autospawn != null))
+		if ((cd.gen_damages_check_type > 0 && !mob.spawn_reason.equalsIgnoreCase("autospawned")) || (cd.as_damages_check_type > 0 && mob.spawn_reason.equalsIgnoreCase("autospawned")))
 		{
 			if (Config.log_level > 1) L.log("Checking conditions for damages");
 			Outcome o = L.get_damages_outcome(cd, le, mob.spawn_reason, p, mob.random, mob.autospawn_id);
@@ -313,7 +320,7 @@ public class Main_listener implements Listener
 		if (mob.hp != null)
 		{
 			mob.hp -= damage;
-			if (mob.hp < 1) event.setDamage(5000); else event.setDamage(-1);
+			if (mob.hp < 1) event.setDamage(10000); else event.setDamage(-1);
 		} else event.setDamage(damage);
 	}
 	
