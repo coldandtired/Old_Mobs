@@ -32,7 +32,7 @@ public class Regions implements Condition
 		{
 			ProtectedRegion pr = Main.world_guard.getRegionManager(world).getRegion(r);
 			if (pr != null && pr.contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) b = true;
-		}
+		}		
 		if (reversed) return !b; else return b; 
 	}
 }

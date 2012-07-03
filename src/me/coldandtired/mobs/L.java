@@ -3,12 +3,14 @@ package me.coldandtired.mobs;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.DyeColor;
 import org.bukkit.Effect;
@@ -19,6 +21,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Pig;
@@ -34,8 +37,12 @@ import org.bukkit.potion.PotionEffectType;
 
 import com.herocraftonline.heroes.characters.Monster;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
+import com.sk89q.worldedit.BlockVector;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 import me.coldandtired.mobs.conditions.Number_condition;
+import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.data.Autospawn_location;
 import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
@@ -46,13 +53,279 @@ import me.coldandtired.mobs.data.Mob_properties;
 import me.coldandtired.mobs.data.Outcome;
 import me.coldandtired.mobs.data.Potion_effect;
 import me.coldandtired.mobs.data.Selected_outcomes;
+import me.coldandtired.mobs.listeners.Main_listener;
 
 public class L 
 {
 	public static Random rng = new Random();
 	static DecimalFormat f = new DecimalFormat("#,###.##");
-    
-	// general helpers
+    static List<String> unsafe_blocks = Arrays.asList("AIR", "LAVA", "WATER", "STATIONARY_WATER", "STATIONARY_LAVA");
+
+    // general helpers
+	
+	public static void spawn_mob(List<Block> safe_blocks, Autospawn as, boolean from_command, World w)
+	{
+		if (safe_blocks == null) return;
+				
+		int amount = 1;
+		if (as.manual && from_command && as.manual_amount != null) amount = as.manual_amount.get(get_random_choice(as.manual_amount.size()));
+		else if (as.amount != null) amount = as.amount.get(get_random_choice(as.amount.size()));
+		
+		for (int i = 0; i < amount; i++)
+		{
+			Block b = safe_blocks.get(get_random_choice(safe_blocks.size()));
+			Main_listener.autospawn = as;
+			w.spawnCreature(b.getLocation(), EntityType.valueOf(as.mob_name));
+			if (Config.log_level > 1) log("Autospawned " + as.mob_name);
+		}
+	}
+	
+	public static boolean is_above_ground(Block b)
+	{
+		return b.getLightFromSky() > 13;
+	}
+	
+	public static boolean is_safe_to_spawn(Block b, boolean above_ground, String safe_type, Material material)
+	{	
+		if (!b.getChunk().isLoaded()) return false;
+		
+		if (b.getType() != material) return false;
+		
+		if (above_ground != is_above_ground(b)) return false;			
+			
+		Material m = b.getRelative(BlockFace.NORTH).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.EAST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.SOUTH).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.WEST).getType();
+		if (m != material) return false;
+		
+		m = b.getRelative(BlockFace.NORTH_EAST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.NORTH_WEST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.SOUTH_EAST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.SOUTH_WEST).getType();
+		if (m != material) return false;
+		
+		m = b.getRelative(BlockFace.DOWN).getType();
+		
+		if (safe_type.equalsIgnoreCase("land"))
+		{
+			if (!m.isBlock() || unsafe_blocks.contains(m.name())) return false;
+		}
+		else if (m != material) return false;
+
+		b = b.getRelative(BlockFace.UP);
+		if (b.getType() != material) return false;
+		
+		m = b.getRelative(BlockFace.NORTH).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.EAST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.SOUTH).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.WEST).getType();
+		if (m != material) return false;
+		
+		m = b.getRelative(BlockFace.NORTH_EAST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.NORTH_WEST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.SOUTH_EAST).getType();
+		if (m != material) return false;
+			
+		m = b.getRelative(BlockFace.SOUTH_WEST).getType();
+		if (m != material) return false;
+		
+		return true;
+	}
+	
+	public static String get_biome_name(BukkitWorld bw, Block b)
+	{		
+		String temp = null;
+		if (bw != null)
+		{
+			int id = bw.getBiome(b.getX(), b.getZ());
+			temp = bw.getBiomeById(id).getName();
+		}
+		if (temp == null) temp = b.getBiome().name();
+		return temp;
+	}
+	
+	public static boolean is_block_in_regions(Block b, List<String> regions)
+	{
+		if (Main.world_guard == null) return false;
+		RegionManager rm = Main.world_guard.getRegionManager(b.getWorld());
+		if (rm == null) return false;
+		for (String region : regions)
+		{
+			ProtectedRegion pr = rm.getRegion(region);
+			if (pr != null && pr.contains(b.getX(), b.getY(), b.getZ())) return true;
+		}
+		return false;
+	}
+	
+	/** Gets a list of all blocks in the biome */
+	public static List<Block> get_blocks_in_biome(BukkitWorld bw, String mob_name, World world, String biome, boolean above_ground)
+	{
+		List<Chunk> chunks = new ArrayList<Chunk>();
+		for (Chunk c : world.getLoadedChunks())
+		{
+			Block b = c.getBlock(7, 0, 7);			
+			if (get_biome_name(bw, b).equalsIgnoreCase(biome)) chunks.add(c);
+		}
+		
+		if (chunks.size() == 0) return null;
+		
+		String safe_type = "land";
+		Material material = Material.AIR;
+		
+		if (mob_name.equalsIgnoreCase("blaze") || mob_name.equalsIgnoreCase("ghast")
+				|| mob_name.equalsIgnoreCase("enderdragon")) safe_type = "air";
+			
+		if (mob_name.equalsIgnoreCase("squid"))
+		{
+			safe_type = "water";
+			material = Material.WATER;
+		}
+		
+		List<Block> temp = new ArrayList<Block>();
+		
+		for (Chunk c : chunks)
+		{			
+			for (int x = 0; x < 15; x++)
+			{
+				for (int y = 0; y < world.getMaxHeight(); y++)
+				{
+					for (int z = 0; z < 15; z++)
+					{
+						Block b = c.getBlock(x, y, z);
+						if (is_safe_to_spawn(b, above_ground, safe_type, material)) temp.add(b);
+					}
+				}
+			}			
+		}
+		if (temp.size() == 0) temp = null;
+		return temp;
+	}
+	
+	/** Gets a list of all blocks in the region */
+	public static List<Block> get_blocks_in_region(String mob_name, World world, String region, boolean above_ground, List<String> temp_biomes)
+	{
+		if (Main.world_guard == null) return null;
+		RegionManager rm = Main.world_guard.getRegionManager(world);
+		if (rm == null) return null;
+		ProtectedRegion pr = rm.getRegion(region);
+		if (pr == null) return null;
+		
+		String safe_type = "land";
+		Material material = Material.AIR;
+		
+		if (mob_name.equalsIgnoreCase("blaze") || mob_name.equalsIgnoreCase("ghast")
+				|| mob_name.equalsIgnoreCase("enderdragon")) safe_type = "air";
+			
+		if (mob_name.equalsIgnoreCase("squid"))
+		{
+			safe_type = "water";
+			material = Material.WATER;
+		}
+		
+		List<Block> temp = new ArrayList<Block>();
+		BlockVector min = pr.getMinimumPoint();
+		BlockVector max = pr.getMaximumPoint();
+		for (int x = min.getBlockX(); x < max.getBlockX(); x++)
+		{
+			for (int y = min.getBlockY(); y < max.getBlockY(); y++)
+			{
+				for (int z = min.getBlockZ(); z < max.getBlockZ(); z++)
+				{
+					Block b = world.getBlockAt(x, y, z);
+					if (is_safe_to_spawn(b, above_ground, safe_type, material))
+					{
+						if (temp_biomes == null || temp_biomes.contains(b.getBiome().name())) temp.add(b);
+					}
+				}
+			}
+		}
+		if (temp.size() == 0) temp = null;
+		return temp;
+	}
+	
+	public static List<Block> get_blocks_in_range(BukkitWorld bw, String mob_name, int xbase, int ybase, int zbase, Autospawn_location sl, World world, boolean above_ground, List<String> temp_biomes, List<String> temp_regions)
+	{
+		String safe_type = "land";
+		Material material = Material.AIR;
+		
+		if (mob_name.equalsIgnoreCase("blaze") || mob_name.equalsIgnoreCase("ghast")
+				|| mob_name.equalsIgnoreCase("enderdragon")) safe_type = "air";
+			
+		if (mob_name.equalsIgnoreCase("squid"))
+		{
+			safe_type = "water";
+			material = Material.WATER;
+		}
+		
+		List<Block> temp = new ArrayList<Block>();
+		
+		for (int x = xbase - sl.xrange; x <= xbase + sl.xrange; x++)
+		{
+			if (x <= xbase - sl.min_xrange || x >= xbase + sl.min_xrange)
+			{
+				for (int z = zbase - sl.zrange; z <= zbase + sl.zrange; z++)
+				{
+					if (z <= zbase - sl.min_zrange || z >= zbase + sl.min_zrange)
+					{
+						for (int y = ybase - sl.yrange; y <= ybase + sl.yrange; y++)
+						{
+							if ((y <= ybase - sl.min_yrange || y >= ybase + sl.min_yrange) && y < world.getMaxHeight())
+							{
+								Block b = world.getBlockAt(x, y, z);
+								if (is_safe_to_spawn(b, above_ground, safe_type, material))
+								{
+									if (temp_biomes == null || temp_biomes.contains(get_biome_name(bw, b)))
+									{
+										if (temp_regions == null || is_block_in_regions(b, temp_regions)) temp.add(b);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if (temp.size() == 0) temp = null;
+		return temp;
+	}
+	
+	public static LivingEntity get_mob_from_id(String id)
+	{
+		for (World w : Bukkit.getWorlds())
+		{
+			if (!ignore_world(w))
+			{
+				for (LivingEntity le : w.getLivingEntities())
+				{
+					if (le.getUniqueId().toString().equalsIgnoreCase(id)) return le;
+				}
+			}
+		}
+		return null;
+	}
 	
 	public static int get_fallthrough(Creature_data cd, String spawn_reason)
 	{
@@ -262,7 +535,7 @@ public class L
 			int i = return_int_from_array(props.max_lifetime);
 			Calendar cal = Calendar.getInstance();
 			cal.add(Calendar.SECOND, i);
-			Main.mobs_with_lifetimes.put(le, cal);
+			Main.mobs_with_lifetimes.put(le.getUniqueId().toString(), cal);
 		}
 		
 		if (le instanceof Slime)
@@ -340,7 +613,7 @@ public class L
 				if (Main.all_mobs.containsKey(le.getUniqueId().toString())) continue;
 				// already tracked
 				
-				if (cd.reload_behaviour == 0) // remove the mob
+				if (cd.reload_behaviour == 0 && !(le instanceof Player)) // remove the mob
 				{					
 					le.remove();
 					continue;
@@ -792,160 +1065,8 @@ public class L
 			}
 		}
 	}
-	
-	// end creature death helpers
-	
-	// autospawner helpers
-	
-	public static void check_above_ground_block(String mob_name, int xb, int yb, int zb, World w, Autospawn_location sl, List<String> temp_biomes, List<String> temp_regions, List<String> safe_blocks)
-	{
-		for (int x = xb - sl.xrange; x <= xb + sl.xrange; x++)
-		{
-			if (x <= xb - sl.min_xrange || x >= xb + sl.min_xrange)
-			{
-				for (int z = zb - sl.zrange; z <= zb + sl.zrange; z++)
-				{
-					if (z <= zb - sl.min_zrange || z >= zb + sl.min_zrange)
-					{
-						for (int y = yb - sl.yrange; y <= yb + sl.yrange; y++)
-						{
-							if ((y <= yb - sl.min_yrange || y >= yb + sl.min_yrange) && y < w.getMaxHeight())
-							{
-								if (is_safe_above_ground_block(mob_name, w.getBlockAt(x, y, z), sl.loaded_chunks_only,
-										temp_biomes, temp_regions, w)) safe_blocks.add(x + "," + y + "," + z);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	public static void check_below_ground_block(String mob_name, int xb, int yb, int zb, World w, Autospawn_location sl, List<String> temp_biomes, List<String> temp_regions, List<String> safe_blocks)
-	{
-		for (int x = xb - sl.xrange; x <= xb + sl.xrange; x++)
-		{
-			if (x <= xb - sl.min_xrange || x >= xb + sl.min_xrange)
-			{
-				for (int z = zb - sl.zrange; z <= zb + sl.zrange; z++)
-				{
-					if (z <= zb - sl.min_zrange || z >= zb + sl.min_zrange)
-					{
-						for (int y = yb - sl.yrange; y <= yb + sl.yrange; y++)
-						{
-							if ((y <= yb - sl.min_yrange || y >= yb + sl.min_yrange) && y < w.getMaxHeight())
-							{
-								if (is_safe_below_ground_block(mob_name, w.getBlockAt(x, y, z), sl.loaded_chunks_only,
-										temp_biomes, temp_regions, w)) safe_blocks.add(x + "," + y + "," + z);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	public static boolean is_safe_above_ground_block(String mob_name, Block b, boolean loaded_chunks_only, List<String> biomes, List<String> regions, World w)
-	{
-		if (biomes != null)
-		{
-			String biome = null;
-			if (Main.tc != null)
-			{
-				BukkitWorld bw = Main.tc.worlds.get(w.getUID());
-				if (bw != null)
-				{
-					int id = bw.getBiome(b.getX(), b.getZ());
-					biome = bw.getBiomeById(id).getName().toUpperCase();
-				}
-			}
-		
-			if (biome == null) biome = b.getBiome().name();
-		
-			if (!biomes.contains(biome)) return false;
-		}
-		
-		if (regions != null && Main.world_guard != null)
-		{
-			for (String s : regions)
-			{
-				if (Main.world_guard.getRegionManager(w).getRegions().get(s) == null) return false;
-			}
-		}
-		
-		boolean safe = check_above_ground_area(mob_name, b);
-		
-		if (safe)
-		{
-			if (loaded_chunks_only)
-			{
-				if (b.getChunk().isLoaded()) return true;
-			}
-			else return true;
-		}
-		return false;
-	}
-		
-	public static boolean is_safe_below_ground_block(String mob_name, Block b, boolean chunk_loaded_only, List<String> biomes, List<String> regions, World w)
-	{
-		if (biomes != null)
-		{
-			String biome = null;
-			if (Main.tc != null)
-			{
-				BukkitWorld bw = Main.tc.worlds.get(w.getUID());
-				if (bw != null)
-				{
-					int id = bw.getBiome(b.getX(), b.getZ());
-					biome = bw.getBiomeById(id).getName().toUpperCase();
-				}
-			}
-		
-			if (biome == null) biome = b.getBiome().name();
-		
-			if (!biomes.contains(biome)) return false;
-		}
-		
-		if (Main.world_guard != null && regions != null)
-		{
-			for (String s : regions)
-			{
-				if (Main.world_guard.getRegionManager(w).getRegions().get(s) == null) return false;
-			}
-		}
-		
-		boolean safe = check_below_ground_area(mob_name, b);
-		if (safe)
-		{
-			if (chunk_loaded_only)
-			{
-				if (b.getChunk().isLoaded()) return true;
-			}
-			else return true;
-		}
-		return false;
-	}
-	
-	public static boolean check_above_ground_area(String mob_name, Block b)
-	{
-		if (mob_name.equalsIgnoreCase("blaze") || mob_name.equalsIgnoreCase("enderdragon")
-				|| mob_name.equalsIgnoreCase("ghast")) return b.getLightFromSky() > 13 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR;
-		else if (mob_name.equals("squid")) return b.getLightFromSky() > 13 && b.getType() == Material.WATER && b.getRelative(BlockFace.UP).getType() == Material.WATER;
-		else return b.getLightFromSky() > 13 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR
-				&& b.getRelative(BlockFace.DOWN).getType() != Material.AIR;
-	}
-	
-	public static boolean check_below_ground_area(String mob_name, Block b)
-	{
-		if (mob_name.equalsIgnoreCase("blaze") || mob_name.equalsIgnoreCase("enderdragon")
-				|| mob_name.equalsIgnoreCase("ghast")) return b.getLightFromSky() < 14 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR;
-		else if (mob_name.equals("squid")) return b.getLightFromSky() < 14 && b.getType() == Material.WATER && b.getRelative(BlockFace.UP).getType() == Material.WATER;
-		else return b.getLightFromSky() < 14 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR
-				&& b.getRelative(BlockFace.DOWN).getType() != Material.AIR;
-	}
-	// end autospawner helpers
 }
-
+	// end creature death helpers
 /*
 	
 public static boolean matches_quantity(Old_item item, int amount)

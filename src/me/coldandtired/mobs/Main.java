@@ -17,6 +17,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -34,18 +36,13 @@ import me.coldandtired.mobs.data.Selected_outcomes;
 import me.coldandtired.mobs.listeners.*;
 import net.milkbowl.vault.economy.Economy;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -62,9 +59,7 @@ import org.xml.sax.InputSource;
 import com.herocraftonline.heroes.Heroes;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
 import com.khorn.terraincontrol.bukkit.TCPlugin;
-import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 public class Main extends JavaPlugin
 {
@@ -74,12 +69,11 @@ public class Main extends JavaPlugin
 	public static Heroes heroes = null;
 	public static TCPlugin tc = null;
 	public static XPath xpath;
-	public static Map<LivingEntity, Calendar> mobs_with_lifetimes = null;
+	public static ConcurrentMap<String, Calendar> mobs_with_lifetimes = null;
 	public static Map<String, Creature_data> tracked_mobs = null;
 	public static Logger logger;	
 	public static Main plugin;
 	public static Map<String, Selected_outcomes> previous_mobs = null; 
-	public static HashMap<String, Biome_data> chunks = null;
 	List<Autospawn> autospawns = null;
 	
 	boolean is_latest_version()
@@ -103,7 +97,7 @@ public class Main extends JavaPlugin
 		try
 		{	
 			InputSource input = new InputSource(f.getPath());
-			
+
 			Element config = (Element)xpath.evaluate("Mobs/config", input, XPathConstants.NODE);
 			Config.setup_config(config);
 			PluginManager pm = getServer().getPluginManager();
@@ -112,9 +106,10 @@ public class Main extends JavaPlugin
 			heroes = get_heroes();
 			setup_economy();
 			BukkitScheduler scheduler = getServer().getScheduler();
-			
+			scheduler.cancelTasks(this);
+
 			NodeList list = (NodeList) xpath.evaluate("Mobs/creatures/Mob[@has_autospawns = \"true\"]", input, XPathConstants.NODESET);
-			
+
 			if (list.getLength() > 0)
 			{
 				if (Config.log_level > 0)
@@ -123,7 +118,7 @@ public class Main extends JavaPlugin
 					L.log("Autospawning mobs");
 					L.log("-----------------");
 				}
-				
+
 				autospawns = new ArrayList<Autospawn>();
 				for (int i = 0; i < list.getLength(); i++)
 				{				
@@ -147,16 +142,8 @@ public class Main extends JavaPlugin
 					}
 					if (Config.log_level > 0) L.log(mob_name);
 				}
-				if (Config.log_level > 0) L.log("-----------------");
-				
-				chunks = new HashMap<String, Biome_data>();
-				
-				for (World w : Bukkit.getWorlds())
-				{
-					for (Chunk c : w.getLoadedChunks()) add_chunk(c);
-				}			 
-				
-				scheduler.cancelTasks(this);
+				if (Config.log_level > 0) L.log("-----------------");	 
+
 				for (final Autospawn as : autospawns)
 				{
 					if (as.manual) continue;
@@ -166,30 +153,29 @@ public class Main extends JavaPlugin
 						public void run() {activate_autospawn(as, false);}
 					}, l, l);
 				}	
-				pm.registerEvents(new Chunk_listener(), this);
 			}
-			
+
 			// end autospawn mobs		
-			
+
 			list = (NodeList) xpath.evaluate("Mobs/creatures/Mob[@track_mob = \"true\"]", input, XPathConstants.NODESET);
-			
+
 			if (list.getLength() == 0)
 			{
 				L.log("No mobs in the config!  Autospawning vanilla mobs.");				
 				return true;
 			}
-			
+
 			tracked_mobs = new HashMap<String, Creature_data>();
 			all_mobs = new HashMap<String, Mob>();
 			List<String> mob_names = new ArrayList<String>();
-			
+
 			if (Config.log_level > 0)
 			{
 				L.log("------------");
 				L.log("Tracked mobs");
 				L.log("------------");
 			}
-			
+
 			for (int i = 0; i < list.getLength(); i++)
 			{
 				Element element = (Element)list.item(i);
@@ -199,7 +185,7 @@ public class Main extends JavaPlugin
 				mob_names.add(mob_name);
 			}
 			if (Config.log_level > 0) L.log("------------");						
-						
+
 			if (mob_names.contains("SHEEP") || mob_names.contains("MUSHROOM_COW"))
 			{
 				pm.registerEvents(new Sheep_listener(), this);
@@ -230,22 +216,23 @@ public class Main extends JavaPlugin
 			}
 			if (mob_names.contains("PLAYER"))
 			{
-				pm.registerEvents(new Player_listener(), this);
+				//pm.registerEvents(new Player_listener(), this);
 			}
+			
 			pm.registerEvents(new Main_listener(), this);			
 
 			if (pm.getPlugin("Vault") != null) setup_economy();
-			
+
 			scheduler.scheduleSyncDelayedTask(this, new Runnable() 
 			{			 
 				public void run() {convert_mobs();}
 			}, 1L);
-			
+
 			list = (NodeList) xpath.evaluate("//Property[contains(@name, 'max_lifetime') and @property_value != \"\"]", input, XPathConstants.NODESET);
 
 			if (list.getLength() > 0)
 			{
-				mobs_with_lifetimes = new HashMap<LivingEntity, Calendar>();				
+				mobs_with_lifetimes = new ConcurrentHashMap<String, Calendar>();				
 				scheduler.scheduleSyncRepeatingTask(this, new Runnable() 
 				{			 
 					public void run() {check_lifetimes();}
@@ -281,52 +268,8 @@ public class Main extends JavaPlugin
 		logger = null;
 		plugin = null;
 		previous_mobs = null;
-		chunks = null;
 		autospawns = null;
 	}
-	
-	public static void add_chunk(Chunk chunk)
-	{
-		Block b = chunk.getBlock(7, 0, 7);
-		
-		String world_name = chunk.getWorld().getName();
-		Biome_data bd = chunks.get(world_name);
-		if (bd == null) bd = new Biome_data();
-		
-		String biome = null;
-		
-		if (Main.tc != null)
-		{
-			BukkitWorld bw = Main.tc.worlds.get(chunk.getWorld().getUID());
-			if (bw != null)
-			{
-				int id = bw.getBiome(b.getX(), b.getZ());
-				biome = bw.getBiomeById(id).getName().toUpperCase();
-			}
-		}
-		
-		if (biome == null) biome = b.getBiome().name();
-		
-		int[] loc = { chunk.getX(), chunk.getZ() };
-		List<int[]> locs = bd.chunks.get(biome);
-		
-		if (locs == null)
-		{
-			locs = new ArrayList<int[]>();
-			locs.add(loc);
-			bd.chunks.put(biome, locs);
-			chunks.put(world_name, bd);
-			if (Config.log_level > 1) L.log("added new biome " + biome + " to " + world_name);
-		}
-		else if (!locs.contains(loc)) 
-		{
-			locs.add(loc);
-			bd.chunks.put(biome, locs);
-			chunks.put(world_name, bd);
-
-			if (biome.equalsIgnoreCase("gold")) L.log(loc[0] * 16 + loc[1] * 16);
-		}
-	}	
 	
 	public void activate_autospawn(Autospawn as, boolean from_command)
 	{
@@ -369,14 +312,9 @@ public class Main extends JavaPlugin
 			if (mc_time < as.spawn_time.mc_start && mc_time > as.spawn_time.mc_end) return;
 		}
 		
-		List<String> safe_blocks = new ArrayList<String>();
-		
 		boolean above_ground = true;
 		switch (sl.autospawn_placement)
 		{			
-			case 0:
-				above_ground = true;
-				break;
 			case 1:
 				above_ground = false;
 				break;
@@ -407,178 +345,47 @@ public class Main extends JavaPlugin
 			}
 		}
 		
+		// not near players or range
 		if (sl.location_type.equalsIgnoreCase(""))
 		{					
 			if (temp_regions != null)
 			{
+				// regions and biomes
 				for (String s : temp_regions)
 				{
-					safe_blocks.clear();
-					ProtectedRegion pr = Main.world_guard.getRegionManager(w).getRegions().get(s);
-					if (pr != null)
-					{
-						BlockVector min = pr.getMinimumPoint();
-						BlockVector max = pr.getMaximumPoint();
-						if (above_ground)
-						{
-							for (int x = min.getBlockX(); x < max.getBlockX(); x++)
-							{
-								for (int z = min.getBlockZ(); z < max.getBlockZ(); z++)
-								{
-									for (int y = min.getBlockY(); y < max.getBlockY(); y++)
-									{
-										if (y < w.getMaxHeight())
-										{
-											if (L.is_safe_above_ground_block(as.mob_name, w.getBlockAt(x, y, z), sl.loaded_chunks_only,
-													temp_biomes, null, w)) safe_blocks.add(x + "," + y + "," + z);
-										}
-									}
-								}
-							}
-						}
-						else
-						{
-							for (int x = min.getBlockX(); x <= max.getBlockX(); x++)
-							{
-								for (int z = min.getBlockZ(); z <= max.getBlockZ(); z++)
-								{
-									for (int y = min.getBlockY(); y <= max.getBlockY(); y++)
-									{
-										if (y < w.getMaxHeight())
-										{
-											if (L.is_safe_below_ground_block(as.mob_name, w.getBlockAt(x, y, z), sl.loaded_chunks_only,
-													temp_biomes, null, w)) safe_blocks.add(x + "," + y + "," + z);
-										}
-									}
-								}
-							}
-						}
-						if (safe_blocks.size() > 0)
-						{			
-							int amount = 1;
-							if (as.manual && from_command && as.manual_amount != null) amount = as.manual_amount.get(L.get_random_choice(as.manual_amount.size()));
-							else if (as.amount != null) amount = as.amount.get(L.get_random_choice(as.amount.size()));
-							
-							for (int i = 0; i < amount; i++)
-							{
-								String[] temp = safe_blocks.get(L.get_random_choice(safe_blocks.size())).split(",");
-
-								Main_listener.autospawn = as;
-								w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.valueOf(as.mob_name));
-								if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);
-							}
-						}
-					}
-					else L.log("No region called " + s + " in world " + w.getName() + "!");
+					L.spawn_mob(L.get_blocks_in_region(as.mob_name, w, s, above_ground, temp_biomes),
+							as, from_command, w);					
 				}
 			}
 			else if (temp_biomes != null)
 			{
-				Biome_data bd = Main.chunks.get(w.getName());
+				// biomes only
+				BukkitWorld bw = tc != null ? tc.worlds.get(w.getUID()) : null;
 				for (String s : temp_biomes)
 				{
-					List<int[]> locs = bd.chunks.get(s);
-					if (locs == null) continue;
-					for (int[] ints : locs)
-					{
-						Chunk c = w.getChunkAt(ints[0], ints[1]);
-						if (sl.loaded_chunks_only && !c.isLoaded()) continue;
-						int cx = L.get_random_choice(16);
-						int cz = L.get_random_choice(16);
-						if (above_ground)
-						{			
-							int amount = 1;
-							if (as.manual && from_command && as.manual_amount != null) amount = as.manual_amount.get(L.get_random_choice(as.manual_amount.size()));
-							else if (as.amount != null) amount = as.amount.get(L.get_random_choice(as.amount.size()));
-							
-							for (int i = 0; i < amount; i++)
-							{								
-								Main_listener.autospawn = as;
-								w.spawnCreature(c.getBlock(cx, w.getHighestBlockYAt(cx, cz), cz).getLocation(), EntityType.valueOf(as.mob_name));
-								if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);								
-							}
-						}
-						else
-						{
-							for (int x = 0; x < 16; x++)
-							{
-								for (int z = 0; z < 16; z++)
-								{
-									for (int y = 0; y < w.getMaxHeight(); y++)
-									{
-										Block b = c.getBlock(x, y, z);
-										if (b.getLightFromSky() < 14 && b.getType() == Material.AIR && b.getRelative(BlockFace.UP).getType() == Material.AIR
-												&& b.getRelative(BlockFace.DOWN).getType() != Material.AIR) safe_blocks.add(x + "," + y + "," + z);
-									}
-								}
-							}
-							if (safe_blocks.size() > 0)
-							{						
-								int amount = 1;
-								if (as.manual && from_command && as.manual_amount != null) amount = as.manual_amount.get(L.get_random_choice(as.manual_amount.size()));
-								else if (as.amount != null) amount = as.amount.get(L.get_random_choice(as.amount.size()));
-								
-								for (int i = 0; i < amount; i++)
-								{
-									String[] temp = safe_blocks.get(L.get_random_choice(safe_blocks.size())).split(",");
-
-									Main_listener.autospawn = as;
-									w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.valueOf(as.mob_name));
-									if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);									
-								}
-							}
-						}
-					}
-				}
+					L.spawn_mob(L.get_blocks_in_biome(bw, as.mob_name, w, s, above_ground),
+							as, from_command, w);
+				} 
 			}			
 		}		
-		else if (sl.location_type.equalsIgnoreCase("near_players") || sl.location_type.equalsIgnoreCase("range"))
+		else if (sl.location_type.equalsIgnoreCase("near_players"))
 		{
-			if (above_ground)
+			BukkitWorld bw = tc != null ? tc.worlds.get(w.getUID()) : null;
+			for (Player p : w.getPlayers())
 			{
-				if (sl.location_type.equalsIgnoreCase("near_players"))
+				if (p.isOnline())
 				{
-					for (Player p : w.getPlayers())
-					{
-						if (p.isOnline())
-						{
-							Location loc = p.getLocation();						
-							L.check_above_ground_block(as.mob_name, (int)loc.getX(), (int)loc.getY() + 1, (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
-						}
-					}
-				}
-				else L.check_above_ground_block(as.mob_name, sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
-			}
-			else
-			{
-				if (sl.location_type.equalsIgnoreCase("near_players"))
-				{
-					for (Player p : w.getPlayers())
-					{
-						if (p.isOnline())
-						{
-							Location loc = p.getLocation();
-							L.check_below_ground_block(as.mob_name, (int)loc.getX(), (int)loc.getY(), (int)loc.getZ(), w, sl, temp_biomes, temp_regions, safe_blocks);
-						}
-					}
-				}
-				else L.check_below_ground_block(as.mob_name, sl.xbase, sl.ybase, sl.zbase, w, sl, temp_biomes, temp_regions, safe_blocks);
-			}
-			if (safe_blocks.size() > 0)
-			{				
-				int amount = 1;
-				if (as.manual && from_command && as.manual_amount != null) amount = as.manual_amount.get(L.get_random_choice(as.manual_amount.size()));
-				else if (as.amount != null) amount = as.amount.get(L.get_random_choice(as.amount.size()));
-				
-				for (int i = 0; i < amount; i++)
-				{
-					String[] temp = safe_blocks.get(L.get_random_choice(safe_blocks.size())).split(",");
-
-					Main_listener.autospawn = as;
-					w.spawnCreature(w.getBlockAt(Integer.parseInt(temp[0]), Integer.parseInt(temp[1]), Integer.parseInt(temp[2])).getLocation(), EntityType.valueOf(as.mob_name));
-					if (Config.log_level > 1) L.log("Autospawned " + as.mob_name);					
+					Location loc = p.getLocation();	
+					L.spawn_mob(L.get_blocks_in_range(bw, as.mob_name, (int)loc.getX(), (int)loc.getY() + 1, (int)loc.getZ(), sl, w, above_ground, temp_biomes, temp_regions),
+							as, from_command, w);				
 				}
 			}
+		}
+		else if (sl.location_type.equalsIgnoreCase("range"))
+		{
+			BukkitWorld bw = tc != null ? tc.worlds.get(w.getUID()) : null;
+			L.spawn_mob(L.get_blocks_in_range(bw, as.mob_name, sl.xbase, sl.ybase, sl.zbase, sl, w, above_ground, temp_biomes, temp_regions),
+					as, from_command, w);
 		}
 	}	
 	
@@ -673,16 +480,14 @@ public class Main extends JavaPlugin
 		if (mobs_with_lifetimes == null || mobs_with_lifetimes.size() == 0) return;
 		
 		Calendar cal = Calendar.getInstance();
-		Map<LivingEntity, Calendar> temp = new HashMap<LivingEntity, Calendar>();
 		
-		for (LivingEntity e : mobs_with_lifetimes.keySet()) temp.put(e, mobs_with_lifetimes.get(e));
-		
-		for (LivingEntity e : temp.keySet())
+		for (String s : mobs_with_lifetimes.keySet())
 		{
-			if (e == null || e.isDead() || cal.after(temp.get(e)))
+			LivingEntity le = L.get_mob_from_id(s);
+			if (le != null && cal.after(mobs_with_lifetimes.get(s)))
 			{
-				mobs_with_lifetimes.remove(e);
-				if (e != null && !e.isDead()) e.damage(10000);
+				mobs_with_lifetimes.remove(s);
+				le.damage(10000);
 			}
 		}
 	}
@@ -739,11 +544,11 @@ public class Main extends JavaPlugin
 		for (World world : getServer().getWorlds())
 		{ 		
 			if (!L.ignore_world(world))	for (Chunk c : world.getLoadedChunks()) L.convert_chunk(c);
-		}	
+		}
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
-	{		
+	{
 		if (cmd.getName().equalsIgnoreCase("mobstest"))
     	{
     		if (sender.isOp())

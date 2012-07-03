@@ -2,10 +2,12 @@ package me.coldandtired.mobs.listeners;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.Main;
 import me.coldandtired.mobs.Mob;
+import me.coldandtired.mobs.api.events.Mob_died_event;
 import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.data.Bounty;
 import me.coldandtired.mobs.data.Config;
@@ -24,6 +26,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -52,6 +55,8 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onCreatureSpawn(CreatureSpawnEvent event)
 	{
+		if (event.getEntity() instanceof Pig && !event.getLocation().getChunk().isLoaded()) L.log("piggy");
+		
 		if (L.ignore_world(event.getEntity().getWorld()) && autospawn == null) return;
 
 		if (event.isCancelled())
@@ -99,9 +104,77 @@ public class Main_listener implements Listener
 		autospawn = null;			
 	}	
 
+	private List<ItemStack> get_drops(Mob mob, Drops drops, List<ItemStack> old_drops)
+	{
+		if (drops.items == null) return old_drops;
+		
+		List<ItemStack> dropped = new ArrayList<ItemStack>();
+		for (ItemStack is : old_drops) dropped.add(is);
+		boolean replaced = false;
+		for (Item item : drops.items)
+		{
+			if (!replaced && L.matches_number_condition(item.chances, mob.random))
+			{
+				if (item.replace)
+				{
+					dropped.clear();
+					replaced = true;
+				}
+				int quantity = L.get_quantity(item.quantity);
+				ItemStack is = new ItemStack(item.id, quantity, item.data);
+				if (item.enchantments != null)
+				{
+					for (Item_enchantment ie : item.enchantments)
+					{
+						is.addUnsafeEnchantment(Enchantment.getByName(ie.name), L.get_quantity(ie.level));
+					}
+				}
+				dropped.add(is);
+			}
+		}
+		return dropped;
+	}
+	
+	private int get_exp(Mob mob, Drops drops, int old_exp)
+	{
+		if (drops.exps == null) return old_exp;
+		
+		boolean replaced = false;
+		for (Exp exp : drops.exps)
+		{
+			if (!replaced && L.matches_number_condition(exp.chances, mob.random))
+			{
+				if (exp.replace)
+				{
+					old_exp = 0;
+					replaced = true;
+				}
+				old_exp += L.get_quantity(exp.amount);
+			}
+		}
+		return old_exp;
+	}
+	
+	private int get_bounties(Mob mob, Drops drops)
+	{
+		if (drops.bounties == null) return 0;
+		
+		int given_bounty = 0;
+		
+		for (Bounty b : drops.bounties)
+		{
+			if (L.matches_number_condition(b.chances, mob.random))
+			{
+				double amount = L.get_bounty(b.amount);
+				given_bounty += amount;
+			}
+		}		
+		return given_bounty;
+	}
+	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDeath(EntityDeathEvent event)
-	{	
+	{
 		LivingEntity le = (LivingEntity)event.getEntity();
 		String mob_name = le.getType().name();
 		
@@ -118,6 +191,9 @@ public class Main_listener implements Listener
 		Mob mob = Main.all_mobs.get(le.getUniqueId().toString());
 		if (mob == null) return;
 	
+		Main.all_mobs.remove(le.getUniqueId().toString());
+		if (Main.mobs_with_lifetimes != null) Main.mobs_with_lifetimes.remove(le.getUniqueId().toString());
+		
 		mob_name = mob_name.toLowerCase();
 		
 		if (Config.log_level > 1) L.log("Tracked mob " + mob_name + " died");
@@ -139,99 +215,44 @@ public class Main_listener implements Listener
 			drops = mob.drops;
 		}
 		
-		if (drops != null)
+		List<ItemStack> old_drops = drops != null ? get_drops(mob, drops, event.getDrops()) : event.getDrops();
+		int old_exp = drops != null ? get_exp(mob, drops, event.getDroppedExp()) : event.getDroppedExp();
+		int old_bounties = drops != null ? get_bounties(mob, drops) : 0;
+		List<Death_message> old_messages = drops != null ? drops.messages : Config.messages;
+		
+		Mob_died_event mob_died_event = new Mob_died_event(mob, le, p, old_drops, old_exp, old_bounties,
+				old_messages);
+		Main.plugin.getServer().getPluginManager().callEvent(mob_died_event);
+		
+		if (mob_died_event.isCancelled()) return;
+		
+		if (mob_died_event.get_drops() != null)
 		{
-			if (Config.log_level > 1) L.log("Drops found");
-			if (drops.items != null)
-			{
-				List<ItemStack> dropped = new ArrayList<ItemStack>();
-				boolean replaced = false;
-				for (Item item : drops.items)
-				{
-					if (!replaced && L.matches_number_condition(item.chances, mob.random))
-					{
-						if (item.replace)
-						{
-							event.getDrops().clear();
-							replaced = true;
-						}
-						int quantity = L.get_quantity(item.quantity);
-						ItemStack is = new ItemStack(item.id, quantity, item.data);
-						if (item.enchantments != null)
-						{
-							for (Item_enchantment ie : item.enchantments)
-							{
-								is.addUnsafeEnchantment(Enchantment.getByName(ie.name), L.get_quantity(ie.level));
-							}
-						}
-						dropped.add(is);
-					}
-				}
-				for (ItemStack is : dropped) event.getDrops().add(is);
-			}
-			
-			int given_bounty = 0;
-			if (drops.bounties != null && p != null)
-			{
-				for (Bounty b : drops.bounties)
-				{
-					if (L.matches_number_condition(b.chances, mob.random))
-					{
-						double amount = L.get_bounty(b.amount);
-						given_bounty += amount;
-						Main.economy.depositPlayer(p.getName(), amount);
-					}
-				}
-			
-			}
-			
-			if (drops.exps != null)
-			{
-				boolean replaced = false;
-				int xp = 0;
-				for (Exp exp : drops.exps)
-				{
-					if (!replaced && L.matches_number_condition(exp.chances, mob.random))
-					{
-						if (exp.replace)
-						{
-							xp = 0;
-							replaced = true;
-						}
-						xp += L.get_quantity(exp.amount);
-					}
-				}
-				event.setDroppedExp(xp);
-
-				if (p != null && Main.heroes != null)
-				{
-					Hero hero = Main.heroes.getCharacterManager().getHero(p);
-					hero.gainExp(Double.parseDouble(Integer.toString(xp)) , HeroClass.ExperienceType.KILLING);
-					event.setDroppedExp(0);
-				}
-			}
-			
-			if (drops.messages != null)
-			{
-				for (Death_message dm : drops.messages) L.send_death_message(dm, mob_name, event.getDroppedExp(), p, event.getDrops(), given_bounty);				
-			}
-			else if (Config.messages != null)
-			{
-				for (Death_message dm : Config.messages) L.send_death_message(dm, mob_name, event.getDroppedExp(), p, event.getDrops(), given_bounty);
-			}
+			event.getDrops().clear();
+			Iterator<ItemStack> iter = mob_died_event.get_drops().iterator();
+			while (iter.hasNext()) event.getDrops().add(iter.next());
 		}
 		
-		Main.all_mobs.remove(le.getUniqueId().toString());
+		event.setDroppedExp(mob_died_event.get_exp());
+		
+		if (Main.economy != null) Main.economy.depositPlayer(p.getName(), mob_died_event.get_bounty());
+		
+		if (p != null && Main.heroes != null)
+		{
+			Hero hero = Main.heroes.getCharacterManager().getHero(p);
+			hero.gainExp(Double.parseDouble(Integer.toString(mob_died_event.get_exp())) , HeroClass.ExperienceType.KILLING);
+			event.setDroppedExp(0);
+		}
+			
+		if (mob_died_event.get_death_messages() != null)
+		{
+			for (Death_message dm : mob_died_event.get_death_messages()) L.send_death_message(dm, mob_name, mob_died_event.get_exp(), p, mob_died_event.get_drops(), mob_died_event.get_bounty());				
+		}		
 	}
 
 	@EventHandler(priority = EventPriority.HIGH)
 	public void onEntityDamage(EntityDamageEvent event)
 	{
-		//Monster monster = Main.heroes.getCharacterManager().getMonster((LivingEntity)event.getEntity());
-		
-		//L.log(11);
-		//CharacterDamageEvent other_damage = new CharacterDamageEvent(event.getEntity(), event.getCause(), event.getDamage());
-	    //  Main.plugin.getServer().getPluginManager().callEvent(other_damage);
 		if (!(event.getEntity() instanceof LivingEntity)) return;
 		
 		if (Main.heroes != null) return;

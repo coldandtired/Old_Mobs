@@ -43,13 +43,19 @@ public class Region_mob_count implements Condition
 				int i = 0;
 				if (subvalue.equalsIgnoreCase("all"))
 				{
-					for (Entity e : world.getEntities()) if (e instanceof LivingEntity && 
-							!(e instanceof Player) && pr.contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) i++;
+					for (Entity e : world.getEntities()) if (e instanceof LivingEntity && !(e instanceof Player))
+					{
+						Location l = e.getLocation();
+						if (pr.contains(l.getBlockX(), l.getBlockY(), l.getBlockZ())) i++;
+					}
 				}
 				else
-				{					
-					for (Entity e : world.getEntities()) if (e.getType().name().equals(subvalue) && 
-							pr.contains(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())) i++;
+				{				
+					for (Entity e : world.getEntities()) if (e.getType().name().equals(subvalue))
+					{
+						Location l = e.getLocation();
+						if (pr.contains(l.getBlockX(), l.getBlockY(), l.getBlockZ())) i++;
+					}
 				}
 				if (L.matches_number_condition(values, i)) b = true;
 			}

@@ -1,6 +1,12 @@
 package me.coldandtired.mobs.listeners;
 
+import me.coldandtired.mobs.L;
+
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 public class Player_listener implements Listener
@@ -39,5 +45,13 @@ public class Player_listener implements Listener
 		Main.all_mobs.put(p, mob);
 		
 		L.log("respawned!");*/
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void player_died(PlayerDeathEvent event)
+	{
+		Player p = event.getEntity();
+		L.log(p.getName());
+		event.getDrops().clear();
 	}
 }

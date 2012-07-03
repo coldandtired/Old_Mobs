@@ -15,12 +15,14 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+
 import com.herocraftonline.heroes.api.events.WeaponDamageEvent;
 
 public class Heroes_listener implements Listener
 {
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void hero_damaged(WeaponDamageEvent event)
 	{
 		int damage = event.getDamage();		
