@@ -27,6 +27,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import me.coldandtired.api.Mob;
 import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.data.Autospawn_location;
 import me.coldandtired.mobs.data.Autospawn_time;
@@ -63,7 +64,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 public class Main extends JavaPlugin
 {
-	public static Map<String, Mob> all_mobs = null;
+	public static Map<String, Mob> all_mobs = new HashMap<String, Mob>();
 	public static WorldGuardPlugin world_guard = null;
 	public static Economy economy = null;
 	public static Heroes heroes = null;
@@ -104,7 +105,6 @@ public class Main extends JavaPlugin
 			world_guard = get_world_guard();
 			tc = get_tc();
 			heroes = get_heroes();
-			setup_economy();
 			BukkitScheduler scheduler = getServer().getScheduler();
 			scheduler.cancelTasks(this);
 
@@ -152,7 +152,7 @@ public class Main extends JavaPlugin
 					{			 
 						public void run() {activate_autospawn(as, false);}
 					}, l, l);
-				}	
+				}
 			}
 
 			// end autospawn mobs		
@@ -166,7 +166,6 @@ public class Main extends JavaPlugin
 			}
 
 			tracked_mobs = new HashMap<String, Creature_data>();
-			all_mobs = new HashMap<String, Mob>();
 			List<String> mob_names = new ArrayList<String>();
 
 			if (Config.log_level > 0)
@@ -219,7 +218,7 @@ public class Main extends JavaPlugin
 				//pm.registerEvents(new Player_listener(), this);
 			}
 			
-			pm.registerEvents(new Main_listener(), this);			
+			pm.registerEvents(new Main_listener(), this);		
 
 			if (pm.getPlugin("Vault") != null) setup_economy();
 

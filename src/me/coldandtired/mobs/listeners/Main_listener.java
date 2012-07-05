@@ -1,32 +1,26 @@
 package me.coldandtired.mobs.listeners;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import me.coldandtired.api.Mob;
 import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.Mob;
 import me.coldandtired.mobs.api.events.Mob_died_event;
 import me.coldandtired.mobs.data.Autospawn;
-import me.coldandtired.mobs.data.Bounty;
 import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
 import me.coldandtired.mobs.data.Damage_value;
 import me.coldandtired.mobs.data.Death_message;
 import me.coldandtired.mobs.data.Drops;
-import me.coldandtired.mobs.data.Exp;
-import me.coldandtired.mobs.data.Item;
-import me.coldandtired.mobs.data.Item_enchantment;
 import me.coldandtired.mobs.data.Outcome;
 
 import org.bukkit.Effect;
 import org.bukkit.Location;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Pig;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
@@ -55,8 +49,6 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onCreatureSpawn(CreatureSpawnEvent event)
 	{
-		if (event.getEntity() instanceof Pig && !event.getLocation().getChunk().isLoaded()) L.log("piggy");
-		
 		if (L.ignore_world(event.getEntity().getWorld()) && autospawn == null) return;
 
 		if (event.isCancelled())
@@ -103,74 +95,6 @@ public class Main_listener implements Listener
 		
 		autospawn = null;			
 	}	
-
-	private List<ItemStack> get_drops(Mob mob, Drops drops, List<ItemStack> old_drops)
-	{
-		if (drops.items == null) return old_drops;
-		
-		List<ItemStack> dropped = new ArrayList<ItemStack>();
-		for (ItemStack is : old_drops) dropped.add(is);
-		boolean replaced = false;
-		for (Item item : drops.items)
-		{
-			if (!replaced && L.matches_number_condition(item.chances, mob.random))
-			{
-				if (item.replace)
-				{
-					dropped.clear();
-					replaced = true;
-				}
-				int quantity = L.get_quantity(item.quantity);
-				ItemStack is = new ItemStack(item.id, quantity, item.data);
-				if (item.enchantments != null)
-				{
-					for (Item_enchantment ie : item.enchantments)
-					{
-						is.addUnsafeEnchantment(Enchantment.getByName(ie.name), L.get_quantity(ie.level));
-					}
-				}
-				dropped.add(is);
-			}
-		}
-		return dropped;
-	}
-	
-	private int get_exp(Mob mob, Drops drops, int old_exp)
-	{
-		if (drops.exps == null) return old_exp;
-		
-		boolean replaced = false;
-		for (Exp exp : drops.exps)
-		{
-			if (!replaced && L.matches_number_condition(exp.chances, mob.random))
-			{
-				if (exp.replace)
-				{
-					old_exp = 0;
-					replaced = true;
-				}
-				old_exp += L.get_quantity(exp.amount);
-			}
-		}
-		return old_exp;
-	}
-	
-	private int get_bounties(Mob mob, Drops drops)
-	{
-		if (drops.bounties == null) return 0;
-		
-		int given_bounty = 0;
-		
-		for (Bounty b : drops.bounties)
-		{
-			if (L.matches_number_condition(b.chances, mob.random))
-			{
-				double amount = L.get_bounty(b.amount);
-				given_bounty += amount;
-			}
-		}		
-		return given_bounty;
-	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityDeath(EntityDeathEvent event)
@@ -215,9 +139,9 @@ public class Main_listener implements Listener
 			drops = mob.drops;
 		}
 		
-		List<ItemStack> old_drops = drops != null ? get_drops(mob, drops, event.getDrops()) : event.getDrops();
-		int old_exp = drops != null ? get_exp(mob, drops, event.getDroppedExp()) : event.getDroppedExp();
-		int old_bounties = drops != null ? get_bounties(mob, drops) : 0;
+		List<ItemStack> old_drops = drops != null ? L.get_drops(mob, drops, event.getDrops()) : event.getDrops();
+		int old_exp = drops != null ? L.get_exp(mob, drops, event.getDroppedExp()) : event.getDroppedExp();
+		int old_bounties = drops != null ? L.get_bounties(mob, drops) : 0;
 		List<Death_message> old_messages = drops != null ? drops.messages : Config.messages;
 		
 		Mob_died_event mob_died_event = new Mob_died_event(mob, le, p, old_drops, old_exp, old_bounties,
@@ -252,7 +176,7 @@ public class Main_listener implements Listener
 
 	@EventHandler(priority = EventPriority.HIGH)
 	public void onEntityDamage(EntityDamageEvent event)
-	{
+	{	
 		if (!(event.getEntity() instanceof LivingEntity)) return;
 		
 		if (Main.heroes != null) return;
@@ -297,7 +221,7 @@ public class Main_listener implements Listener
 		
 		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;	
-		
+		L.log(mob.hp);
 		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);
 		
 		Creature_data cd = Main.tracked_mobs.get(le.getType().name());	
@@ -308,7 +232,7 @@ public class Main_listener implements Listener
 		Player p = null;
 		if (damager instanceof Player) p = (Player)damager;
 		
-		HashMap<String, Damage_value> damage_values = null;	
+		Map<String, Damage_value> damage_values = null;	
 		
 		// check damages == damage or both
 		if ((cd.gen_damages_check_type > 0 && !mob.spawn_reason.equalsIgnoreCase("autospawned")) || (cd.as_damages_check_type > 0 && mob.spawn_reason.equalsIgnoreCase("autospawned")))

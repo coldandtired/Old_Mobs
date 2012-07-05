@@ -18,6 +18,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Animals;
 import org.bukkit.entity.Creeper;
 import org.bukkit.entity.Entity;
@@ -41,14 +42,20 @@ import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
+import me.coldandtired.api.Mob;
+import me.coldandtired.mobs.api.events.Mob_created_event;
 import me.coldandtired.mobs.conditions.Number_condition;
 import me.coldandtired.mobs.data.Autospawn;
 import me.coldandtired.mobs.data.Autospawn_location;
+import me.coldandtired.mobs.data.Bounty;
 import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
 import me.coldandtired.mobs.data.Damage_value;
 import me.coldandtired.mobs.data.Death_message;
 import me.coldandtired.mobs.data.Drops;
+import me.coldandtired.mobs.data.Exp;
+import me.coldandtired.mobs.data.Item;
+import me.coldandtired.mobs.data.Item_enchantment;
 import me.coldandtired.mobs.data.Mob_properties;
 import me.coldandtired.mobs.data.Outcome;
 import me.coldandtired.mobs.data.Potion_effect;
@@ -515,6 +522,16 @@ public class L
 
 		Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so, autospawn_id);
 		
+		if (mob.invincible_ticks != null) le.setMaximumNoDamageTicks(mob.invincible_ticks);
+		
+		Mob_created_event mob_created_event = new Mob_created_event(mob, le, potion_effects);
+		Main.plugin.getServer().getPluginManager().callEvent(mob_created_event);
+		
+		if (mob_created_event.isCancelled()) return;
+		
+		mob = mob_created_event.get_mob();
+		potion_effects = mob_created_event.get_potion_effects();
+		
 		if (Main.heroes != null)
 		{
 			Monster monster = Main.heroes.getCharacterManager().getMonster(le);
@@ -526,75 +543,68 @@ public class L
 		
 		Main.all_mobs.put(le.getUniqueId().toString(), mob);	
 	
-		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);
+		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);		
 		
-		if (props == null) return;			
-		
-		if (props.max_lifetime != null)
+		if (mob.max_lifetime != null)
 		{
-			int i = return_int_from_array(props.max_lifetime);
 			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.SECOND, i);
+			cal.add(Calendar.SECOND, mob.max_lifetime);
 			Main.mobs_with_lifetimes.put(le.getUniqueId().toString(), cal);
 		}
 		
 		if (le instanceof Slime)
 		{
 			Slime slime = (Slime)le;
-			if (!spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && props.size != null) slime.setSize(return_int_from_array(props.size));
-			if (props.hp_per_size != null) mob.hp = slime.getSize() * return_int_from_array(props.hp_per_size);
+			if (!spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && mob.size != null) slime.setSize(mob.size);
+			if (mob.hp_per_size != null) mob.hp = slime.getSize() * mob.hp_per_size;
 		}	
 			
-		if (le instanceof Animals && props.adult != null)
+		if (le instanceof Animals && mob.adult != null)
 		{
 			Animals animal = (Animals)le;
-			boolean b2 = return_bool_from_string(props.adult);
 		
-			if (b2 == true) animal.setAdult(); else animal.setBaby();
+			if (mob.adult == true) animal.setAdult(); else animal.setBaby();
 		}
 			
-		if (le instanceof Pig && props.saddled != null)
+		if (le instanceof Pig && mob.saddled != null)
 		{
-			((Pig)le).setSaddle(return_bool_from_string(props.saddled));
+			((Pig)le).setSaddle(mob.saddled);
 		}
-		else if (le instanceof PigZombie && props.angry != null)
+		else if (le instanceof PigZombie && mob.angry != null)
 		{
-			((PigZombie)le).setAngry(return_bool_from_string(props.angry));
+			((PigZombie)le).setAngry(mob.angry);
 		}
 		else if (le instanceof Wolf)
 		{
 			Wolf wolf = (Wolf)le;			
-			if (props.angry != null) wolf.setAngry(return_bool_from_string(props.angry));
+			if (mob.angry != null) wolf.setAngry(mob.angry);
 			if (!wolf.isAngry())
 			{
-				if (props.tamed != null) wolf.setTamed(return_bool_from_string(props.tamed));
-				if (props.can_be_tamed != null && !return_bool_from_string(props.can_be_tamed)) wolf.setTamed(false);
-				if (wolf.isTamed() && props.tamed_hp != null) mob.hp = return_int_from_array(props.tamed_hp);
+				if (mob.tamed != null) wolf.setTamed(mob.tamed);
+				if (mob.can_be_tamed != null && !mob.can_be_tamed) wolf.setTamed(false);
+				if (wolf.isTamed() && mob.tamed_hp != null) mob.hp = mob.tamed_hp;
 			}
 			else wolf.damage(0, get_nearby_player(wolf));
 		}
 		else if (le instanceof Sheep)
 		{
 			Sheep sheep = (Sheep)le;
-			if (props.sheared != null) sheep.setSheared(return_bool_from_string(props.sheared));
-			if (props.can_grow_wool != null && !return_bool_from_string(props.can_grow_wool)) sheep.setSheared(false);
+			if (mob.sheared != null) sheep.setSheared(mob.sheared);
+			if (mob.can_grow_wool != null && !mob.can_grow_wool) sheep.setSheared(false);
 			
-			DyeColor dc = set_wool_colour(props.wool_colours);
-			if (dc != null) sheep.setColor(dc);
+			if (mob.wool_colour != null) sheep.setColor(mob.wool_colour);
 		}
-		else if (le instanceof Ocelot && props.ocelot_types != null)
+		else if (le instanceof Ocelot && mob.ocelot_type != null)
 		{
-			Ocelot.Type ot = set_ocelot_type(props.ocelot_types);
-			if (ot != null) ((Ocelot)le).setCatType(ot);
+			((Ocelot)le).setCatType(mob.ocelot_type);
 		}
-		else if (le instanceof Villager && props.villager_types != null)
+		else if (le instanceof Villager && mob.villager_type != null)
 		{
-			Villager.Profession prof = set_villager_type(props.villager_types);
-			if (prof != null) ((Villager)le).setProfession(prof);			
+			((Villager)le).setProfession(mob.villager_type);			
 		}
-		else if (le instanceof Creeper && props.powered != null) 
+		else if (le instanceof Creeper && mob.powered != null) 
 		{
-			((Creeper)le).setPowered(return_bool_from_string(props.powered));		
+			((Creeper)le).setPowered(mob.powered);		
 		}
 	}
 	
@@ -1024,6 +1034,74 @@ public class L
 	// end creature spawn helpers
 	
 	// creature death helpers
+	
+	public static List<ItemStack> get_drops(Mob mob, Drops drops, List<ItemStack> old_drops)
+	{
+		if (drops.items == null) return old_drops;
+		
+		List<ItemStack> dropped = new ArrayList<ItemStack>();
+		for (ItemStack is : old_drops) dropped.add(is);
+		boolean replaced = false;
+		for (Item item : drops.items)
+		{
+			if (!replaced && L.matches_number_condition(item.chances, mob.random))
+			{
+				if (item.replace)
+				{
+					dropped.clear();
+					replaced = true;
+				}
+				int quantity = L.get_quantity(item.quantity);
+				ItemStack is = new ItemStack(item.id, quantity, item.data);
+				if (item.enchantments != null)
+				{
+					for (Item_enchantment ie : item.enchantments)
+					{
+						is.addUnsafeEnchantment(Enchantment.getByName(ie.name), L.get_quantity(ie.level));
+					}
+				}
+				dropped.add(is);
+			}
+		}
+		return dropped;
+	}
+	
+	public static int get_exp(Mob mob, Drops drops, int old_exp)
+	{
+		if (drops.exps == null) return old_exp;
+		
+		boolean replaced = false;
+		for (Exp exp : drops.exps)
+		{
+			if (!replaced && L.matches_number_condition(exp.chances, mob.random))
+			{
+				if (exp.replace)
+				{
+					old_exp = 0;
+					replaced = true;
+				}
+				old_exp += L.get_quantity(exp.amount);
+			}
+		}
+		return old_exp;
+	}
+	
+	public static int get_bounties(Mob mob, Drops drops)
+	{
+		if (drops.bounties == null) return 0;
+		
+		int given_bounty = 0;
+		
+		for (Bounty b : drops.bounties)
+		{
+			if (L.matches_number_condition(b.chances, mob.random))
+			{
+				double amount = L.get_bounty(b.amount);
+				given_bounty += amount;
+			}
+		}		
+		return given_bounty;
+	}
 	
 	public static void send_death_message(Death_message dm, String mob_name, int exp, Player p, List<ItemStack> drops, int given_bounty)
 	{

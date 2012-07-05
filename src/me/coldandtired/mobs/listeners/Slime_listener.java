@@ -1,7 +1,7 @@
 package me.coldandtired.mobs.listeners;
 
+import me.coldandtired.api.Mob;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.Mob;
 import me.coldandtired.mobs.data.Config;
 
 import org.bukkit.event.EventHandler;

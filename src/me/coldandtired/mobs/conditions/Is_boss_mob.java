@@ -5,9 +5,9 @@ import org.bukkit.World;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
+import me.coldandtired.api.Mob;
 import me.coldandtired.mobs.Condition;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.Mob;
 
 public class Is_boss_mob implements Condition
 {

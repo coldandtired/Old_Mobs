@@ -1,7 +1,12 @@
-package me.coldandtired.mobs;
+package me.coldandtired.api;
 
-import java.util.HashMap;
+import java.util.Map;
 
+import org.bukkit.DyeColor;
+import org.bukkit.entity.Ocelot;
+import org.bukkit.entity.Villager;
+
+import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.data.Damage_value;
 import me.coldandtired.mobs.data.Drops;
 import me.coldandtired.mobs.data.Mob_properties;
@@ -10,13 +15,23 @@ import me.coldandtired.mobs.data.Selected_outcomes;
 public class Mob
 {	
 	public Integer hp;
+	public Integer hp_per_size;
+	public Integer size;
 	public Integer max_hp;
 	public Integer tamed_hp;
 	public Integer damage;
 	public Integer explosion_size;
 	public Integer split_into;
+	public Integer max_lifetime;
+	public Integer invincible_ticks = 100;
 	public String spawn_reason;
 	public int random;
+	public Boolean adult;
+	public Boolean saddled;
+	public Boolean angry;
+	public Boolean tamed;
+	public Boolean sheared;
+	public Boolean powered;
 	public Boolean can_be_dyed;
 	public Boolean can_be_sheared;
 	public Boolean can_be_tamed;
@@ -35,12 +50,15 @@ public class Mob
 	public Boolean boss_mob;
 	public Integer burn_duration;
 	public Boolean fiery_explosion;
-	public HashMap<String, Damage_value> damage_properties = null;
+	public Map<String, Damage_value> damage_properties = null;
+	public DyeColor wool_colour = null;
+	public Ocelot.Type ocelot_type = null;
+	public Villager.Profession villager_type = null;
 	public Drops drops = null;
 	public Selected_outcomes selected_outcomes = null;
 	public String autospawn_id = null;
 	
-	public Mob(Mob_properties props, Drops drops, HashMap<String, Damage_value> damage_properties, String spawn_reason, int random, Selected_outcomes so, String autospawn_id)
+	public Mob(Mob_properties props, Drops drops, Map<String, Damage_value> damage_properties, String spawn_reason, int random, Selected_outcomes so, String autospawn_id)
 	{
 		selected_outcomes = so;
 		so.spawn_reason = spawn_reason;
@@ -54,13 +72,23 @@ public class Mob
 				max_hp = hp;
 			}
 			
+			if (props.hp_per_size != null) hp_per_size = L.return_int_from_array(props.hp_per_size);
+			if (props.size != null) size = L.return_int_from_array(props.size);
 			if (props.tamed_hp != null) tamed_hp = L.return_int_from_array(props.tamed_hp);
 			if (props.damage != null) damage = L.return_int_from_array(props.damage);
 			if (props.explosion_size != null) explosion_size = L.return_int_from_array(props.explosion_size);
 			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);
 			if (props.burn_duration != null) burn_duration = L.return_int_from_array(props.burn_duration);
+			if (props.max_lifetime != null) max_lifetime = L.return_int_from_array(props.max_lifetime);
+			if (props.invincible_ticks != null) invincible_ticks = L.return_int_from_array(props.invincible_ticks);
 			
 			if (props.boss_mob != null) boss_mob = L.return_bool_from_string(props.boss_mob);
+			if (props.adult != null) adult = L.return_bool_from_string(props.adult);
+			if (props.saddled != null) saddled = L.return_bool_from_string(props.saddled);
+			if (props.angry != null) angry = L.return_bool_from_string(props.angry);
+			if (props.tamed != null) tamed = L.return_bool_from_string(props.tamed);
+			if (props.sheared != null) sheared = L.return_bool_from_string(props.sheared);
+			if (props.powered != null) powered = L.return_bool_from_string(props.powered);
 			if (props.can_be_dyed != null) can_be_dyed = L.return_bool_from_string(props.can_be_dyed);
 			if (props.can_be_sheared != null) can_be_sheared = L.return_bool_from_string(props.can_be_sheared);
 			if (props.can_be_tamed != null) can_be_tamed = L.return_bool_from_string(props.can_be_tamed);
@@ -77,6 +105,9 @@ public class Mob
 			if (props.can_teleport != null) can_teleport = L.return_bool_from_string(props.can_teleport);
 			if (props.safe != null) safe = L.return_bool_from_string(props.safe);
 			if (props.fiery_explosion != null) fiery_explosion = L.return_bool_from_string(props.fiery_explosion);
+			if (props.wool_colours != null) wool_colour = L.set_wool_colour(props.wool_colours);
+			if (props.ocelot_types != null) ocelot_type = L.set_ocelot_type(props.ocelot_types);
+			if (props.villager_types != null) villager_type = L.set_villager_type(props.villager_types);
 		}
 		this.drops = drops;
 		this.damage_properties = damage_properties;

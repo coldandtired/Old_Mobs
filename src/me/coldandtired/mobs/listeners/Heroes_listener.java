@@ -1,10 +1,10 @@
 package me.coldandtired.mobs.listeners;
 
-import java.util.HashMap;
+import java.util.Map;
 
+import me.coldandtired.api.Mob;
 import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.Mob;
 import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
 import me.coldandtired.mobs.data.Damage_value;
@@ -61,7 +61,7 @@ public class Heroes_listener implements Listener
 		Player p = null;
 		if (damager instanceof Player) p = (Player)damager;
 		
-		HashMap<String, Damage_value> damage_values = null;	
+		Map<String, Damage_value> damage_values = null;	
 		
 		// check damages == damage or both
 		if ((cd.gen_damages_check_type > 0 && !mob.spawn_reason.equalsIgnoreCase("autospawned")) || (cd.as_damages_check_type > 0 && mob.spawn_reason.equalsIgnoreCase("autospawned")))
