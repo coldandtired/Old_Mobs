@@ -92,13 +92,13 @@ public class L
 		return b.getLightFromSky() > 13;
 	}
 	
-	public static boolean is_safe_to_spawn(Block b, boolean above_ground, String safe_type, Material material)
+	public static boolean is_safe_to_spawn(Block b, Boolean above_ground, String safe_type, Material material)
 	{	
 		if (!b.getChunk().isLoaded()) return false;
 		
 		if (b.getType() != material) return false;
 		
-		if (above_ground != is_above_ground(b)) return false;			
+		if (above_ground != null && above_ground != is_above_ground(b)) return false;			
 			
 		Material m = b.getRelative(BlockFace.NORTH).getType();
 		if (m != material) return false;
@@ -188,7 +188,7 @@ public class L
 	}
 	
 	/** Gets a list of all blocks in the biome */
-	public static List<Block> get_blocks_in_biome(BukkitWorld bw, String mob_name, World world, String biome, boolean above_ground)
+	public static List<Block> get_blocks_in_biome(BukkitWorld bw, String mob_name, World world, String biome, Boolean above_ground)
 	{
 		List<Chunk> chunks = new ArrayList<Chunk>();
 		for (Chunk c : world.getLoadedChunks())
@@ -232,7 +232,7 @@ public class L
 	}
 	
 	/** Gets a list of all blocks in the region */
-	public static List<Block> get_blocks_in_region(String mob_name, World world, String region, boolean above_ground, List<String> temp_biomes)
+	public static List<Block> get_blocks_in_region(String mob_name, World world, String region, Boolean above_ground, List<String> temp_biomes)
 	{
 		if (Main.world_guard == null) return null;
 		RegionManager rm = Main.world_guard.getRegionManager(world);
@@ -273,7 +273,7 @@ public class L
 		return temp;
 	}
 	
-	public static List<Block> get_blocks_in_range(BukkitWorld bw, String mob_name, int xbase, int ybase, int zbase, Autospawn_location sl, World world, boolean above_ground, List<String> temp_biomes, List<String> temp_regions)
+	public static List<Block> get_blocks_in_range(BukkitWorld bw, String mob_name, int xbase, int ybase, int zbase, Autospawn_location sl, World world, Boolean above_ground, List<String> temp_biomes, List<String> temp_regions)
 	{
 		String safe_type = "land";
 		Material material = Material.AIR;
@@ -522,7 +522,7 @@ public class L
 
 		Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so, autospawn_id);
 		
-		if (mob.invincible_ticks != null) le.setMaximumNoDamageTicks(mob.invincible_ticks);
+		if (mob.invincibility_ticks != null) le.setMaximumNoDamageTicks(mob.invincibility_ticks);
 		
 		Mob_created_event mob_created_event = new Mob_created_event(mob, le, potion_effects);
 		Main.plugin.getServer().getPluginManager().callEvent(mob_created_event);

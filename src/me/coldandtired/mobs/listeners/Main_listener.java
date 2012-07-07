@@ -159,7 +159,7 @@ public class Main_listener implements Listener
 		
 		event.setDroppedExp(mob_died_event.get_exp());
 		
-		if (Main.economy != null) Main.economy.depositPlayer(p.getName(), mob_died_event.get_bounty());
+		if (Main.economy != null && p != null) Main.economy.depositPlayer(p.getName(), mob_died_event.get_bounty());
 		
 		if (p != null && Main.heroes != null)
 		{

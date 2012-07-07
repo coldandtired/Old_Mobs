@@ -311,14 +311,14 @@ public class Main extends JavaPlugin
 			if (mc_time < as.spawn_time.mc_start && mc_time > as.spawn_time.mc_end) return;
 		}
 		
-		boolean above_ground = true;
+		Boolean above_ground = true;
 		switch (sl.autospawn_placement)
 		{			
 			case 1:
 				above_ground = false;
 				break;
 			case 2:
-				above_ground = L.rng.nextBoolean();
+				above_ground = null;
 				break;
 		}
 		

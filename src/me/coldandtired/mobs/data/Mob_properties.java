@@ -15,7 +15,7 @@ public class Mob_properties
 	public String[] ocelot_types = null;
 	public List<Integer> burn_duration = null;
 	public List<Integer> max_lifetime = null;
-	public List<Integer> invincible_ticks = null;
+	public List<Integer> invincibility_ticks = null;
 	
 	public String boss_mob = null;
 	public String can_burn = null;
@@ -79,7 +79,7 @@ public class Mob_properties
 			{
 				if (s.equalsIgnoreCase("hp")) hp = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("max_lifetime")) max_lifetime = L.fill_int_properties(value);
-				if (s.equalsIgnoreCase("invincible_ticks")) invincible_ticks = L.fill_int_properties(value);
+				if (s.equalsIgnoreCase("invincibility_ticks")) invincibility_ticks = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("size")) size = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("hp_per_size")) hp_per_size = L.fill_int_properties(value);
 				if (s.equalsIgnoreCase("split_into")) split_into = L.fill_int_properties(value);

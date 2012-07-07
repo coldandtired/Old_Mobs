@@ -23,7 +23,7 @@ public class Mob
 	public Integer explosion_size;
 	public Integer split_into;
 	public Integer max_lifetime;
-	public Integer invincible_ticks = 100;
+	public Integer invincibility_ticks;
 	public String spawn_reason;
 	public int random;
 	public Boolean adult;
@@ -80,7 +80,7 @@ public class Mob
 			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);
 			if (props.burn_duration != null) burn_duration = L.return_int_from_array(props.burn_duration);
 			if (props.max_lifetime != null) max_lifetime = L.return_int_from_array(props.max_lifetime);
-			if (props.invincible_ticks != null) invincible_ticks = L.return_int_from_array(props.invincible_ticks);
+			if (props.invincibility_ticks != null) invincibility_ticks = L.return_int_from_array(props.invincibility_ticks);
 			
 			if (props.boss_mob != null) boss_mob = L.return_bool_from_string(props.boss_mob);
 			if (props.adult != null) adult = L.return_bool_from_string(props.adult);
