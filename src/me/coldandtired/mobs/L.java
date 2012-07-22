@@ -4,10 +4,10 @@ package me.coldandtired.mobs;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.bukkit.Bukkit;
@@ -59,7 +59,6 @@ import me.coldandtired.mobs.data.Item_enchantment;
 import me.coldandtired.mobs.data.Mob_properties;
 import me.coldandtired.mobs.data.Outcome;
 import me.coldandtired.mobs.data.Potion_effect;
-import me.coldandtired.mobs.data.Selected_outcomes;
 import me.coldandtired.mobs.listeners.Main_listener;
 
 public class L 
@@ -477,22 +476,74 @@ public class L
 		return false;
 	}
 	
-	public static void setup_mob(Creature_data cd, LivingEntity le, String spawn_reason, int random, String autospawn_id, Selected_outcomes previous)
+	public static Mob make_mob(LivingEntity le, Mob_properties props, Drops drops, Map<String, Damage_value> damage_properties, String spawn_reason, int random, String autospawn_id)
 	{
-		Selected_outcomes so = new Selected_outcomes();
-		if (previous != null)
+		Mob m = new Mob();
+		
+		m.setMob_id(le.getUniqueId().toString());
+		m.setName(le.getType().name());
+		
+		if (props != null)
 		{
-			spawn_reason = previous.spawn_reason;
-			random = previous.random;
+			if (props.hp != null)
+			{
+				m.setHp(L.return_int_from_array(props.hp));
+				m.setMax_hp(m.getHp());
+			}
+			
+			if (props.hp_per_size != null) m.setHp_per_size(L.return_int_from_array(props.hp_per_size));
+			if (props.size != null) m.setSize(L.return_int_from_array(props.size));
+			if (props.tamed_hp != null) m.setTamed_hp(L.return_int_from_array(props.tamed_hp));
+			if (props.damage != null) m.setDamage(L.return_int_from_array(props.damage));
+			if (props.explosion_size != null) m.setExplosion_size(L.return_int_from_array(props.explosion_size));
+			if (props.split_into != null) m.setSplit_into(L.return_int_from_array(props.split_into));
+			if (props.burn_duration != null) m.setBurn_duration(L.return_int_from_array(props.burn_duration));
+			if (props.max_lifetime != null)	m.setDeath_time(System.currentTimeMillis() + (L.return_int_from_array(props.max_lifetime) * 1000));
+			if (props.invincibility_ticks != null) m.setInvincibility_ticks(L.return_int_from_array(props.invincibility_ticks));
+			
+			if (props.boss_mob != null) m.setBoss_mob(L.return_bool_from_string(props.boss_mob));
+			if (props.adult != null) m.setAdult(L.return_bool_from_string(props.adult));
+			if (props.saddled != null) m.setSaddled(L.return_bool_from_string(props.saddled));
+			if (props.angry != null) m.setAngry(L.return_bool_from_string(props.angry));
+			if (props.tamed != null) m.setTamed(L.return_bool_from_string(props.tamed));
+			if (props.sheared != null) m.setSheared(L.return_bool_from_string(props.sheared));
+			if (props.powered != null) m.setPowered(L.return_bool_from_string(props.powered));
+			if (props.can_be_dyed != null) m.setCan_be_dyed(L.return_bool_from_string(props.can_be_dyed));
+			if (props.can_be_sheared != null) m.setCan_be_sheared(L.return_bool_from_string(props.can_be_sheared));
+			if (props.can_be_tamed != null) m.setCan_be_tamed(L.return_bool_from_string(props.can_be_tamed));
+			if (props.can_become_pig_zombie != null) m.setCan_become_pig_zombie(L.return_bool_from_string(props.can_become_pig_zombie));
+			if (props.can_become_powered_creeper != null) m.setCan_become_powered_creeper(L.return_bool_from_string(props.can_become_powered_creeper));
+			if (props.can_burn != null) m.setCan_burn(L.return_bool_from_string(props.can_burn));
+			if (props.can_heal != null) m.setCan_heal(L.return_bool_from_string(props.can_heal));
+			if (props.can_overheal != null) m.setCan_overheal(L.return_bool_from_string(props.can_overheal));
+			if (props.can_create_portal != null) m.setCan_create_portal(L.return_bool_from_string(props.can_create_portal));
+			if (props.can_destroy_blocks != null) m.setCan_destroy_blocks(L.return_bool_from_string(props.can_destroy_blocks));
+			if (props.can_move_blocks != null) m.setCan_move_blocks(L.return_bool_from_string(props.can_move_blocks));
+			if (props.can_grow_wool != null) m.setCan_grow_wool(L.return_bool_from_string(props.can_grow_wool));
+			if (props.can_graze != null) m.setCan_graze(L.return_bool_from_string(props.can_graze));
+			if (props.can_teleport != null) m.setCan_teleport(L.return_bool_from_string(props.can_teleport));
+			if (props.safe != null) m.setSafe(L.return_bool_from_string(props.safe));
+			if (props.fiery_explosion != null) m.setFiery_explosion(L.return_bool_from_string(props.fiery_explosion));
+			if (props.wool_colours != null) m.setWool_colour(L.set_wool_colour(props.wool_colours));
+			if (props.ocelot_types != null) m.setOcelot_type(L.set_ocelot_type(props.ocelot_types));
+			if (props.villager_types != null) m.setVillager_type(L.set_villager_type(props.villager_types));
 		}
+		//m.setDrops(drops);
 		
-		Outcome o = previous != null ? get_previous_outcome(cd, previous.properties) : get_mob_properties_outcome(cd, le, spawn_reason, random, autospawn_id);
+		//m.setDamage_properties(damage_properties);
+		m.setSpawn_reason(spawn_reason);
+		m.setAutospawn_id(autospawn_id);
+		m.setRandom(random);
+		return m;
+	}
+	
+	public static void setup_mob(Creature_data cd, LivingEntity le, String spawn_reason, int random, String autospawn_id)
+	{		
+		Outcome o = get_mob_properties_outcome(cd, le, spawn_reason, random, autospawn_id);
 		Mob_properties props = merge_mob_properties(o, cd, spawn_reason);
-		if (o != null) so.properties = o.outcome_id;
 		
-		o = previous != null ? get_previous_outcome(cd, previous.potions) : get_potion_effects_outcome(cd, le, spawn_reason, random, autospawn_id);
+		o = get_potion_effects_outcome(cd, le, spawn_reason, random, autospawn_id);
 		Collection<PotionEffect> potion_effects = merge_potion_effects(o, cd, spawn_reason);
-		if (o != null) so.potions = o.outcome_id;
 		
 		Drops drops = null;
 		HashMap<String, Damage_value> damage_properties = null;		
@@ -500,29 +551,21 @@ public class L
 		boolean b = spawn_reason.equalsIgnoreCase("autospawned");
 		if ((cd.gen_drops_check_type != 1 && !b) || cd.as_drops_check_type != 1 && b)
 		{				
-			o = previous != null ? get_previous_outcome(cd, previous.drops) : get_drops_outcome(cd, le, spawn_reason, null, random, autospawn_id);			
+			o = get_drops_outcome(cd, le, spawn_reason, null, random, autospawn_id);			
 			drops = merge_drops(o, cd, spawn_reason);
-			if (o != null) so.drops = o.outcome_id;
 		}
 		
 		if ((cd.gen_damages_check_type != 1 && !b) || cd.as_damages_check_type != 1 && b)
 		{
-			o = previous != null ? get_previous_outcome(cd, previous.damages) : get_damages_outcome(cd, le, spawn_reason, null, random, autospawn_id);
+			o = get_damages_outcome(cd, le, spawn_reason, null, random, autospawn_id);
 			damage_properties = merge_damage_properties(o, cd, spawn_reason);
-			if (o != null) so.damages = o.outcome_id;
 		}
 		
-		if (props == null && potion_effects == null && drops == null && damage_properties == null) 
-		{
-			if (Config.log_level > 1) log("No default outcome for " + le.getType().name() + "  - vanilla mob spawned!");
-			Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so, autospawn_id);
-			Main.all_mobs.put(le.getUniqueId().toString(), mob);
-			return;
-		}
-
-		Mob mob = new Mob(props, drops, damage_properties, spawn_reason, random, so, autospawn_id);
+		//if (props == null && potion_effects == null && drops == null && damage_properties == null) return;	
 		
-		if (mob.invincibility_ticks != null) le.setMaximumNoDamageTicks(mob.invincibility_ticks);
+		Mob mob = make_mob(le, props, drops, damage_properties, spawn_reason, random, autospawn_id);	
+		
+		if (mob.getInvincibility_ticks() != null) le.setMaximumNoDamageTicks(mob.getInvincibility_ticks());
 		
 		Mob_created_event mob_created_event = new Mob_created_event(mob, le, potion_effects);
 		Main.plugin.getServer().getPluginManager().callEvent(mob_created_event);
@@ -530,81 +573,74 @@ public class L
 		if (mob_created_event.isCancelled()) return;
 		
 		mob = mob_created_event.get_mob();
+		Main.db.save(mob);
+		
 		potion_effects = mob_created_event.get_potion_effects();
 		
 		if (Main.heroes != null)
 		{
 			Monster monster = Main.heroes.getCharacterManager().getMonster(le);
-			if (mob.hp != null)	monster.setMaxHealth(mob.hp);
-			if (mob.damage != null) monster.setDamage(mob.damage);
+			if (mob.getHp() != null)	monster.setMaxHealth(mob.getHp());
+			if (mob.getDamage() != null) monster.setDamage(mob.getDamage());
 		}
 		
 		if (potion_effects != null) le.addPotionEffects(potion_effects);		
-		
-		Main.all_mobs.put(le.getUniqueId().toString(), mob);	
 	
-		if (mob.boss_mob != null && mob.boss_mob) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);		
-		
-		if (mob.max_lifetime != null)
-		{
-			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.SECOND, mob.max_lifetime);
-			Main.mobs_with_lifetimes.put(le.getUniqueId().toString(), cal);
-		}
+		if (mob.getBoss_mob() != null && mob.getBoss_mob()) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);		
 		
 		if (le instanceof Slime)
 		{
 			Slime slime = (Slime)le;
-			if (!spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && mob.size != null) slime.setSize(mob.size);
-			if (mob.hp_per_size != null) mob.hp = slime.getSize() * mob.hp_per_size;
+			if (!spawn_reason.equalsIgnoreCase("SLIME_SPLIT") && mob.getSize() != null) slime.setSize(mob.getSize());
+			if (mob.getHp_per_size() != null) mob.setHp(slime.getSize() * mob.getHp_per_size());
 		}	
 			
-		if (le instanceof Animals && mob.adult != null)
+		if (le instanceof Animals && mob.getAdult() != null)
 		{
 			Animals animal = (Animals)le;
 		
-			if (mob.adult == true) animal.setAdult(); else animal.setBaby();
+			if (mob.getAdult() == true) animal.setAdult(); else animal.setBaby();
 		}
 			
-		if (le instanceof Pig && mob.saddled != null)
+		if (le instanceof Pig && mob.getSaddled() != null)
 		{
-			((Pig)le).setSaddle(mob.saddled);
+			((Pig)le).setSaddle(mob.getSaddled());
 		}
-		else if (le instanceof PigZombie && mob.angry != null)
+		else if (le instanceof PigZombie && mob.getAngry() != null)
 		{
-			((PigZombie)le).setAngry(mob.angry);
+			((PigZombie)le).setAngry(mob.getAngry());
 		}
 		else if (le instanceof Wolf)
 		{
 			Wolf wolf = (Wolf)le;			
-			if (mob.angry != null) wolf.setAngry(mob.angry);
+			if (mob.getAngry() != null) wolf.setAngry(mob.getAngry());
 			if (!wolf.isAngry())
 			{
-				if (mob.tamed != null) wolf.setTamed(mob.tamed);
-				if (mob.can_be_tamed != null && !mob.can_be_tamed) wolf.setTamed(false);
-				if (wolf.isTamed() && mob.tamed_hp != null) mob.hp = mob.tamed_hp;
+				if (mob.getTamed() != null) wolf.setTamed(mob.getTamed());
+				if (mob.getCan_be_tamed() != null && !mob.getCan_be_tamed()) wolf.setTamed(false);
+				if (wolf.isTamed() && mob.getTamed_hp() != null) mob.setHp(mob.getTamed_hp());
 			}
 			else wolf.damage(0, get_nearby_player(wolf));
 		}
 		else if (le instanceof Sheep)
 		{
 			Sheep sheep = (Sheep)le;
-			if (mob.sheared != null) sheep.setSheared(mob.sheared);
-			if (mob.can_grow_wool != null && !mob.can_grow_wool) sheep.setSheared(false);
+			if (mob.getSheared() != null) sheep.setSheared(mob.getSheared());
+			if (mob.getCan_grow_wool() != null && !mob.getCan_grow_wool()) sheep.setSheared(false);
 			
-			if (mob.wool_colour != null) sheep.setColor(mob.wool_colour);
+			if (mob.getWool_colour() != null) sheep.setColor(mob.getWool_colour());
 		}
-		else if (le instanceof Ocelot && mob.ocelot_type != null)
+		else if (le instanceof Ocelot && mob.getOcelot_type() != null)
 		{
-			((Ocelot)le).setCatType(mob.ocelot_type);
+			((Ocelot)le).setCatType(mob.getOcelot_type());
 		}
-		else if (le instanceof Villager && mob.villager_type != null)
+		else if (le instanceof Villager && mob.getVillager_type() != null)
 		{
-			((Villager)le).setProfession(mob.villager_type);			
+			((Villager)le).setProfession(mob.getVillager_type());			
 		}
-		else if (le instanceof Creeper && mob.powered != null) 
+		else if (le instanceof Creeper && mob.getPowered() != null) 
 		{
-			((Creeper)le).setPowered(mob.powered);		
+			((Creeper)le).setPowered(mob.getPowered());		
 		}
 	}
 	
@@ -613,37 +649,62 @@ public class L
 		for (Entity e : c.getEntities())
 		{
 			if (e instanceof LivingEntity)
-			{				
-				Creature_data cd = Main.tracked_mobs.get(e.getType().name());
-				if (cd == null || cd.reload_behaviour == 2) continue;
-				// not tracked or admin wants vanilla
-				
+			{		
 				LivingEntity le = (LivingEntity)e;
+				Creature_data cd = Main.tracked_mobs.get(le.getType().name());
+				Mob mob = Main.db.find(Mob.class, le.getUniqueId().toString());
 				
-				if (Main.all_mobs.containsKey(le.getUniqueId().toString())) continue;
-				// already tracked
+				if (mob != null)
+				{
+					// is in database
+					if (cd == null || cd.load_behaviour_existing == 2)
+					{
+						// not tracked or admin wants vanilla
+						Main.db.delete(mob);
+						continue;
+					}
+					else if (cd.load_behaviour_existing == 0)
+					{
+						// remove the mob
+						le.remove();
+						Main.db.delete(mob);
+						continue;
+					}
+					else if (cd.load_behaviour_existing == 1)
+					{
+						// kill the mob
+						le.damage(10000);
+						continue;
+					}
+					else if (cd.load_behaviour_existing == 3) 
+					{
+						// recalculate conditions using current values
+						int random = rng.nextInt(100) + 1;						
+						setup_mob(cd, le, "NATURAL", random, null);
+					}
+				}
 				
-				if (cd.reload_behaviour == 0 && !(le instanceof Player)) // remove the mob
-				{					
-					le.remove();
-					continue;
-				}
-				else if (cd.reload_behaviour == 1) // kill the mob
-				{					
-					le.damage(1000);
-					continue;
-				}
-				else if (cd.reload_behaviour == 3) // find the previous outcomes used
+				if (mob == null && cd != null && cd.load_behaviour_new != 2) 
 				{
-					Selected_outcomes so = Main.previous_mobs.get(le.getUniqueId().toString());
-					if (so == null) continue;
-					setup_mob(cd, le, so.spawn_reason, so.random, null, so);
-					
-				}
-				else if (cd.reload_behaviour == 4) // recalculate conditions using current values
-				{
-					int random = rng.nextInt(100) + 1;						
-					setup_mob(cd, le, "NATURAL", random, null, null);
+					// not previously tracked
+					if (cd.load_behaviour_new == 0)
+					{
+						// remove the mob
+						le.remove();
+						continue;
+					}
+					else if (cd.load_behaviour_new == 1)
+					{
+						// kill the mob
+						le.damage(10000);
+						continue;
+					}
+					else if (cd.load_behaviour_new == 3) 
+					{
+						// recalculate conditions using current values
+						int random = rng.nextInt(100) + 1;						
+						setup_mob(cd, le, "NATURAL", random, null);
+					}
 				}
 			}
 		}
@@ -1044,7 +1105,7 @@ public class L
 		boolean replaced = false;
 		for (Item item : drops.items)
 		{
-			if (!replaced && L.matches_number_condition(item.chances, mob.random))
+			if (!replaced && L.matches_number_condition(item.chances, mob.getRandom()))
 			{
 				if (item.replace)
 				{
@@ -1073,7 +1134,7 @@ public class L
 		boolean replaced = false;
 		for (Exp exp : drops.exps)
 		{
-			if (!replaced && L.matches_number_condition(exp.chances, mob.random))
+			if (!replaced && L.matches_number_condition(exp.chances, mob.getRandom()))
 			{
 				if (exp.replace)
 				{
@@ -1094,7 +1155,7 @@ public class L
 		
 		for (Bounty b : drops.bounties)
 		{
-			if (L.matches_number_condition(b.chances, mob.random))
+			if (L.matches_number_condition(b.chances, mob.getRandom()))
 			{
 				double amount = L.get_bounty(b.amount);
 				given_bounty += amount;

@@ -13,7 +13,7 @@ public class Pig_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPigZap(PigZapEvent event)
 	{		
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -24,6 +24,6 @@ public class Pig_listener implements Listener
 		
 		// end setup
 		
-		if (mob.can_become_pig_zombie != null && !mob.can_become_pig_zombie) event.setCancelled(true);
+		if (mob.getCan_become_pig_zombie() != null && !mob.getCan_become_pig_zombie()) event.setCancelled(true);
 	}
 }

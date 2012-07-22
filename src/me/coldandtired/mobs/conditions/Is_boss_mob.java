@@ -21,9 +21,9 @@ private boolean value;
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
-		Mob m = Main.all_mobs.get(entity);
+		Mob m = Main.db.find(Mob.class, entity.getUniqueId().toString());
 		if (m == null) return true;
 		
-		return m.boss_mob == value;
+		return m.getBoss_mob() == value;
 	}
 }

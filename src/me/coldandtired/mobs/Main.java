@@ -1,26 +1,21 @@
 package me.coldandtired.mobs;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
+import javax.persistence.PersistenceException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -57,6 +52,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import com.avaje.ebean.EbeanServer;
 import com.herocraftonline.heroes.Heroes;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
 import com.khorn.terraincontrol.bukkit.TCPlugin;
@@ -64,18 +61,24 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 public class Main extends JavaPlugin
 {
-	public static Map<String, Mob> all_mobs = new HashMap<String, Mob>();
 	public static WorldGuardPlugin world_guard = null;
 	public static Economy economy = null;
 	public static Heroes heroes = null;
 	public static TCPlugin tc = null;
 	public static XPath xpath;
-	public static ConcurrentMap<String, Calendar> mobs_with_lifetimes = null;
 	public static Map<String, Creature_data> tracked_mobs = null;
 	public static Logger logger;	
 	public static Main plugin;
-	public static Map<String, Selected_outcomes> previous_mobs = null; 
+	public static EbeanServer db;
 	List<Autospawn> autospawns = null;
+	
+	@Override
+	public List<Class<?>> getDatabaseClasses()
+	{
+		List<Class<?>> classes = new LinkedList<Class<?>>();
+		classes.add(Mob.class);
+		return classes;
+	}
 	
 	boolean is_latest_version()
 	{
@@ -230,8 +233,7 @@ public class Main extends JavaPlugin
 			list = (NodeList) xpath.evaluate("//Property[contains(@name, 'max_lifetime') and @property_value != \"\"]", input, XPathConstants.NODESET);
 
 			if (list.getLength() > 0)
-			{
-				mobs_with_lifetimes = new ConcurrentHashMap<String, Calendar>();				
+			{			
 				scheduler.scheduleSyncRepeatingTask(this, new Runnable() 
 				{			 
 					public void run() {check_lifetimes();}
@@ -256,17 +258,14 @@ public class Main extends JavaPlugin
 	
 	public void onDisable() 
 	{
-		save_mobs();
-		all_mobs = null;
 		world_guard = null;
 		economy = null;
 		tc = null;
 		xpath = null;
-		mobs_with_lifetimes = null;
 		tracked_mobs = null;
 		logger = null;
 		plugin = null;
-		previous_mobs = null;
+		db = null;
 		autospawns = null;
 	}
 	
@@ -416,41 +415,9 @@ public class Main extends JavaPlugin
 		return null;
 	}
 	
-	private void save_mobs()
-	{
-		if (all_mobs == null) return;
-		
-		File f = new File(getDataFolder(), "mobs_list");
-		if (f.exists())
-		try
-		{
-			OutputStream file = new FileOutputStream(f);
-		    OutputStream buffer = new BufferedOutputStream(file);
-		    ObjectOutput output = new ObjectOutputStream(buffer);
-		    try
-		    {
-		    	Map<String, Selected_outcomes> temp_mobs = new HashMap<String, Selected_outcomes>();
-		    	for (World w : getServer().getWorlds())
-		    	{
-		    		if (L.ignore_world(w)) continue;
-		    		
-		    		for (LivingEntity le : w.getLivingEntities())
-		    		{
-		    			String s = le.getUniqueId().toString();
-		    			if (all_mobs.containsKey(s)) temp_mobs.put(s, all_mobs.get(s).selected_outcomes);	    		
-		    		}
-		    	}
-		    	
-		        output.writeObject(temp_mobs);
-		    }
-		    finally {output.close();}
-		}  
-		catch(Exception ne) {ne.printStackTrace();}
-	}
-	
 	public Mob get_mob(Entity entity)
 	{
-		return all_mobs != null ? all_mobs.get((LivingEntity)entity) : null;
+		return db.find(Mob.class, entity.getUniqueId().toString());	
 	}
 	
 	private Boolean setup_economy()
@@ -476,17 +443,15 @@ public class Main extends JavaPlugin
 		
 	private void check_lifetimes()
 	{
-		if (mobs_with_lifetimes == null || mobs_with_lifetimes.size() == 0) return;
-		
-		Calendar cal = Calendar.getInstance();
-		
-		for (String s : mobs_with_lifetimes.keySet())
+		List<Mob> mobs = getDatabase().find(Mob.class).where().isNotNull("death_time").select("death_time").findList();
+	
+		if (mobs.size() == 0) return;
+		for (Mob m : mobs)
 		{
-			LivingEntity le = L.get_mob_from_id(s);
-			if (le != null && cal.after(mobs_with_lifetimes.get(s)))
+			if (System.currentTimeMillis() >= m.getDeath_time())
 			{
-				mobs_with_lifetimes.remove(s);
-				le.damage(10000);
+				LivingEntity le = L.get_mob_from_id(m.getMob_id());
+				if (le != null) le.damage(10000);
 			}
 		}
 	}
@@ -524,7 +489,8 @@ public class Main extends JavaPlugin
 			setEnabled(false);
 			return;
 		}
-		plugin = this;		
+		plugin = this;
+		setup_database();
 		
 		try 
 		{
@@ -535,11 +501,25 @@ public class Main extends JavaPlugin
 		{
 		    L.warn("Something went wrong with Metrics - it will be disabled.");
 		}
+		
 	}	
 
+	private void setup_database()
+	{
+		// check and add columns
+		db = getDatabase();
+		try
+		{
+			db.find(Mob.class).findRowCount();						
+		}
+		catch (PersistenceException e)
+		{
+			this.installDDL();
+		}		
+	}
+	
 	void convert_mobs()
 	{
-		previous_mobs = get_mobs();
 		for (World world : getServer().getWorlds())
 		{ 		
 			if (!L.ignore_world(world))	for (Chunk c : world.getLoadedChunks()) L.convert_chunk(c);

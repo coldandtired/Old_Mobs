@@ -1,118 +1,545 @@
 package me.coldandtired.api;
 
-import java.util.Map;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Villager;
 
-import me.coldandtired.mobs.L;
-import me.coldandtired.mobs.data.Damage_value;
-import me.coldandtired.mobs.data.Drops;
-import me.coldandtired.mobs.data.Mob_properties;
-import me.coldandtired.mobs.data.Selected_outcomes;
-
+@Entity
+@Table(name = "all_mobs")
 public class Mob
 {	
-	public Integer hp;
-	public Integer hp_per_size;
-	public Integer size;
-	public Integer max_hp;
-	public Integer tamed_hp;
-	public Integer damage;
-	public Integer explosion_size;
-	public Integer split_into;
-	public Integer max_lifetime;
-	public Integer invincibility_ticks;
-	public String spawn_reason;
-	public int random;
-	public Boolean adult;
-	public Boolean saddled;
-	public Boolean angry;
-	public Boolean tamed;
-	public Boolean sheared;
-	public Boolean powered;
-	public Boolean can_be_dyed;
-	public Boolean can_be_sheared;
-	public Boolean can_be_tamed;
-	public Boolean can_become_pig_zombie;
-	public Boolean can_become_powered_creeper;
-	public Boolean can_burn;
-	public Boolean can_heal;
-	public Boolean can_overheal;
-	public Boolean can_create_portal;
-	public Boolean can_destroy_blocks;
-	public Boolean can_move_blocks;
-	public Boolean can_grow_wool;
-	public Boolean can_graze;
-	public Boolean can_teleport;
-	public Boolean safe;
-	public Boolean boss_mob;
-	public Integer burn_duration;
-	public Boolean fiery_explosion;
-	public Map<String, Damage_value> damage_properties = null;
-	public DyeColor wool_colour = null;
-	public Ocelot.Type ocelot_type = null;
-	public Villager.Profession villager_type = null;
-	public Drops drops = null;
-	public Selected_outcomes selected_outcomes = null;
-	public String autospawn_id = null;
+	// most mobs
+	@Id private String mob_id;
+	private String name;
+	@Column private Integer hp;
+	@Column private Integer max_hp;
+	@Column private Integer invincibility_ticks;
+	@Column private int random;
+	@Column private Integer burn_duration;
+	@Column private Boolean can_burn;
+	@Column private Boolean can_heal;
+	@Column private Boolean can_overheal;
+	@Column private String spawn_reason;
+	//@Column private Drops drops = null;
+	@Column private String autospawn_id = null;
+	@Column private Boolean boss_mob;
+	//@Embedded private Map<String, Damage_value> damage_properties = null;
+	@Column private Long death_time;
+
+	// hostile mobs
+	@Column private Boolean safe;
+	@Column private Integer damage;
 	
-	public Mob(Mob_properties props, Drops drops, Map<String, Damage_value> damage_properties, String spawn_reason, int random, Selected_outcomes so, String autospawn_id)
-	{
-		selected_outcomes = so;
-		so.spawn_reason = spawn_reason;
-		so.random = random;
+	// creepers
+	@Column private Boolean fiery_explosion;
+	@Column private Boolean powered;
+	@Column private Boolean can_become_powered_creeper;
+	@Column private Integer explosion_size;
 		
-		if (props != null)
-		{
-			if (props.hp != null)
-			{
-				hp = L.return_int_from_array(props.hp);
-				max_hp = hp;
-			}
+	// wolves
+	@Column private Integer tamed_hp;
+	@Column private Boolean tamed;
+	@Column private Boolean can_be_tamed;
+	@Column private Boolean angry;
+	//can_become_angry?
+		
+	// endermen
+	@Column private Boolean can_move_blocks;
+	@Column private Boolean can_teleport;
+		
+	//ender dragons
+	@Column private Boolean can_create_portal;
+	@Column private Boolean can_destroy_blocks;
+		
+	// ocelots
+	@Column private Ocelot.Type ocelot_type = null;
 			
-			if (props.hp_per_size != null) hp_per_size = L.return_int_from_array(props.hp_per_size);
-			if (props.size != null) size = L.return_int_from_array(props.size);
-			if (props.tamed_hp != null) tamed_hp = L.return_int_from_array(props.tamed_hp);
-			if (props.damage != null) damage = L.return_int_from_array(props.damage);
-			if (props.explosion_size != null) explosion_size = L.return_int_from_array(props.explosion_size);
-			if (props.split_into != null) split_into = L.return_int_from_array(props.split_into);
-			if (props.burn_duration != null) burn_duration = L.return_int_from_array(props.burn_duration);
-			if (props.max_lifetime != null) max_lifetime = L.return_int_from_array(props.max_lifetime);
-			if (props.invincibility_ticks != null) invincibility_ticks = L.return_int_from_array(props.invincibility_ticks);
-			
-			if (props.boss_mob != null) boss_mob = L.return_bool_from_string(props.boss_mob);
-			if (props.adult != null) adult = L.return_bool_from_string(props.adult);
-			if (props.saddled != null) saddled = L.return_bool_from_string(props.saddled);
-			if (props.angry != null) angry = L.return_bool_from_string(props.angry);
-			if (props.tamed != null) tamed = L.return_bool_from_string(props.tamed);
-			if (props.sheared != null) sheared = L.return_bool_from_string(props.sheared);
-			if (props.powered != null) powered = L.return_bool_from_string(props.powered);
-			if (props.can_be_dyed != null) can_be_dyed = L.return_bool_from_string(props.can_be_dyed);
-			if (props.can_be_sheared != null) can_be_sheared = L.return_bool_from_string(props.can_be_sheared);
-			if (props.can_be_tamed != null) can_be_tamed = L.return_bool_from_string(props.can_be_tamed);
-			if (props.can_become_pig_zombie != null) can_become_pig_zombie = L.return_bool_from_string(props.can_become_pig_zombie);
-			if (props.can_become_powered_creeper != null) can_become_powered_creeper = L.return_bool_from_string(props.can_become_powered_creeper);
-			if (props.can_burn != null) can_burn = L.return_bool_from_string(props.can_burn);
-			if (props.can_heal != null) can_heal = L.return_bool_from_string(props.can_heal);
-			if (props.can_overheal != null) can_overheal = L.return_bool_from_string(props.can_overheal);
-			if (props.can_create_portal != null) can_create_portal = L.return_bool_from_string(props.can_create_portal);
-			if (props.can_destroy_blocks != null) can_destroy_blocks = L.return_bool_from_string(props.can_destroy_blocks);
-			if (props.can_move_blocks != null) can_move_blocks = L.return_bool_from_string(props.can_move_blocks);
-			if (props.can_grow_wool != null) can_grow_wool = L.return_bool_from_string(props.can_grow_wool);
-			if (props.can_graze != null) can_graze = L.return_bool_from_string(props.can_graze);
-			if (props.can_teleport != null) can_teleport = L.return_bool_from_string(props.can_teleport);
-			if (props.safe != null) safe = L.return_bool_from_string(props.safe);
-			if (props.fiery_explosion != null) fiery_explosion = L.return_bool_from_string(props.fiery_explosion);
-			if (props.wool_colours != null) wool_colour = L.set_wool_colour(props.wool_colours);
-			if (props.ocelot_types != null) ocelot_type = L.set_ocelot_type(props.ocelot_types);
-			if (props.villager_types != null) villager_type = L.set_villager_type(props.villager_types);
-		}
-		this.drops = drops;
-		this.damage_properties = damage_properties;
-		this.spawn_reason = spawn_reason;
-		this.autospawn_id = autospawn_id;
+	// animals
+	@Column private Boolean adult;
+	
+	// sheep
+	@Column private Boolean sheared;
+	@Column private Boolean can_be_dyed;
+	@Column private Boolean can_be_sheared;
+	@Column private Boolean can_grow_wool;
+	@Column private Boolean can_graze;
+	@Column private DyeColor wool_colour = null;
+	
+	// slimes
+	@Column private Integer hp_per_size;
+	@Column private Integer size;
+	@Column private Integer split_into;
+	
+	// pigs
+	@Column private Boolean saddled;
+	@Column private Boolean can_become_pig_zombie;
+		
+	// villagers
+	@Column private Villager.Profession villager_type = null;
+
+	
+	// getters and setters
+
+	// most mobs
+	public String getMob_id() 
+	{
+		return mob_id;
+	}
+
+	public void setMob_id(String mob_id)
+	{
+		this.mob_id = mob_id;
+	}
+
+	public String getName()
+	{
+		return name;
+	}
+
+	public void setName(String name)
+	{
+		this.name = name;
+	}
+
+	public Integer getHp()
+	{ 
+		return hp; 
+	}
+	
+	public void setHp(Integer hp)
+	{
+		this.hp = hp;
+	}
+	
+	public Integer getHp_per_size()
+	{
+		return hp_per_size;
+	}
+	
+	public void setHp_per_size(Integer hp_per_size)
+	{
+		this.hp_per_size = hp_per_size;
+	}
+
+	public Integer getMax_hp() {
+		return max_hp;
+	}
+
+	public void setMax_hp(Integer max_hp)
+	{
+		this.max_hp = max_hp;
+	}
+/*
+	public Integer getMax_lifetime()
+	{
+		return max_lifetime;
+	}
+
+	public void setMax_lifetime(Integer max_lifetime)
+	{
+		this.max_lifetime = max_lifetime;
+	}*/
+
+	public Integer getInvincibility_ticks()
+	{
+		return invincibility_ticks;
+	}
+
+	public void setInvincibility_ticks(Integer invincibility_ticks)
+	{
+		this.invincibility_ticks = invincibility_ticks;
+	}
+
+	public int getRandom()
+	{
+		return random;
+	}
+	
+	public void setRandom(int random)
+	{
 		this.random = random;
+	}
+
+	public Integer getBurn_duration()
+	{
+		return burn_duration;
+	}
+
+	public void setBurn_duration(Integer burn_duration)
+	{
+		this.burn_duration = burn_duration;
+	}
+
+	public Boolean getCan_burn()
+	{
+		return can_burn;
+	}
+
+	public void setCan_burn(Boolean can_burn)
+	{
+		this.can_burn = can_burn;
+	}
+
+	public Boolean getCan_heal()
+	{
+		return can_heal;
+	}
+
+	public void setCan_heal(Boolean can_heal)
+	{
+		this.can_heal = can_heal;
+	}
+
+	public Boolean getCan_overheal()
+	{
+		return can_overheal;
+	}
+
+	public void setCan_overheal(Boolean can_overheal)
+	{
+		this.can_overheal = can_overheal;
+	}
+
+	public String getSpawn_reason()
+	{
+		return spawn_reason;
+	}
+
+	public void setSpawn_reason(String spawn_reason)
+	{
+		this.spawn_reason = spawn_reason;
+	}
+
+	/*public Drops getDrops()
+	{
+		return drops;
+	}
+
+	public void setDrops(Drops drops)
+	{
+		this.drops = drops;
+	}
+/*
+	public Selected_outcomes getSelected_outcomes() {
+		return selected_outcomes;
+	}
+
+	public void setSelected_outcomes(Selected_outcomes selected_outcomes) {
+		this.selected_outcomes = selected_outcomes;
+	}*/
+
+	public String getAutospawn_id()
+	{
+		return autospawn_id;
+	}
+
+	public void setAutospawn_id(String autospawn_id)
+	{
+		this.autospawn_id = autospawn_id;
+	}
+
+	public Boolean getBoss_mob()
+	{
+		return boss_mob;
+	}
+
+	public void setBoss_mob(Boolean boss_mob)
+	{
+		this.boss_mob = boss_mob;
+	}
+
+	/*public Map<String, Damage_value> getDamage_properties()
+	{
+		return damage_properties;
+	}
+
+	public void setDamage_properties(Map<String, Damage_value> damage_properties)
+	{
+		this.damage_properties = damage_properties;
+	}*/
+
+	public Long getDeath_time()
+	{
+		return death_time;
+	}
+
+	public void setDeath_time(Long death_time)
+	{
+		this.death_time = death_time;
+	}
+
+	public Boolean getSafe()
+	{
+		return safe;
+	}
+
+	public void setSafe(Boolean safe)
+	{
+		this.safe = safe;
+	}
+
+	public Integer getDamage()
+	{
+		return damage;
+	}
+
+	public void setDamage(Integer damage)
+	{
+		this.damage = damage;
+	}
+
+	public Boolean getFiery_explosion()
+	{
+		return fiery_explosion;
+	}
+
+	public void setFiery_explosion(Boolean fiery_explosion)
+	{
+		this.fiery_explosion = fiery_explosion;
+	}
+
+	public Boolean getPowered()
+	{
+		return powered;
+	}
+
+	public void setPowered(Boolean powered)
+	{
+		this.powered = powered;
+	}
+
+	public Boolean getCan_become_powered_creeper()
+	{
+		return can_become_powered_creeper;
+	}
+
+	public void setCan_become_powered_creeper(Boolean can_become_powered_creeper)
+	{
+		this.can_become_powered_creeper = can_become_powered_creeper;
+	}
+
+	public Integer getExplosion_size()
+	{
+		return explosion_size;
+	}
+
+	public void setExplosion_size(Integer explosion_size)
+	{
+		this.explosion_size = explosion_size;
+	}
+
+	public Integer getTamed_hp()
+	{
+		return tamed_hp;
+	}
+
+	public void setTamed_hp(Integer tamed_hp)
+	{
+		this.tamed_hp = tamed_hp;
+	}
+
+	public Boolean getTamed()
+	{
+		return tamed;
+	}
+
+	public void setTamed(Boolean tamed)
+	{
+		this.tamed = tamed;
+	}
+
+	public Boolean getCan_be_tamed()
+	{
+		return can_be_tamed;
+	}
+
+	public void setCan_be_tamed(Boolean can_be_tamed)
+	{
+		this.can_be_tamed = can_be_tamed;
+	}
+
+	public Boolean getAngry()
+	{
+		return angry;
+	}
+
+	public void setAngry(Boolean angry)
+	{
+		this.angry = angry;
+	}
+
+	public Boolean getCan_move_blocks()
+	{
+		return can_move_blocks;
+	}
+
+	public void setCan_move_blocks(Boolean can_move_blocks)
+	{
+		this.can_move_blocks = can_move_blocks;
+	}
+
+	public Boolean getCan_teleport()
+	{
+		return can_teleport;
+	}
+
+	public void setCan_teleport(Boolean can_teleport)
+	{
+		this.can_teleport = can_teleport;
+	}
+
+	public Boolean getCan_create_portal()
+	{
+		return can_create_portal;
+	}
+
+	public void setCan_create_portal(Boolean can_create_portal)
+	{
+		this.can_create_portal = can_create_portal;
+	}
+
+	public Boolean getCan_destroy_blocks()
+	{
+		return can_destroy_blocks;
+	}
+
+	public void setCan_destroy_blocks(Boolean can_destroy_blocks)
+	{
+		this.can_destroy_blocks = can_destroy_blocks;
+	}
+
+	public Ocelot.Type getOcelot_type()
+	{
+		return ocelot_type;
+	}
+
+	public void setOcelot_type(Ocelot.Type ocelot_type)
+	{
+		this.ocelot_type = ocelot_type;
+	}
+
+	public Boolean getAdult()
+	{
+		return adult;
+	}
+
+	public void setAdult(Boolean adult)
+	{
+		this.adult = adult;
+	}
+
+	public Boolean getSheared()
+	{
+		return sheared;
+	}
+
+	public void setSheared(Boolean sheared)
+	{
+		this.sheared = sheared;
+	}
+
+	public Boolean getCan_be_dyed()
+	{
+		return can_be_dyed;
+	}
+
+	public void setCan_be_dyed(Boolean can_be_dyed) 
+	{
+		this.can_be_dyed = can_be_dyed;
+	}
+
+	public Boolean getCan_be_sheared()
+	{
+		return can_be_sheared;
+	}
+
+	public void setCan_be_sheared(Boolean can_be_sheared)
+	{
+		this.can_be_sheared = can_be_sheared;
+	}
+
+	public Boolean getCan_grow_wool() 
+	{
+		return can_grow_wool;
+	}
+
+	public void setCan_grow_wool(Boolean can_grow_wool)
+	{
+		this.can_grow_wool = can_grow_wool;
+	}
+
+	public Boolean getCan_graze()
+	{
+		return can_graze;
+	}
+
+	public void setCan_graze(Boolean can_graze)
+	{
+		this.can_graze = can_graze;
+	}
+
+	public DyeColor getWool_colour()
+	{
+		return wool_colour;
+	}
+
+	public void setWool_colour(DyeColor wool_colour)
+	{
+		this.wool_colour = wool_colour;
+	}
+
+	public Integer getSize()
+	{
+		return size;
+	}
+
+	public void setSize(Integer size)
+	{
+		this.size = size;
+	}
+
+	public Integer getSplit_into() 
+	{
+		return split_into;
+	}
+
+	public void setSplit_into(Integer split_into)
+	{
+		this.split_into = split_into;
+	}
+
+	public Boolean getSaddled()
+	{
+		return saddled;
+	}
+
+	public void setSaddled(Boolean saddled)
+	{
+		this.saddled = saddled;
+	}
+
+	public Boolean getCan_become_pig_zombie()
+	{
+		return can_become_pig_zombie;
+	}
+
+	public void setCan_become_pig_zombie(Boolean can_become_pig_zombie)
+	{
+		this.can_become_pig_zombie = can_become_pig_zombie;
+	}
+
+	public Villager.Profession getVillager_type()
+	{
+		return villager_type;
+	}
+
+	public void setVillager_type(Villager.Profession villager_type)
+	{
+		this.villager_type = villager_type;
 	}
 }

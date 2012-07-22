@@ -14,7 +14,7 @@ public class Slime_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSlimeSplit(SlimeSplitEvent event)
 	{
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -25,6 +25,6 @@ public class Slime_listener implements Listener
 		
 		// end setup
 	
-		if (mob.split_into != null) event.setCount(mob.split_into);
+		if (mob.getSplit_into() != null) event.setCount(mob.getSplit_into());
 	}
 }

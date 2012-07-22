@@ -13,7 +13,7 @@ public class Ender_dragon_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCreatePortal(EntityCreatePortalEvent event)
 	{
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -24,6 +24,6 @@ public class Ender_dragon_listener implements Listener
 		
 		// end setup
 		
-		if (mob.can_create_portal != null && !mob.can_create_portal) event.setCancelled(true);
+		if (mob.getCan_create_portal() != null && !mob.getCan_create_portal()) event.setCancelled(true);
 	}
 }

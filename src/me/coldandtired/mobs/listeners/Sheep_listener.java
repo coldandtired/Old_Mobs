@@ -16,7 +16,7 @@ public class Sheep_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSheepRegrowWool(SheepRegrowWoolEvent event)
 	{	
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -27,13 +27,13 @@ public class Sheep_listener implements Listener
 		
 		// end setup
 		
-		if (mob.can_grow_wool != null && !mob.can_grow_wool) event.setCancelled(true);
+		if (mob.getCan_grow_wool() != null && !mob.getCan_grow_wool()) event.setCancelled(true);
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onSheepDyeWool(SheepDyeWoolEvent event)
 	{
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -44,13 +44,13 @@ public class Sheep_listener implements Listener
 		
 		// end setup
 		
-		if (mob.can_be_dyed != null && !mob.can_be_dyed) event.setCancelled(true);
+		if (mob.getCan_be_dyed() != null && !mob.getCan_be_dyed()) event.setCancelled(true);
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerShearEntity(PlayerShearEntityEvent event)
 	{
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -61,6 +61,6 @@ public class Sheep_listener implements Listener
 		
 		// end setup
 		
-		if (mob.can_be_sheared != null && !mob.can_be_sheared) event.setCancelled(true);
+		if (mob.getCan_be_sheared() != null && !mob.getCan_be_sheared()) event.setCancelled(true);
 	}
 }

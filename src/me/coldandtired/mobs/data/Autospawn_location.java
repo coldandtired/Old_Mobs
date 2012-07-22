@@ -16,7 +16,6 @@ public class Autospawn_location
 	public List<World> worlds = null;
 	public List<String> regions= null;
 	public List<String> biomes = null;
-	public boolean loaded_chunks_only;
 	public boolean all_values;
 	public Integer xbase;
 	public Integer ybase;
@@ -62,9 +61,6 @@ public class Autospawn_location
 			s = s.toUpperCase();
 			biomes = Arrays.asList(s.split(","));
 		}
-		
-		s = el.getAttributeNode("loaded_chunks_only").getValue();
-		loaded_chunks_only = !s.equalsIgnoreCase("") ? Boolean.parseBoolean(s) : true;
 		
 		autospawn_placement = Integer.parseInt(el.getAttributeNode("autospawn_placement").getValue());
 		

@@ -13,7 +13,7 @@ public class Wolf_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTame(EntityTameEvent event)
 	{		
-		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
+		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())
@@ -24,11 +24,11 @@ public class Wolf_listener implements Listener
 		
 		// end setup
 		
-		if (mob.can_be_tamed != null && !mob.can_be_tamed) 
+		if (mob.getCan_be_tamed() != null && !mob.getCan_be_tamed()) 
 		{
 			event.setCancelled(true);
 			return;
 		}
-		if (mob.tamed_hp != null) mob.hp = mob.tamed_hp;
+		if (mob.getTamed_hp() != null) mob.setHp(mob.getTamed_hp());
 	}
 }

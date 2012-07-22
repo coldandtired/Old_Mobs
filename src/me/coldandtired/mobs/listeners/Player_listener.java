@@ -1,29 +1,14 @@
 package me.coldandtired.mobs.listeners;
 
-import java.util.Iterator;
-import java.util.List;
-
-import me.coldandtired.api.Mob;
 import me.coldandtired.mobs.L;
 import me.coldandtired.mobs.Main;
-import me.coldandtired.mobs.api.events.Mob_died_event;
-import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
-import me.coldandtired.mobs.data.Death_message;
-import me.coldandtired.mobs.data.Drops;
-import me.coldandtired.mobs.data.Outcome;
-
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.ItemStack;
-
-import com.herocraftonline.heroes.characters.Hero;
-import com.herocraftonline.heroes.characters.classes.HeroClass;
 
 public class Player_listener implements Listener
 {
@@ -39,13 +24,13 @@ public class Player_listener implements Listener
 		String spawn_reason = "NATURAL";
 		int random = L.rng.nextInt(100) + 1;
 		
-		L.setup_mob(cd, le, spawn_reason, random, null, null);	
+		L.setup_mob(cd, le, spawn_reason, random, null);	
 	}
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void player_died(PlayerDeathEvent event)
 	{
-		LivingEntity le = event.getEntity();
+		/*LivingEntity le = event.getEntity();
 		String mob_name = le.getType().name();
 	
 		Creature_data cd = Main.tracked_mobs.get(mob_name);	
@@ -62,7 +47,7 @@ public class Player_listener implements Listener
 		if (mob == null) return;
 	
 		Main.all_mobs.remove(le.getUniqueId().toString());
-		if (Main.mobs_with_lifetimes != null) Main.mobs_with_lifetimes.remove(le.getUniqueId().toString());
+		//if (Main.mobs_with_lifetimes != null) Main.mobs_with_lifetimes.remove(le.getUniqueId().toString());
 		
 		mob_name = mob_name.toLowerCase();
 		
@@ -73,16 +58,16 @@ public class Player_listener implements Listener
 		Drops drops = null;		
 
 		// check drops == death or both
-		if ((cd.gen_drops_check_type > 0 && !mob.spawn_reason.equalsIgnoreCase("autospawned")) || (cd.as_drops_check_type > 0 && mob.spawn_reason.equalsIgnoreCase("autospawned")))
+		if ((cd.gen_drops_check_type > 0 && !mob.getSpawn_reason().equalsIgnoreCase("autospawned")) || (cd.as_drops_check_type > 0 && mob.getSpawn_reason().equalsIgnoreCase("autospawned")))
 		{
 			if (Config.log_level > 1) L.log("Checking conditions for drops");
-			Outcome o = L.get_drops_outcome(cd, le, mob.spawn_reason, p, mob.random, mob.autospawn_id);
-			drops = L.merge_drops(o, cd, mob.spawn_reason);
+			Outcome o = L.get_drops_outcome(cd, le, mob.getSpawn_reason(), p, mob.getRandom(), mob.getAutospawn_id());
+			drops = L.merge_drops(o, cd, mob.getSpawn_reason());
 		} 
 		else
 		{
 			if (Config.log_level > 1) L.log("Using spawn conditions");
-			drops = mob.drops;
+			drops = mob.getDrops();
 		}
 		
 		List<ItemStack> old_drops = drops != null ? L.get_drops(mob, drops, event.getDrops()) : event.getDrops();
@@ -117,6 +102,6 @@ public class Player_listener implements Listener
 		if (mob_died_event.get_death_messages() != null)
 		{
 			for (Death_message dm : mob_died_event.get_death_messages()) L.send_death_message(dm, mob_name, mob_died_event.get_exp(), p, mob_died_event.get_drops(), mob_died_event.get_bounty());				
-		}
+		}*/
 	}
 }

@@ -1,5 +1,6 @@
 package me.coldandtired.mobs.data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +13,12 @@ import me.coldandtired.mobs.conditions.Number_condition;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-public class Item
+public class Item implements Serializable
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public List<Integer> quantity;
 	public int id;
 	public boolean replace;

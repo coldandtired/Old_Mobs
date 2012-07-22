@@ -19,7 +19,8 @@ public class Creature_data
     public int as_drops_check_type;
     public int gen_fallthrough_type;
     public int as_fallthrough_type;
-    public int reload_behaviour;
+    public int load_behaviour_new;
+    public int load_behaviour_existing;
     
 	public Creature_data(Element element)
 	{
@@ -29,9 +30,20 @@ public class Creature_data
 			gen_drops_check_type = Integer.parseInt(element.getAttributeNode("gen_drops_check_type").getValue());
 			as_damages_check_type = Integer.parseInt(element.getAttributeNode("as_damages_check_type").getValue());
 			as_drops_check_type = Integer.parseInt(element.getAttributeNode("as_drops_check_type").getValue());
+			//workaround
+			if (gen_damages_check_type == 0) gen_damages_check_type = 1;
+			if (as_damages_check_type == 0) as_damages_check_type = 1;
+			if (gen_drops_check_type == 0) gen_drops_check_type = 1;
+			if (as_drops_check_type == 0) as_drops_check_type = 1;
+			//end
 			gen_fallthrough_type = Integer.parseInt(element.getAttributeNode("gen_fallthrough_type").getValue());
 			as_fallthrough_type = Integer.parseInt(element.getAttributeNode("as_fallthrough_type").getValue());
-			reload_behaviour = Integer.parseInt(element.getAttributeNode("reload_behaviour").getValue());			
+			if (element.hasAttribute("load_behaviour_new"))
+			load_behaviour_new = Integer.parseInt(element.getAttributeNode("load_behaviour_new").getValue());
+			else load_behaviour_new = 0;
+			if (element.hasAttribute("load_behaviour_existing"))
+			load_behaviour_existing = Integer.parseInt(element.getAttributeNode("load_behaviour_existing").getValue());
+			else load_behaviour_existing = 0;
 			
 			if (Boolean.parseBoolean(element.getAttributeNode("has_outcomes").getValue()))
 			{
