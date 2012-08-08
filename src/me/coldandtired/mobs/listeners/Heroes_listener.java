@@ -36,7 +36,7 @@ public class Heroes_listener implements Listener
 
 		if (damager != null)
 		{
-			Mob attacker = Main.db.find(Mob.class, damager.getUniqueId().toString());
+			Mob attacker = Main.all_mobs.get(damager.getUniqueId().toString());
 			if (attacker != null)
 			{
 				if (attacker.getDamage() != null) damage = attacker.getDamage();
@@ -46,14 +46,14 @@ public class Heroes_listener implements Listener
 				LivingEntity le2 = ((Projectile)damager).getShooter();
 				if (le2 != null)
 				{
-					attacker = Main.db.find(Mob.class, le2.getUniqueId().toString());
+					attacker = Main.all_mobs.get(le2.getUniqueId().toString());
 					if (attacker != null && attacker.getDamage() != null) damage = attacker.getDamage();	
 				}
 			}
 			event.setDamage(damage);
 		}				
 		
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;	
 		
 		if (mob.getBoss_mob() != null && mob.getBoss_mob()) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);
@@ -104,7 +104,7 @@ public class Heroes_listener implements Listener
 		int damage = event.getDamage();		
 		LivingEntity le = (LivingEntity)event.getEntity();			
 		
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;	
 		
 		if (mob.getBoss_mob() != null && mob.getBoss_mob()) le.getWorld().playEffect(le.getLocation(), Effect.MOBSPAWNER_FLAMES, 100);

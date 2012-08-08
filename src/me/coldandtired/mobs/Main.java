@@ -3,10 +3,12 @@ package me.coldandtired.mobs;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -15,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import javax.persistence.PersistenceException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -53,7 +54,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import com.avaje.ebean.EbeanServer;
 import com.herocraftonline.heroes.Heroes;
 import com.khorn.terraincontrol.bukkit.BukkitWorld;
 import com.khorn.terraincontrol.bukkit.TCPlugin;
@@ -69,7 +69,7 @@ public class Main extends JavaPlugin
 	public static Map<String, Creature_data> tracked_mobs = null;
 	public static Logger logger;	
 	public static Main plugin;
-	public static EbeanServer db;
+	public static Map<String, Mob> all_mobs  = new HashMap<String, Mob>();
 	List<Autospawn> autospawns = null;
 	
 	@Override
@@ -100,6 +100,7 @@ public class Main extends JavaPlugin
 		if (f.exists())
 		try
 		{	
+			load_mobs();
 			InputSource input = new InputSource(f.getPath());
 
 			Element config = (Element)xpath.evaluate("Mobs/config", input, XPathConstants.NODE);
@@ -258,6 +259,7 @@ public class Main extends JavaPlugin
 	
 	public void onDisable() 
 	{
+		save_mobs();
 		world_guard = null;
 		economy = null;
 		tc = null;
@@ -265,7 +267,7 @@ public class Main extends JavaPlugin
 		tracked_mobs = null;
 		logger = null;
 		plugin = null;
-		db = null;
+		all_mobs = null;
 		autospawns = null;
 	}
 	
@@ -417,7 +419,7 @@ public class Main extends JavaPlugin
 	
 	public Mob get_mob(Entity entity)
 	{
-		return db.find(Mob.class, entity.getUniqueId().toString());	
+		return all_mobs.get(entity.getUniqueId().toString());
 	}
 	
 	private Boolean setup_economy()
@@ -443,15 +445,20 @@ public class Main extends JavaPlugin
 		
 	private void check_lifetimes()
 	{
-		List<Mob> mobs = getDatabase().find(Mob.class).where().isNotNull("death_time").select("death_time").findList();
-	
+		List<Mob> mobs = new ArrayList<Mob>();
+		
+		for (Mob m : all_mobs.values())
+		{
+			if (m.getDeath_time() != null) mobs.add(m);			
+		}
+		
 		if (mobs.size() == 0) return;
 		for (Mob m : mobs)
 		{
 			if (System.currentTimeMillis() >= m.getDeath_time())
 			{
 				LivingEntity le = L.get_mob_from_id(m.getMob_id());
-				if (le != null) le.damage(10000);
+				if (le != null) le.remove();
 			}
 		}
 	}
@@ -490,7 +497,6 @@ public class Main extends JavaPlugin
 			return;
 		}
 		plugin = this;
-		setup_database();
 		
 		try 
 		{
@@ -503,19 +509,49 @@ public class Main extends JavaPlugin
 		}
 		
 	}	
-
-	private void setup_database()
+	
+	@SuppressWarnings("unchecked")
+	void load_mobs()
 	{
-		// check and add columns
-		db = getDatabase();
+		File f = new File(getDataFolder(), "saved_mobs.dat");
+		if (f.exists())
 		try
 		{
-			db.find(Mob.class).findRowCount();						
+			FileInputStream fis;
+			try 
+			{
+				fis = new FileInputStream(f);
+				ObjectInputStream ois = new ObjectInputStream(fis);
+				all_mobs = (HashMap<String, Mob>) ois.readObject();
+			} 
+			catch (Exception e) {e.printStackTrace();}
 		}
-		catch (PersistenceException e)
+		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	void save_mobs()
+	{
+		File f = new File(getDataFolder(), "saved_mobs.dat");
+		if (!f.exists())
+		try
+		{	
+			f.createNewFile();
+		}
+		catch (Exception e) {e.printStackTrace();}
+		
+		FileOutputStream fos;
+		try 
 		{
-			this.installDDL();
-		}		
+			fos = new FileOutputStream(f);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+			  // Write object.
+			  oos.writeObject(all_mobs);
+			//fos = new FileOutputStream("aaa.xml");
+		//	XMLEncoder xenc = new XMLEncoder(fos);
+			//xenc.writeObject(all_mobs);
+		} 
+		catch (Exception e) {e.printStackTrace();}		
 	}
 	
 	void convert_mobs()

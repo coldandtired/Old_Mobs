@@ -61,6 +61,7 @@ public class Outcome
     				//if (s.equalsIgnoreCase("item_type")) conditions.add(new Item_type(s2));
     				if (s.equalsIgnoreCase("killed_player_names")) conditions.add(new Killed_player_names(s2, b));
     				if (s.equalsIgnoreCase("light_levels")) conditions.add(new Light_levels(s2, b));
+    				if (s.equalsIgnoreCase("lunar_phases")) conditions.add(new Lunar_phases(s2, b));
     				if (s.equalsIgnoreCase("mob_ages")) conditions.add(new Mob_ages(s2, b));
     				if (s.equalsIgnoreCase("mob_standing_on")) conditions.add(new Mob_standing_on(s2, b));
     				if (s.equalsIgnoreCase("ocelot_type")) conditions.add(new Ocelot_type(s2, b));
@@ -68,7 +69,7 @@ public class Outcome
     				if (s.equalsIgnoreCase("percent")) conditions.add(new Percent(s2, b));
     				if (s.equalsIgnoreCase("player_money")) conditions.add(new Player_money(s2, b));
     				if (s.equalsIgnoreCase("player_names")) conditions.add(new Player_names(s2, b));
-    				if (s.equalsIgnoreCase("player_permission")) conditions.add(new Player_permission(s2, b));
+    				if (s.equalsIgnoreCase("player_permissions")) conditions.add(new Player_permission(s2, b));
     				if (s.equalsIgnoreCase("player_standing_on")) conditions.add(new Player_standing_on(s2, b));
     				if (s.equalsIgnoreCase("regions")) conditions.add(new Regions(s2, b));
     				if (s.equalsIgnoreCase("remaining_lifetime")) conditions.add(new Remaining_lifetime(s2, b));

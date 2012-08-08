@@ -13,7 +13,7 @@ public class Enderman_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTeleport(EntityTeleportEvent event)
 	{
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 
 		if (event.isCancelled())

@@ -113,10 +113,10 @@ public class Main_listener implements Listener
 			else return; // not tracked
 		}
 		
-		Mob mob = Main.db.find(Mob.class, le.getUniqueId().toString());	
+		Mob mob = Main.all_mobs.get(le.getUniqueId().toString());	
 		if (mob == null) return;
 	
-		Main.db.delete(mob);
+		Main.all_mobs.remove(le.getUniqueId().toString());
 		
 		mob_name = mob_name.toLowerCase();
 		
@@ -136,7 +136,7 @@ public class Main_listener implements Listener
 		else
 		{
 			if (Config.log_level > 1) L.log("Using spawn conditions");
-			//drops = mob.getDrops();
+			drops = mob.getDrops();
 		}
 		
 		List<ItemStack> old_drops = drops != null ? L.get_drops(mob, drops, event.getDrops()) : event.getDrops();
@@ -210,7 +210,7 @@ public class Main_listener implements Listener
 		
 		if (damager != null)
 		{
-			Mob attacker = Main.db.find(Mob.class, damager.getUniqueId().toString());
+			Mob attacker = Main.all_mobs.get(damager.getUniqueId().toString());
 			if (attacker != null)
 			{
 				if (attacker.getDamage() != null) damage = attacker.getDamage();
@@ -220,14 +220,14 @@ public class Main_listener implements Listener
 				LivingEntity le2 = ((Projectile)damager).getShooter();
 				if (le2 != null)
 				{
-					attacker = Main.db.find(Mob.class, le2.getUniqueId().toString());
+					attacker = Main.all_mobs.get(le2.getUniqueId().toString());
 					if (attacker != null && attacker.getDamage() != null) damage = attacker.getDamage();	
 				}
 			}
 			event.setDamage(damage);
 		}				
 		
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		
 		if (mob == null) return;	
 		
@@ -277,7 +277,6 @@ public class Main_listener implements Listener
 			if (mob.getHp() < 1) event.setDamage(10000); else
 			{
 				event.setDamage(-1);
-				Main.db.save(mob);
 			}
 		} else event.setDamage(damage);
 	}
@@ -285,7 +284,7 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityRegainHealth(EntityRegainHealthEvent event)
 	{
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 		
 		if (event.isCancelled())
@@ -312,7 +311,7 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityCombust(EntityCombustEvent event)
 	{
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 	
 		if (event.isCancelled())
@@ -333,7 +332,7 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityTarget(EntityTargetLivingEntityEvent event)
 	{
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 		
 		if (event.isCancelled())
@@ -359,7 +358,7 @@ public class Main_listener implements Listener
 		Entity entity = event.getEntity();
 		if (entity instanceof Fireball) entity = ((Fireball)entity).getShooter();
 		
-		Mob mob = Main.db.find(Mob.class, entity.getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(entity.getUniqueId().toString());
 		if (mob == null) return;
 		
 		// end setup
@@ -377,7 +376,7 @@ public class Main_listener implements Listener
 		
 		if (entity instanceof Fireball) entity = ((Fireball)entity).getShooter();
 		
-		Mob mob = Main.db.find(Mob.class, entity.getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(entity.getUniqueId().toString());
 		if (mob == null) return;
 		
 		if (event.isCancelled())
@@ -410,7 +409,7 @@ public class Main_listener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onEntityChangeBlock(EntityChangeBlockEvent event)
 	{
-		Mob mob = Main.db.find(Mob.class, event.getEntity().getUniqueId().toString());
+		Mob mob = Main.all_mobs.get(event.getEntity().getUniqueId().toString());
 		if (mob == null) return;
 		
 		if (event.isCancelled())

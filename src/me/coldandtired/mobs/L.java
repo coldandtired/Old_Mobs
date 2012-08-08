@@ -81,7 +81,7 @@ public class L
 		{
 			Block b = safe_blocks.get(get_random_choice(safe_blocks.size()));
 			Main_listener.autospawn = as;
-			w.spawnCreature(b.getLocation(), EntityType.valueOf(as.mob_name));
+			w.spawnEntity(b.getLocation(), EntityType.valueOf(as.mob_name));
 			if (Config.log_level > 1) log("Autospawned " + as.mob_name);
 		}
 	}
@@ -528,9 +528,9 @@ public class L
 			if (props.ocelot_types != null) m.setOcelot_type(L.set_ocelot_type(props.ocelot_types));
 			if (props.villager_types != null) m.setVillager_type(L.set_villager_type(props.villager_types));
 		}
-		//m.setDrops(drops);
+		m.setDrops(drops);
 		
-		//m.setDamage_properties(damage_properties);
+		m.setDamage_properties(damage_properties);
 		m.setSpawn_reason(spawn_reason);
 		m.setAutospawn_id(autospawn_id);
 		m.setRandom(random);
@@ -573,7 +573,7 @@ public class L
 		if (mob_created_event.isCancelled()) return;
 		
 		mob = mob_created_event.get_mob();
-		Main.db.save(mob);
+		Main.all_mobs.put(le.getUniqueId().toString(), mob);
 		
 		potion_effects = mob_created_event.get_potion_effects();
 		
@@ -652,7 +652,7 @@ public class L
 			{		
 				LivingEntity le = (LivingEntity)e;
 				Creature_data cd = Main.tracked_mobs.get(le.getType().name());
-				Mob mob = Main.db.find(Mob.class, le.getUniqueId().toString());
+				Mob mob = Main.all_mobs.get(le.getUniqueId().toString());
 				
 				if (mob != null)
 				{
@@ -660,14 +660,14 @@ public class L
 					if (cd == null || cd.load_behaviour_existing == 2)
 					{
 						// not tracked or admin wants vanilla
-						Main.db.delete(mob);
+						Main.all_mobs.remove(le.getUniqueId().toString());
 						continue;
 					}
 					else if (cd.load_behaviour_existing == 0)
 					{
 						// remove the mob
 						le.remove();
-						Main.db.delete(mob);
+						Main.all_mobs.remove(le.getUniqueId().toString());
 						continue;
 					}
 					else if (cd.load_behaviour_existing == 1)

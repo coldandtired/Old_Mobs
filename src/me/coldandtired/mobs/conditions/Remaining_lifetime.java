@@ -25,7 +25,7 @@ public class Remaining_lifetime implements Condition
 	@Override
 	public boolean check(LivingEntity entity, World world, Location loc, String spawn_reason, Player player, int random, String autospawn_id) 
 	{
-		Mob m = Main.db.find(Mob.class, entity.getUniqueId().toString());
+		Mob m = Main.all_mobs.get(entity.getUniqueId().toString());
 		
 		if (m == null || m.getDeath_time() == null) return false;
 		

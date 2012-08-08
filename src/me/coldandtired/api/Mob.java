@@ -1,86 +1,89 @@
 package me.coldandtired.api;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import java.io.Serializable;
+import java.util.Map;
+
+import me.coldandtired.mobs.data.Damage_value;
+import me.coldandtired.mobs.data.Drops;
 
 import org.bukkit.DyeColor;
 import org.bukkit.entity.Ocelot;
 import org.bukkit.entity.Villager;
 
-@Entity
-@Table(name = "all_mobs")
-public class Mob
+public class Mob implements Serializable
 {	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	// most mobs
-	@Id private String mob_id;
+	private String mob_id;
 	private String name;
-	@Column private Integer hp;
-	@Column private Integer max_hp;
-	@Column private Integer invincibility_ticks;
-	@Column private int random;
-	@Column private Integer burn_duration;
-	@Column private Boolean can_burn;
-	@Column private Boolean can_heal;
-	@Column private Boolean can_overheal;
-	@Column private String spawn_reason;
-	//@Column private Drops drops = null;
-	@Column private String autospawn_id = null;
-	@Column private Boolean boss_mob;
-	//@Embedded private Map<String, Damage_value> damage_properties = null;
-	@Column private Long death_time;
+	private Integer hp;
+	private Integer max_hp;
+	private Integer invincibility_ticks;
+	private int random;
+	private Integer burn_duration;
+	private Boolean can_burn;
+	private Boolean can_heal;
+	private Boolean can_overheal;
+	private String spawn_reason;
+	private Drops drops = null;
+	private String autospawn_id = null;
+	private Boolean boss_mob;
+	private Map<String, Damage_value> damage_properties = null;
+	private Long death_time;
 
 	// hostile mobs
-	@Column private Boolean safe;
-	@Column private Integer damage;
+	private Boolean safe;
+	private Integer damage;
 	
 	// creepers
-	@Column private Boolean fiery_explosion;
-	@Column private Boolean powered;
-	@Column private Boolean can_become_powered_creeper;
-	@Column private Integer explosion_size;
+	private Boolean fiery_explosion;
+	private Boolean powered;
+	private Boolean can_become_powered_creeper;
+	private Integer explosion_size;
 		
 	// wolves
-	@Column private Integer tamed_hp;
-	@Column private Boolean tamed;
-	@Column private Boolean can_be_tamed;
-	@Column private Boolean angry;
+	private Integer tamed_hp;
+	private Boolean tamed;
+	private Boolean can_be_tamed;
+	private Boolean angry;
 	//can_become_angry?
 		
 	// endermen
-	@Column private Boolean can_move_blocks;
-	@Column private Boolean can_teleport;
+	private Boolean can_move_blocks;
+	private Boolean can_teleport;
 		
 	//ender dragons
-	@Column private Boolean can_create_portal;
-	@Column private Boolean can_destroy_blocks;
+	private Boolean can_create_portal;
+	private Boolean can_destroy_blocks;
 		
 	// ocelots
-	@Column private Ocelot.Type ocelot_type = null;
+	private Ocelot.Type ocelot_type = null;
 			
 	// animals
-	@Column private Boolean adult;
+	private Boolean adult;
 	
 	// sheep
-	@Column private Boolean sheared;
-	@Column private Boolean can_be_dyed;
-	@Column private Boolean can_be_sheared;
-	@Column private Boolean can_grow_wool;
-	@Column private Boolean can_graze;
-	@Column private DyeColor wool_colour = null;
+	private Boolean sheared;
+	private Boolean can_be_dyed;
+	private Boolean can_be_sheared;
+	private Boolean can_grow_wool;
+	private Boolean can_graze;
+	private DyeColor wool_colour = null;
 	
 	// slimes
-	@Column private Integer hp_per_size;
-	@Column private Integer size;
-	@Column private Integer split_into;
+	private Integer hp_per_size;
+	private Integer size;
+	private Integer split_into;
 	
 	// pigs
-	@Column private Boolean saddled;
-	@Column private Boolean can_become_pig_zombie;
+	private Boolean saddled;
+	private Boolean can_become_pig_zombie;
 		
 	// villagers
-	@Column private Villager.Profession villager_type = null;
+	private Villager.Profession villager_type = null;
 
 	
 	// getters and setters
@@ -215,7 +218,7 @@ public class Mob
 		this.spawn_reason = spawn_reason;
 	}
 
-	/*public Drops getDrops()
+	public Drops getDrops()
 	{
 		return drops;
 	}
@@ -253,7 +256,7 @@ public class Mob
 		this.boss_mob = boss_mob;
 	}
 
-	/*public Map<String, Damage_value> getDamage_properties()
+	public Map<String, Damage_value> getDamage_properties()
 	{
 		return damage_properties;
 	}
@@ -261,7 +264,7 @@ public class Mob
 	public void setDamage_properties(Map<String, Damage_value> damage_properties)
 	{
 		this.damage_properties = damage_properties;
-	}*/
+	}
 
 	public Long getDeath_time()
 	{
