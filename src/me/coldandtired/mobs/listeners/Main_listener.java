@@ -1,6 +1,5 @@
 package me.coldandtired.mobs.listeners;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +35,6 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.ExplosionPrimeEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.ItemStack;
 
 import com.herocraftonline.heroes.characters.Hero;
@@ -137,7 +135,7 @@ public class Main_listener implements Listener
 		{
 			if (Config.log_level > 1) L.log("Using spawn conditions");
 			drops = mob.getDrops();
-		}
+		}		
 		
 		List<ItemStack> old_drops = drops != null ? L.get_drops(mob, drops, event.getDrops()) : event.getDrops();
 		int old_exp = drops != null ? L.get_exp(mob, drops, event.getDroppedExp()) : event.getDroppedExp();
@@ -152,13 +150,21 @@ public class Main_listener implements Listener
 		
 		if (mob_died_event.get_drops() != null)
 		{
-			event.getDrops().clear();
-			Iterator<ItemStack> iter = mob_died_event.get_drops().iterator();
-			while (iter.hasNext()) event.getDrops().add(iter.next());
+			List<ItemStack> items = event.getDrops();
+			items.clear();
+			for (ItemStack is : mob_died_event.get_drops())
+			{
+				if (is.getTypeId() == 0)
+				{
+					items.clear();
+					break;
+				}
+				else items.add(is);
+			}
 		}
 		
 		event.setDroppedExp(mob_died_event.get_exp());
-		
+	
 		if (Main.economy != null && p != null) Main.economy.depositPlayer(p.getName(), mob_died_event.get_bounty());
 		
 		if (p != null && Main.heroes != null)
@@ -424,8 +430,8 @@ public class Main_listener implements Listener
 				|| (mob.getCan_graze() != null && !mob.getCan_graze())) event.setCancelled(true);
 	}
 
-	public void onChunkLoad(ChunkLoadEvent event)
+	/*public void onChunkLoad(ChunkLoadEvent event)
 	{
 		if (!L.ignore_world(event.getWorld())) L.convert_chunk(event.getChunk());
-	}
+	}*/
 }

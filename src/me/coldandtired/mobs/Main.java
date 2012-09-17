@@ -1,18 +1,10 @@
 package me.coldandtired.mobs;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -29,12 +21,10 @@ import me.coldandtired.mobs.data.Autospawn_location;
 import me.coldandtired.mobs.data.Autospawn_time;
 import me.coldandtired.mobs.data.Config;
 import me.coldandtired.mobs.data.Creature_data;
-import me.coldandtired.mobs.data.Selected_outcomes;
 import me.coldandtired.mobs.listeners.*;
 import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -72,14 +62,6 @@ public class Main extends JavaPlugin
 	public static Map<String, Mob> all_mobs  = new HashMap<String, Mob>();
 	List<Autospawn> autospawns = null;
 	
-	@Override
-	public List<Class<?>> getDatabaseClasses()
-	{
-		List<Class<?>> classes = new LinkedList<Class<?>>();
-		classes.add(Mob.class);
-		return classes;
-	}
-	
 	boolean is_latest_version()
 	{
 		DocumentBuilder dbf;
@@ -100,12 +82,13 @@ public class Main extends JavaPlugin
 		if (f.exists())
 		try
 		{	
-			load_mobs();
+			//load_mobs();
 			InputSource input = new InputSource(f.getPath());
 
 			Element config = (Element)xpath.evaluate("Mobs/config", input, XPathConstants.NODE);
 			Config.setup_config(config);
 			PluginManager pm = getServer().getPluginManager();
+			if (pm.getPlugin("Vault") != null) setup_economy();
 			world_guard = get_world_guard();
 			tc = get_tc();
 			heroes = get_heroes();
@@ -222,14 +205,12 @@ public class Main extends JavaPlugin
 				//pm.registerEvents(new Player_listener(), this);
 			}
 			
-			pm.registerEvents(new Main_listener(), this);		
+			pm.registerEvents(new Main_listener(), this);				
 
-			if (pm.getPlugin("Vault") != null) setup_economy();
-
-			scheduler.scheduleSyncDelayedTask(this, new Runnable() 
+			/*scheduler.scheduleSyncDelayedTask(this, new Runnable() 
 			{			 
 				public void run() {convert_mobs();}
-			}, 1L);
+			}, 1L);*/
 
 			list = (NodeList) xpath.evaluate("//Property[contains(@name, 'max_lifetime') and @property_value != \"\"]", input, XPathConstants.NODESET);
 
@@ -259,7 +240,7 @@ public class Main extends JavaPlugin
 	
 	public void onDisable() 
 	{
-		save_mobs();
+		//save_mobs();
 		world_guard = null;
 		economy = null;
 		tc = null;
@@ -389,7 +370,7 @@ public class Main extends JavaPlugin
 		}
 	}	
 	
-	@SuppressWarnings("unchecked")
+	/*@SuppressWarnings("unchecked")
 	public Map<String, Selected_outcomes> get_mobs()
 	{
 		File f = new File(getDataFolder(), "mobs_list");
@@ -415,7 +396,7 @@ public class Main extends JavaPlugin
 		} 
 		catch (Exception ne) {ne.printStackTrace();}
 		return null;
-	}
+	}*/
 	
 	public Mob get_mob(Entity entity)
 	{
@@ -488,7 +469,7 @@ public class Main extends JavaPlugin
 	public void onEnable() 
 	{		
 		logger = getLogger();
-		if (!is_latest_version()) logger.info("There's a new version of Mobs available!");
+		if (!is_latest_version()) logger.info("There's a newer version of Mobs available!");
     	
 		if (!load_xml_config())
 		{
@@ -510,7 +491,7 @@ public class Main extends JavaPlugin
 		
 	}	
 	
-	@SuppressWarnings("unchecked")
+	/*@SuppressWarnings("unchecked")
 	void load_mobs()
 	{
 		File f = new File(getDataFolder(), "saved_mobs.dat");
@@ -552,15 +533,15 @@ public class Main extends JavaPlugin
 			//xenc.writeObject(all_mobs);
 		} 
 		catch (Exception e) {e.printStackTrace();}		
-	}
+	}*/
 	
-	void convert_mobs()
+	/*void convert_mobs()
 	{
 		for (World world : getServer().getWorlds())
 		{ 		
 			if (!L.ignore_world(world))	for (Chunk c : world.getLoadedChunks()) L.convert_chunk(c);
 		}
-	}
+	}*/
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)
 	{

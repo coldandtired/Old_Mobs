@@ -1,5 +1,6 @@
 package me.coldandtired.mobs.api.events;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import me.coldandtired.api.Mob;
@@ -25,7 +26,12 @@ public class Mob_died_event extends Base_event
 		this.mob = mob;
 		this.original_entity = original_entity;
 		this.killer = killer;
-		this.drops = drops;
+		if (drops != null)
+		{
+			this.drops = new ArrayList<ItemStack>();
+			for (ItemStack is : drops) this.drops.add(is);
+		}
+		else this.drops = null;
 		this.exp = exp;
 		this.bounty = bounty;
 		this.messages = messages;

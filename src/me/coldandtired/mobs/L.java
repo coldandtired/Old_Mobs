@@ -1102,16 +1102,11 @@ public class L
 		
 		List<ItemStack> dropped = new ArrayList<ItemStack>();
 		for (ItemStack is : old_drops) dropped.add(is);
-		boolean replaced = false;
 		for (Item item : drops.items)
 		{
-			if (!replaced && L.matches_number_condition(item.chances, mob.getRandom()))
+			if (L.matches_number_condition(item.chances, mob.getRandom()))
 			{
-				if (item.replace)
-				{
-					dropped.clear();
-					replaced = true;
-				}
+				if (item.replace) dropped.clear();
 				int quantity = L.get_quantity(item.quantity);
 				ItemStack is = new ItemStack(item.id, quantity, item.data);
 				if (item.enchantments != null)
@@ -1160,7 +1155,7 @@ public class L
 				double amount = L.get_bounty(b.amount);
 				given_bounty += amount;
 			}
-		}		
+		}	
 		return given_bounty;
 	}
 	
